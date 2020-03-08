@@ -30,7 +30,7 @@ interface FinnhubCandleResponse {
   s: string
 }
 
-function loadForexCandles(options: CandleRequest): Promise<void | Candle[]> {
+function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
 
   console.log('\nFetching data with params:\n' + JSON.stringify(options));
 
@@ -78,10 +78,6 @@ function loadForexCandles(options: CandleRequest): Promise<void | Candle[]> {
       }));
 
       return candles;
-    })
-
-    .catch(err => {
-      console.error('Failed to load or parse forex candles:\n', err)
     })
 }
 

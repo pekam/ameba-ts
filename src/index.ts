@@ -7,4 +7,12 @@ loadForexCandles({
   resolution: 'D',
   from: new Date('March 2 2020'),
   to: new Date()
-}).then(console.log);
+})
+
+  .then(candles => {
+    console.log(candles)
+  })
+
+  .catch(err => {
+    console.error('Failed to get forex candles:\n', err)
+  })
