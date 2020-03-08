@@ -1,0 +1,18 @@
+{
+  "name": "trade-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "scripts": {
+    "start": "tsc && node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pekka Maanpää",
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.9.0",
+    "@types/node-fetch": "^2.5.5"
+  }
+}
