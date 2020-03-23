@@ -16,7 +16,7 @@ interface Candle {
   high: number,
   low: number,
   close: number,
-  volume: number,
+  volume?: number,
   time: Date
 }
 
@@ -70,12 +70,17 @@ function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
 
     .then(json => {
       const data: FinnhubCandleResponse = json;
+
+      if (data.s === 'no_data') {
+        throw new Error('No data received.')
+      }
+
       const length = data.o.length;
 
       if (!(data.h.length === length
         && data.l.length === length
         && data.c.length === length
-        && data.v.length === length
+        && (!data.v || data.v.length === length)
         && data.t.length === length)) {
         throw new Error('Invalid data. Candlestick property lists have unequal lengths.');
       }
@@ -85,7 +90,7 @@ function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
         high: data.h[index],
         low: data.l[index],
         close: data.c[index],
-        volume: data.v[index],
+        volume: data.v && data.v[index],
         time: new Date(data.t[index] * 1000)
       }));
 
