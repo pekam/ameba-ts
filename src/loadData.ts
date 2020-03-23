@@ -7,8 +7,8 @@ const { finnhub_api_key } = JSON.parse(fs.readFileSync(path.join(__dirname, '..'
 interface CandleRequest {
   symbol: string,
   resolution: string,
-  from: Date,
-  to: Date
+  from: Date | number,
+  to: Date | number
 }
 
 interface Candle {
@@ -30,6 +30,18 @@ interface FinnhubCandleResponse {
   s: string
 }
 
+function milliSecondsToSeconds(milliseconds: number) {
+  return Math.floor(milliseconds / 1000);
+}
+
+function convertTime(time: Date | number)  {
+  if (typeof time === 'number') {
+    return milliSecondsToSeconds(time);
+  } else { // Date object
+    return milliSecondsToSeconds(time.getTime());
+  }
+}
+
 function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
 
   console.log('\nFetching data with params:\n' + JSON.stringify(options));
@@ -41,8 +53,8 @@ function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
   const url: string = `https://finnhub.io/api/v1/forex/candle?` +
     `symbol=${options.symbol}&` +
     `resolution=${options.resolution}&` +
-    `from=${Math.floor(options.from.getTime() / 1000)}&` +
-    `to=${Math.floor(options.to.getTime() / 1000)}&` +
+    `from=${convertTime(options.from)}&` +
+    `to=${convertTime(options.to)}&` +
     `token=${finnhub_api_key}`
 
   console.log('Fetching from url:\n' + url)

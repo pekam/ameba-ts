@@ -1,12 +1,12 @@
 import { loadForexCandles, Candle } from "./loadData";
 
 loadForexCandles({
-  // symbol: 'OANDA:EUR_USD',
+  symbol: 'OANDA:EUR_USD',
   // symbol: 'FXCM:EUR/USD',
-  symbol: 'FXPRO:1',
+  // symbol: 'FXPRO:1',
   resolution: 'D',
-  from: new Date('March 2 2020'),
-  to: new Date()
+  from: Date.UTC(2020, 2, 4),
+  to: Date.UTC(2020, 2, 5)
 })
 
   .then(candles => {
