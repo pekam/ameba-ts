@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import fetch from "node-fetch";
 import * as path from "path";
+import { CandleSeries } from "./CandleSeries";
 
 const { finnhub_api_key } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'properties.json'), 'utf8'));
 
@@ -45,7 +46,7 @@ function convertTime(time: Date | number) {
   }
 }
 
-export function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
+export function loadForexCandles(options: CandleRequest): Promise<CandleSeries> {
 
   console.log('\nFetching data with params:\n' + JSON.stringify(options));
 
@@ -97,6 +98,6 @@ export function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
         time: new Date(data.t[index] * 1000)
       }));
 
-      return candles;
+      return new CandleSeries(...candles);
     })
 }
