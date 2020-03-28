@@ -4,14 +4,17 @@ import * as path from "path";
 
 const { finnhub_api_key } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'properties.json'), 'utf8'));
 
-interface CandleRequest {
+export type Resolution =
+  '1' | '5' | '15' | '30' | '60' | 'D' | 'W' | 'M';
+
+export interface CandleRequest {
   symbol: string,
-  resolution: string,
+  resolution: Resolution,
   from: Date | number,
   to: Date | number
 }
 
-interface Candle {
+export interface Candle {
   open: number,
   high: number,
   low: number,
@@ -34,7 +37,7 @@ function milliSecondsToSeconds(milliseconds: number) {
   return Math.floor(milliseconds / 1000);
 }
 
-function convertTime(time: Date | number)  {
+function convertTime(time: Date | number) {
   if (typeof time === 'number') {
     return milliSecondsToSeconds(time);
   } else { // Date object
@@ -42,7 +45,7 @@ function convertTime(time: Date | number)  {
   }
 }
 
-function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
+export function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
 
   console.log('\nFetching data with params:\n' + JSON.stringify(options));
 
@@ -96,10 +99,4 @@ function loadForexCandles(options: CandleRequest): Promise<Candle[]> {
 
       return candles;
     })
-}
-
-export {
-  loadForexCandles,
-  Candle,
-  CandleRequest
 }
