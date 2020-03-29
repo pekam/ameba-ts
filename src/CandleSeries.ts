@@ -37,6 +37,13 @@ export class CandleSeries extends Array<Candle> {
   }
 
   /**
+   * Gets the last candle in the series.
+   */
+  get last(): Candle {
+    return this[this.length - 1];
+  }
+
+  /**
    * Gets the time range of the candles as unix timestamps.
    */
   get range(): { start: number, end: number } {
