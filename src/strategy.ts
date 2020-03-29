@@ -1,4 +1,4 @@
-import { Candle } from "./loadData";
+import { CandleSeries } from "./CandleSeries";
 
 export interface Order {
   /**
@@ -21,7 +21,7 @@ export interface TradeState {
   /**
    * The price data up to the current moment.
    */
-  candles: Candle[],
+  series: CandleSeries,
   /**
    * The order that is placed to enter the trade.
    */
