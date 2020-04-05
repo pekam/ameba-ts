@@ -1,5 +1,5 @@
 import { Strategy, TradeState, Order, Transaction, MarketPosition } from "./strategy";
-import { CandleSeries } from "./CandleSeries";
+import { CandleSeries, TimeTraveller } from "./CandleSeries";
 import { Candle } from "./loadData";
 
 /**
@@ -21,7 +21,7 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
 
   const tt = series.getTimeTraveller(from, to);
 
-  const state: TradeState = {
+  const initialState: TradeState = {
     series: null,
     entryOrder: null,
     position: null,
@@ -30,46 +30,67 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
     transactions: []
   }
 
-  while (tt.hasNext()) {
-    // Get a subseries of the full candle data, expanding it
-    // by one candle on each iteration.
-    state.series = tt.next();
+  const finalState = nextState(initialState, tt, strat);
 
-    const newCandle = state.series.last;
+  return finalState.transactions;
+}
 
-    // 1. See if an order got fulfilled based on the new
-    //    price candle.
-    if (!state.position && state.entryOrder &&
-      isOrderFulfilled(state.entryOrder, newCandle)) {
-      const mutations = fulfillEntryOrder(state);
-      Object.assign(state, mutations);
-    }
-    if (state.position && state.stopLoss) {
-      const stopLossOrder: Order = createStopLossOrder(state);
-      if (isOrderFulfilled(stopLossOrder, newCandle)) {
-        const mutations = fulfillExitOrder(stopLossOrder, state);
-        Object.assign(state, mutations);
-      }
-    }
-    if (state.position && state.takeProfit) {
-      const takeProfitOrder: Order = createTakeProfitOrder(state);
-      if (isOrderFulfilled(takeProfitOrder, newCandle)) {
-        const mutations = fulfillExitOrder(takeProfitOrder, state);
-        Object.assign(state, mutations);
-      }
-    }
+function nextState(state: TradeState, tt: TimeTraveller,
+  strat: Strategy): TradeState {
 
-    // 2. Get updates from the strategy, to update its
-    //    order and stop loss and take profit levels.
-    const mutations = strat(state);
-    if (state.position) {
-      delete mutations.entryOrder;
-    }
-    Object.assign(state, mutations);
-
+  if (!tt.hasNext()) {
+    return state;
   }
 
-  return state.transactions;
+  return nextState(
+    applyStrategy(
+      handleTakeProfit(
+        handleStopLoss(
+          handleEntryOrder(
+            { ...state, series: tt.next() }
+          ))),
+      strat),
+    tt, strat);
+}
+
+function handleEntryOrder(state: TradeState) {
+  if (!state.position && state.entryOrder &&
+    isOrderFulfilled(state.entryOrder, state.series.last)) {
+    const mutations = fulfillEntryOrder(state);
+    return { ...state, ...mutations };
+  }
+  return state;
+}
+
+function handleStopLoss(state: TradeState) {
+  if (state.position && state.stopLoss) {
+    const stopLossOrder: Order = createStopLossOrder(state);
+    if (isOrderFulfilled(stopLossOrder, state.series.last)) {
+      const mutations = fulfillExitOrder(stopLossOrder, state);
+      return { ...state, ...mutations };
+    }
+  }
+  return state;
+}
+
+function handleTakeProfit(state: TradeState) {
+  if (state.position && state.takeProfit) {
+    const takeProfitOrder: Order = createTakeProfitOrder(state);
+    if (isOrderFulfilled(takeProfitOrder, state.series.last)) {
+      const mutations = fulfillExitOrder(takeProfitOrder, state);
+      return { ...state, ...mutations };
+    }
+  }
+  return state;
+}
+
+function applyStrategy(state: TradeState, strat: Strategy) {
+  const mutations = strat(state);
+  if (state.position && mutations.entryOrder) {
+    throw new Error('Changing entry order while already ' +
+      'in a position is not allowed.');
+  }
+  return { ...state, ...mutations };
 }
 
 function isOrderFulfilled(order: Order, newCandle: Candle): boolean {
@@ -87,10 +108,12 @@ function fulfillEntryOrder(state: TradeState) {
   const transaction = createTransaction(
     state.entryOrder, state.series.last.time.getTime());
 
-  return {
-    transactions: state.transactions.concat(transaction),
-    position: state.entryOrder.sell ? 'short' : 'long'
-  }
+  const transactions = state.transactions.concat(transaction);
+
+  const position: MarketPosition =
+    state.entryOrder.sell ? 'short' : 'long';
+
+  return { transactions, position }
 }
 
 function createTransaction(order: Order, time: number): Transaction {
