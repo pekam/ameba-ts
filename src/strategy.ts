@@ -17,6 +17,8 @@ export interface Order {
   price: number
 }
 
+export type MarketPosition = 'long' | 'short';
+
 export interface TradeState {
   /**
    * The price data up to the current moment.
@@ -33,7 +35,7 @@ export interface TradeState {
    * 
    * When we don't have an active position, this is falsy.
    */
-  position: 'long' | 'short',
+  position: MarketPosition,
   /**
    * The price of the stop loss order that should be
    * placed after the entry order has been activated,
@@ -48,7 +50,27 @@ export interface TradeState {
    * This can be left out, eg. when using a trailing
    * stop loss.
    */
-  takeProfit: number
+  takeProfit: number,
+  transactions: Transaction[]
+}
+
+export interface Transaction {
+  /**
+   * Defines if this is a buy or a sell transaction.
+   */
+  sell: boolean,
+  /**
+   * The order that was fulfilled to create the transaction.
+   */
+  order: Order,
+  /**
+   * The price at which the buy/sell occurred.
+   */
+  price: number,
+  /**
+   * The moment when the transaction took place, in unix time.
+   */
+  time: number,
 }
 
 /**

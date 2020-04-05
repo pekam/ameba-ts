@@ -1,5 +1,6 @@
-import { Strategy, TradeState } from "./strategy";
+import { Strategy, TradeState, Order, Transaction, MarketPosition } from "./strategy";
 import { CandleSeries } from "./CandleSeries";
+import { Candle } from "./loadData";
 
 /**
  * Tests how the given strategy would have performed with
@@ -16,7 +17,7 @@ import { CandleSeries } from "./CandleSeries";
  * to test until the end of the series
  */
 export function backtestStrategy(strat: Strategy, series: CandleSeries,
-  from: number, to?: number) {
+  from: number, to?: number): Transaction[] {
 
   const tt = series.getTimeTraveller(from);
 
@@ -25,7 +26,8 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
     entryOrder: null,
     position: null,
     stopLoss: null,
-    takeProfit: null
+    takeProfit: null,
+    transactions: []
   }
 
   while (tt.hasNext()) {
@@ -37,23 +39,97 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
     }
     state.series = currentSeries;
 
-    // 1. Get updates from the broker, to see if an order
-    //    was triggered.
-    //    TODO
+    const newCandle = state.series.last;
+
+    // 1. See if an order got fulfilled based on the new
+    //    price candle.
+    if (!state.position && state.entryOrder &&
+      isOrderFulfilled(state.entryOrder, newCandle)) {
+        const mutations = fulfillEntryOrder(state);
+        Object.assign(state, mutations);
+    }
+    if (state.position && state.stopLoss) {
+      const stopLossOrder: Order = createStopLossOrder(state);
+      if (isOrderFulfilled(stopLossOrder, newCandle)) {
+        const mutations = fulfillExitOrder(stopLossOrder, state);
+        Object.assign(state, mutations);
+      }
+    }
+    if (state.position && state.takeProfit) {
+      const takeProfitOrder: Order = createTakeProfitOrder(state);
+      if (isOrderFulfilled(takeProfitOrder, newCandle)) {
+        const mutations = fulfillExitOrder(takeProfitOrder, state);
+        Object.assign(state, mutations);
+      }
+    }
 
     // 2. Get updates from the strategy, to update its
     //    order and stop loss and take profit levels.
     const mutations = strat(state);
+    if (state.position) {
+      delete mutations.entryOrder;
+    }
     Object.assign(state, mutations);
-
-    // 3. Get updates from the broker again, to apply the
-    //    possible order changes decide by the strategy.
-    //    TODO
 
   }
 
-  // TODO: Return the results, containing the profits/losses,
-  // preferably also per each trade.
+  return state.transactions;
 }
 
+function isOrderFulfilled(order: Order, newCandle: Candle): boolean {
 
+  const priceBelowOrder = newCandle.low <= order.price;
+  const priceAboveOrder = newCandle.high >= order.price;
+
+  return (!order.sell && order.type === 'limit' && priceBelowOrder)
+    || (!order.sell && order.type === 'stop' && priceAboveOrder)
+    || (order.sell && order.type === 'limit' && priceAboveOrder)
+    || (order.sell && order.type === 'stop' && priceBelowOrder)
+}
+
+function fulfillEntryOrder(state: TradeState) {
+  const transaction = createTransaction(
+    state.entryOrder, state.series.last.time.getTime());
+
+  return {
+    transactions: state.transactions.concat(transaction),
+    position: state.entryOrder.sell ? 'short' : 'long'
+  }
+}
+
+function createTransaction(order: Order, time: number): Transaction {
+  return {
+    sell: order.sell,
+    order,
+    price: order.price, // ignoring slippage
+    time
+  }
+}
+
+function createStopLossOrder(state: TradeState): Order {
+  return {
+    price: state.stopLoss,
+    type: 'stop',
+    sell: state.position === 'long'
+  }
+}
+
+function createTakeProfitOrder(state: TradeState): Order {
+  return {
+    price: state.takeProfit,
+    type: 'limit',
+    sell: state.position === 'long'
+  }
+}
+
+function fulfillExitOrder(order: Order, state: TradeState) {
+  const transaction: Transaction = createTransaction(
+    order, state.series.last.time.getTime());
+  return {
+    transactions: state.transactions.concat(transaction),
+    position: null,
+    entryOrder: null,
+    stopLoss: null,
+    takeProfit: null
+  }
+}
