@@ -29,11 +29,13 @@ export class CandleSeries extends Array<Candle> {
    * used to simulate how the data is received one candle
    * at a time.
    * 
-   * @param startTime the unix time of the last candle to
+   * @param from the unix time of the last candle to
    * be included in the first iteration
+   * @param to the unix time of the candle which will
+   * end the iteration once encountered
    */
-  getTimeTraveller(startTime: number): TimeTraveller {
-    return new TimeTraveller(this, startTime);
+  getTimeTraveller(from: number, to: number): TimeTraveller {
+    return new TimeTraveller(this, from, to);
   }
 
   /**
@@ -82,14 +84,32 @@ export class TimeTraveller {
    * in the next call of next() function.
    */
   private nextIndex: number;
+  /**
+   * Index of the first candle not included, based on the
+   * given endTime (if provided).
+   */
+  private endIndex: number;
 
-  constructor(series: CandleSeries, startTime: number) {
+  constructor(series: CandleSeries, from: number, to: number) {
     this.series = series;
+
     this.nextIndex = series.findIndex(candle =>
-      candle.time.getTime() === startTime);
+      candle.time.getTime() === from);
+
+    if (to) {
+      this.endIndex = series.findIndex(candle =>
+        candle.time.getTime() === to);
+    } else {
+      this.endIndex = series.length;
+    }
+
     if (this.nextIndex < 0) {
       throw new Error('Failed to create TimeTraveller. ' +
-        'Could not find a candle with startTime ' + startTime);
+        'Could not find a candle with startTime ' + from);
+    }
+    if (this.endIndex < 0) {
+      throw new Error('Failed to create TimeTraveller. ' +
+        'Could not find a candle with endTime ' + from);
     }
   }
 
@@ -109,7 +129,7 @@ export class TimeTraveller {
    * next() function can still be called succesfully.
    */
   hasNext(): boolean {
-    return this.nextIndex >= 0 && this.nextIndex < this.series.length;
+    return this.nextIndex >= 0 && this.nextIndex < this.endIndex;
   }
 
 }

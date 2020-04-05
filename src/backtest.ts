@@ -19,7 +19,7 @@ import { Candle } from "./loadData";
 export function backtestStrategy(strat: Strategy, series: CandleSeries,
   from: number, to?: number): Transaction[] {
 
-  const tt = series.getTimeTraveller(from);
+  const tt = series.getTimeTraveller(from, to);
 
   const state: TradeState = {
     series: null,
@@ -33,11 +33,7 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
   while (tt.hasNext()) {
     // Get a subseries of the full candle data, expanding it
     // by one candle on each iteration.
-    const currentSeries = tt.next();
-    if (to && currentSeries.last.time.getTime() >= to) {
-      break;
-    }
-    state.series = currentSeries;
+    state.series = tt.next();
 
     const newCandle = state.series.last;
 
@@ -45,8 +41,8 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
     //    price candle.
     if (!state.position && state.entryOrder &&
       isOrderFulfilled(state.entryOrder, newCandle)) {
-        const mutations = fulfillEntryOrder(state);
-        Object.assign(state, mutations);
+      const mutations = fulfillEntryOrder(state);
+      Object.assign(state, mutations);
     }
     if (state.position && state.stopLoss) {
       const stopLossOrder: Order = createStopLossOrder(state);
