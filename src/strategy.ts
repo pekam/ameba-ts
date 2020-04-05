@@ -88,3 +88,16 @@ export interface Strategy {
     takeProfit?: number
   }
 }
+
+export interface Trade {
+  entry: Transaction,
+  exit: Transaction,
+  position: MarketPosition,
+  /**
+   * The relative win/loss in the
+   * invested money. For example:
+   * - 10% win: profit = 0.10
+   * - 0.5% loss: profit = -0.005
+   */
+  profit: number
+}

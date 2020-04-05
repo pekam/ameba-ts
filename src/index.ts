@@ -1,5 +1,5 @@
 import { loadForexCandles, Candle } from "./loadData";
-import { Strategy, Order, Transaction } from "./strategy";
+import { Strategy, Order, Transaction, Trade } from "./strategy";
 import { backtestStrategy } from "./backtest";
 
 const strat: Strategy = state => {
@@ -38,7 +38,7 @@ loadForexCandles({
 
   .then(series => {
 
-    const result: Transaction[] =
+    const result: Trade[] =
       backtestStrategy(strat, series,
         Date.UTC(2020, 2, 4, 5),
         Date.UTC(2020, 2, 4, 6));
@@ -46,17 +46,11 @@ loadForexCandles({
     console.log(result);
 
     let balance = 1000;
-    result.forEach((transaction, i) => {
-      if (transaction.order.sell) {
-        const prev = result[i - 1];
-        const tradeProfit = transaction.price / prev.price;
-        balance *= tradeProfit;
-        console.log(tradeProfit);
-      };
+    result.forEach(trade => {
+      balance *= (1 + trade.profit);
+      console.log(balance);
     });
     console.log('end balance: ' + balance);
   })
 
-  .catch(err => {
-    console.error('Failed to get forex candles:\n', err)
-  })
+  .catch(console.error);

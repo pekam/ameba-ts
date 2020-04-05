@@ -1,4 +1,4 @@
-import { Strategy, TradeState, Order, Transaction, MarketPosition } from "./strategy";
+import { Strategy, TradeState, Order, Transaction, MarketPosition, Trade } from "./strategy";
 import { CandleSeries, TimeTraveller } from "./CandleSeries";
 import { Candle } from "./loadData";
 
@@ -17,7 +17,7 @@ import { Candle } from "./loadData";
  * to test until the end of the series
  */
 export function backtestStrategy(strat: Strategy, series: CandleSeries,
-  from: number, to?: number): Transaction[] {
+  from: number, to?: number): Trade[] {
 
   const tt = series.getTimeTraveller(from, to);
 
@@ -32,7 +32,7 @@ export function backtestStrategy(strat: Strategy, series: CandleSeries,
 
   const finalState = nextState(initialState, tt, strat);
 
-  return finalState.transactions;
+  return convertToTrades(finalState.transactions);
 }
 
 function nextState(state: TradeState, tt: TimeTraveller,
@@ -151,4 +151,19 @@ function fulfillExitOrder(order: Order, state: TradeState) {
     stopLoss: null,
     takeProfit: null
   }
+}
+
+function convertToTrades(transactions: Transaction[]): Trade[] {
+  return transactions
+    // Every other transaction is an exit.
+    // If the last entry didn't close, it's ignored.
+    .filter((_, i) => i % 2 === 1)
+    .map((exit, i) => {
+      const entry = transactions[i * 2];
+      const position = entry.sell ? 'short' : 'long';
+      const profit = entry.sell ?
+        (entry.price - exit.price) / entry.price
+        : (exit.price - entry.price) / entry.price;
+      return { entry, exit, position, profit }
+    });
 }
