@@ -1,4 +1,4 @@
-import { Strategy, TradeState, Order, Transaction, MarketPosition, Trade } from "./strategy";
+import { Strategy, TradeState, Order, Transaction, MarketPosition, Trade } from "./types";
 import { CandleSeries, TimeTraveller } from "./CandleSeries";
 import { Candle } from "./loadData";
 

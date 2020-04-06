@@ -1,5 +1,5 @@
 import { loadCandles, Candle } from "./loadData";
-import { Strategy, Order, Transaction, Trade } from "./strategy";
+import { Strategy, Order, Transaction, Trade } from "./types";
 import { backtestStrategy } from "./backtest";
 
 const strat: Strategy = state => {
