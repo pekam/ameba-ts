@@ -9,6 +9,7 @@ export type Resolution =
   '1' | '5' | '15' | '30' | '60' | 'D' | 'W' | 'M';
 
 export interface CandleRequest {
+  market: 'forex' | 'stock',
   symbol: string,
   resolution: Resolution,
   from: Date | number,
@@ -46,7 +47,7 @@ function convertTime(time: Date | number) {
   }
 }
 
-export function loadForexCandles(options: CandleRequest): Promise<CandleSeries> {
+export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
 
   console.log('\nFetching data with params:\n' + JSON.stringify(options));
 
@@ -54,7 +55,8 @@ export function loadForexCandles(options: CandleRequest): Promise<CandleSeries> 
     throw new Error('Failed to read finnhub_api_key from properties.json');
   }
 
-  const url: string = `https://finnhub.io/api/v1/forex/candle?` +
+  const url: string = `https://finnhub.io/api/v1/` +
+    `${options.market}/candle?` +
     `symbol=${options.symbol}&` +
     `resolution=${options.resolution}&` +
     `from=${convertTime(options.from)}&` +

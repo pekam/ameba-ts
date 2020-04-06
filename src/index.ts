@@ -1,4 +1,4 @@
-import { loadForexCandles, Candle } from "./loadData";
+import { loadCandles, Candle } from "./loadData";
 import { Strategy, Order, Transaction, Trade } from "./strategy";
 import { backtestStrategy } from "./backtest";
 
@@ -27,7 +27,8 @@ const strat: Strategy = state => {
   }
 }
 
-loadForexCandles({
+loadCandles({
+  market: 'forex',
   symbol: 'OANDA:EUR_USD',
   // symbol: 'FXCM:EUR/USD',
   // symbol: 'FXPRO:1',
