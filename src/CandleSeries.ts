@@ -1,4 +1,4 @@
-import { Candle } from "./loadData";
+import { Candle } from "./types";
 
 export class CandleSeries extends Array<Candle> {
 

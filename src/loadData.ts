@@ -2,6 +2,7 @@ import * as fs from "fs";
 import fetch from "node-fetch";
 import * as path from "path";
 import { CandleSeries } from "./CandleSeries";
+import { Candle } from "./types";
 
 const { finnhub_api_key } = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'properties.json'), 'utf8'));
 
@@ -14,15 +15,6 @@ export interface CandleRequest {
   resolution: Resolution,
   from: Date | number,
   to: Date | number
-}
-
-export interface Candle {
-  open: number,
-  high: number,
-  low: number,
-  close: number,
-  volume?: number,
-  time: Date
 }
 
 interface FinnhubCandleResponse {

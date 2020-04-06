@@ -1,4 +1,4 @@
-import { loadCandles, Candle } from "./loadData";
+import { loadCandles } from "./loadData";
 import { Strategy, Order, Transaction, Trade } from "./types";
 import { backtestStrategy } from "./backtest";
 

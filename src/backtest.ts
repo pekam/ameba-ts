@@ -1,6 +1,5 @@
-import { Strategy, TradeState, Order, Transaction, MarketPosition, Trade } from "./types";
+import { Strategy, TradeState, Order, Transaction, MarketPosition, Trade, Candle } from "./types";
 import { CandleSeries, TimeTraveller } from "./CandleSeries";
-import { Candle } from "./loadData";
 
 /**
  * Tests how the given strategy would have performed with
