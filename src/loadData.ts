@@ -26,12 +26,12 @@ export interface Candle {
 }
 
 interface FinnhubCandleResponse {
-  o: Array<number>,
-  h: Array<number>,
-  l: Array<number>,
-  c: Array<number>,
-  v: Array<number>,
-  t: Array<number>,
+  o: number[],
+  h: number[],
+  l: number[],
+  c: number[],
+  v: number[],
+  t: number[],
   s: string
 }
 
