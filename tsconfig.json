@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "outDir": "./build",
-    "target": "ES5"
+    "target": "ES5",
+    "sourceMap": true
   },
   "include": [
     "./src/**/*"
