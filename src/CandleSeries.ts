@@ -1,7 +1,6 @@
 import { Candle } from "./types";
 
 export class CandleSeries extends Array<Candle> {
-
   /**
    * @param candles in chronological order
    */
@@ -20,8 +19,9 @@ export class CandleSeries extends Array<Candle> {
    * @param to the upper limit as unix timestamp, exclusive
    */
   subSeries(from: number, to: number): CandleSeries {
-    return new CandleSeries(...this.filter(candle =>
-      candle.time >= from && candle.time < to));
+    return new CandleSeries(
+      ...this.filter((candle) => candle.time >= from && candle.time < to)
+    );
   }
 
   /**
@@ -48,13 +48,12 @@ export class CandleSeries extends Array<Candle> {
   /**
    * Gets the time range of the candles as unix timestamps.
    */
-  get range(): { start: number, end: number } {
+  get range(): { start: number; end: number } {
     return {
       start: this[0].time,
-      end: this.last.time
-    }
+      end: this.last.time,
+    };
   }
-
 }
 
 /**
@@ -66,7 +65,6 @@ export class CandleSeries extends Array<Candle> {
  * going through the history one candle at a time.
  */
 export class TimeTraveller {
-
   private readonly series: CandleSeries;
   /**
    * Index of the candle that will be the last one included
@@ -82,23 +80,27 @@ export class TimeTraveller {
   constructor(series: CandleSeries, from: number, to: number) {
     this.series = series;
 
-    this.nextIndex = series.findIndex(candle =>
-      candle.time === from);
+    this.nextIndex = series.findIndex((candle) => candle.time === from);
 
     if (to) {
-      this.endIndex = series.findIndex(candle =>
-        candle.time === to);
+      this.endIndex = series.findIndex((candle) => candle.time === to);
     } else {
       this.endIndex = series.length;
     }
 
     if (this.nextIndex < 0) {
-      throw new Error('Failed to create TimeTraveller. ' +
-        'Could not find a candle with startTime ' + from);
+      throw new Error(
+        "Failed to create TimeTraveller. " +
+          "Could not find a candle with startTime " +
+          from
+      );
     }
     if (this.endIndex < 0) {
-      throw new Error('Failed to create TimeTraveller. ' +
-        'Could not find a candle with endTime ' + from);
+      throw new Error(
+        "Failed to create TimeTraveller. " +
+          "Could not find a candle with endTime " +
+          from
+      );
     }
   }
 
@@ -108,7 +110,7 @@ export class TimeTraveller {
    */
   next(): CandleSeries {
     if (!this.hasNext()) {
-      throw new Error('TimeTraveller index out of bounds.');
+      throw new Error("TimeTraveller index out of bounds.");
     }
     return new CandleSeries(...this.series.slice(0, ++this.nextIndex));
   }
@@ -120,5 +122,4 @@ export class TimeTraveller {
   hasNext(): boolean {
     return this.nextIndex >= 0 && this.nextIndex < this.endIndex;
   }
-
 }

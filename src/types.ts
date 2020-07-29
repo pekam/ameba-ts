@@ -1,12 +1,12 @@
 import { CandleSeries } from "./CandleSeries";
 
 export interface Candle {
-  open: number,
-  high: number,
-  low: number,
-  close: number,
-  volume?: number,
-  time: number
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+  time: number;
 }
 
 export interface Order {
@@ -14,29 +14,29 @@ export interface Order {
    * Defines if this is a buy or a sell order.
    * By default it's a buy order.
    */
-  sell?: boolean,
+  sell?: boolean;
   /**
    * Defines if this a limit order or a stop order.
    */
-  type: 'limit' | 'stop',
+  type: "limit" | "stop";
   /**
    * Limit price for a limit order, or
    * stop price for a stop order.
    */
-  price: number
+  price: number;
 }
 
-export type MarketPosition = 'long' | 'short';
+export type MarketPosition = "long" | "short";
 
 export interface TradeState {
   /**
    * The price data up to the current moment.
    */
-  series: CandleSeries,
+  series: CandleSeries;
   /**
    * The order that is placed to enter the trade.
    */
-  entryOrder: Order,
+  entryOrder: Order;
   /**
    * After the entry order has been fulfilled, this defines
    * if we're in a long position (after a buy order) or a
@@ -44,13 +44,13 @@ export interface TradeState {
    *
    * When we don't have an active position, this is falsy.
    */
-  position: MarketPosition,
+  position: MarketPosition;
   /**
    * The price of the stop loss order that should be
    * placed after the entry order has been activated,
    * or that is currently active.
    */
-  stopLoss: number,
+  stopLoss: number;
   /**
    * The price of the profit taking order that should be
    * placed after the entry order has been activated, or
@@ -59,27 +59,27 @@ export interface TradeState {
    * This can be left out, eg. when using a trailing
    * stop loss.
    */
-  takeProfit: number,
-  transactions: Transaction[]
+  takeProfit: number;
+  transactions: Transaction[];
 }
 
 export interface Transaction {
   /**
    * Defines if this is a buy or a sell transaction.
    */
-  sell: boolean,
+  sell: boolean;
   /**
    * The order that was fulfilled to create the transaction.
    */
-  order: Order,
+  order: Order;
   /**
    * The price at which the buy/sell occurred.
    */
-  price: number,
+  price: number;
   /**
    * The moment when the transaction took place, in unix time.
    */
-  time: number,
+  time: number;
 }
 
 /**
@@ -92,21 +92,21 @@ export interface Transaction {
  */
 export interface Strategy {
   (tradeState: TradeState): {
-    entryOrder?: Order,
-    stopLoss?: number,
-    takeProfit?: number
-  }
+    entryOrder?: Order;
+    stopLoss?: number;
+    takeProfit?: number;
+  };
 }
 
 export interface Trade {
-  entry: Transaction,
-  exit: Transaction,
-  position: MarketPosition,
+  entry: Transaction;
+  exit: Transaction;
+  position: MarketPosition;
   /**
    * The relative win/loss in the
    * invested money. For example:
    * - 10% win: profit = 0.10
    * - 0.5% loss: profit = -0.005
    */
-  profit: number
+  profit: number;
 }
