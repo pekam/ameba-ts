@@ -5,14 +5,18 @@
   "main": "build/index.js",
   "scripts": {
     "start": "tsc && node build/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Pekka Maanpää",
   "dependencies": {
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.7",
     "@types/node": "^13.9.0",
-    "@types/node-fetch": "^2.5.5"
+    "@types/node-fetch": "^2.5.5",
+    "jest": "^26.1.0",
+    "ts-jest": "^26.1.4",
+    "typescript": "^3.9.7"
   }
 }
