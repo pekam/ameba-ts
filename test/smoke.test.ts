@@ -36,15 +36,15 @@ it("should get end balance from backtest", async () => {
     market: "forex",
     symbol: "OANDA:EUR_USD",
     resolution: "1",
-    from: timestampFromUTC(2020, 2, 4),
-    to: timestampFromUTC(2020, 2, 5),
+    from: timestampFromUTC(2020, 3, 4),
+    to: timestampFromUTC(2020, 3, 5),
   });
 
   const result: Trade[] = backtestStrategy(
     strat,
     series,
-    timestampFromUTC(2020, 2, 4, 5),
-    timestampFromUTC(2020, 2, 4, 6)
+    timestampFromUTC(2020, 3, 4, 5),
+    timestampFromUTC(2020, 3, 4, 6)
   );
 
   let balance = 1000;
