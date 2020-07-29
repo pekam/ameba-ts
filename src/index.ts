@@ -1,6 +1,7 @@
 import { loadCandles } from "./loadData";
-import { Strategy, Order, Transaction, Trade } from "./types";
+import { Strategy, Order, Trade } from "./types";
 import { backtestStrategy } from "./backtest";
+import {timestampFromUTC} from "./dateUtil";
 
 const strat: Strategy = state => {
   const newCandle = state.series.last;
@@ -33,16 +34,16 @@ loadCandles({
   // symbol: 'FXCM:EUR/USD',
   // symbol: 'FXPRO:1',
   resolution: '1',
-  from: Date.UTC(2020, 2, 4),
-  to: Date.UTC(2020, 2, 5)
+  from: timestampFromUTC(2020, 2, 4),
+  to: timestampFromUTC(2020, 2, 5)
 })
 
   .then(series => {
 
     const result: Trade[] =
       backtestStrategy(strat, series,
-        Date.UTC(2020, 2, 4, 5),
-        Date.UTC(2020, 2, 4, 6));
+        timestampFromUTC(2020, 2, 4, 5),
+        timestampFromUTC(2020, 2, 4, 6));
 
     console.log(result);
 

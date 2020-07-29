@@ -15,20 +15,20 @@ export class CandleSeries extends Array<Candle> {
   /**
    * Returns a new series including only the candles
    * of this series that are in the given time range.
-   * 
+   *
    * @param from the lower limit as unix timestamp, inclusive
    * @param to the upper limit as unix timestamp, exclusive
    */
   subSeries(from: number, to: number): CandleSeries {
     return new CandleSeries(...this.filter(candle =>
-      candle.time.getTime() >= from && candle.time.getTime() < to));
+      candle.time >= from && candle.time < to));
   }
 
   /**
    * Returns a TimeTraveller for this series, that can be
    * used to simulate how the data is received one candle
    * at a time.
-   * 
+   *
    * @param from the unix time of the last candle to
    * be included in the first iteration
    * @param to the unix time of the candle which will
@@ -49,21 +49,10 @@ export class CandleSeries extends Array<Candle> {
    * Gets the time range of the candles as unix timestamps.
    */
   get range(): { start: number, end: number } {
-    const dateRange = this.rangeAsDates;
-    return {
-      start: dateRange.start.getTime(),
-      end: dateRange.end.getTime()
-    }
-  }
-
-  /**
-   * Gets the time range of the candles as Date objects.
-   */
-  get rangeAsDates(): { start: Date, end: Date } {
     return {
       start: this[0].time,
-      end: this[this.length - 1].time
-    };
+      end: this.last.time
+    }
   }
 
 }
@@ -72,7 +61,7 @@ export class CandleSeries extends Array<Candle> {
  * Allows iterating over a CandleSeries, by expanding a
  * subseries with one more candle, each time when calling
  * the next() function.
- * 
+ *
  * This can be used by the backtesting system, to simulate
  * going through the history one candle at a time.
  */
@@ -94,11 +83,11 @@ export class TimeTraveller {
     this.series = series;
 
     this.nextIndex = series.findIndex(candle =>
-      candle.time.getTime() === from);
+      candle.time === from);
 
     if (to) {
       this.endIndex = series.findIndex(candle =>
-        candle.time.getTime() === to);
+        candle.time === to);
     } else {
       this.endIndex = series.length;
     }

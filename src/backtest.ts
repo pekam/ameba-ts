@@ -4,7 +4,7 @@ import { CandleSeries, TimeTraveller } from "./CandleSeries";
 /**
  * Tests how the given strategy would have performed with
  * the provided historical price data.
- * 
+ *
  * @param strat the strategy to test
  * @param series data series covering at least the range
  * between 'from' and 'to' arguments, plus X time before
@@ -105,7 +105,7 @@ function isOrderFulfilled(order: Order, newCandle: Candle): boolean {
 
 function fulfillEntryOrder(state: TradeState) {
   const transaction = createTransaction(
-    state.entryOrder, state.series.last.time.getTime());
+    state.entryOrder, state.series.last.time);
 
   const transactions = state.transactions.concat(transaction);
 
@@ -142,7 +142,7 @@ function createTakeProfitOrder(state: TradeState): Order {
 
 function fulfillExitOrder(order: Order, state: TradeState) {
   const transaction: Transaction = createTransaction(
-    order, state.series.last.time.getTime());
+    order, state.series.last.time);
   return {
     transactions: state.transactions.concat(transaction),
     position: null,

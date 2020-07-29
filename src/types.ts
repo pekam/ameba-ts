@@ -6,7 +6,7 @@ export interface Candle {
   low: number,
   close: number,
   volume?: number,
-  time: Date
+  time: number
 }
 
 export interface Order {
@@ -41,7 +41,7 @@ export interface TradeState {
    * After the entry order has been fulfilled, this defines
    * if we're in a long position (after a buy order) or a
    * short position (after a sell order).
-   * 
+   *
    * When we don't have an active position, this is falsy.
    */
   position: MarketPosition,
@@ -55,7 +55,7 @@ export interface TradeState {
    * The price of the profit taking order that should be
    * placed after the entry order has been activated, or
    * that is currently active.
-   * 
+   *
    * This can be left out, eg. when using a trailing
    * stop loss.
    */
@@ -86,7 +86,7 @@ export interface Transaction {
  * A function describing a trading strategy.
  * It takes the current state as an argument,
  * and returns updates to the state.
- * 
+ *
  * When in a position, changes to entryOrder
  * should not be made, and they will be ignored.
  */

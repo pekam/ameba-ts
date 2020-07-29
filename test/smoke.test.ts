@@ -2,6 +2,7 @@ import { loadCandles } from "../src/loadData";
 import { Strategy, Order, Trade } from "../src/types";
 import { backtestStrategy } from "../src/backtest";
 import {CandleSeries} from "../src/CandleSeries";
+import {timestampFromUTC} from "../src/dateUtil";
 
 it('should get end balance from backtest', async () => {
 
@@ -36,14 +37,14 @@ it('should get end balance from backtest', async () => {
     market: 'forex',
     symbol: 'OANDA:EUR_USD',
     resolution: '1',
-    from: Date.UTC(2020, 2, 4),
-    to: Date.UTC(2020, 2, 5)
+    from: timestampFromUTC(2020, 2, 4),
+    to: timestampFromUTC(2020, 2, 5)
   });
 
   const result: Trade[] =
       backtestStrategy(strat, series,
-          Date.UTC(2020, 2, 4, 5),
-          Date.UTC(2020, 2, 4, 6));
+          timestampFromUTC(2020, 2, 4, 5),
+          timestampFromUTC(2020, 2, 4, 6));
 
   let balance = 1000;
   result.forEach(trade => {

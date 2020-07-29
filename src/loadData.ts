@@ -13,8 +13,8 @@ export interface CandleRequest {
   market: 'forex' | 'stock',
   symbol: string,
   resolution: Resolution,
-  from: Date | number,
-  to: Date | number
+  from: number,
+  to: number
 }
 
 interface FinnhubCandleResponse {
@@ -25,18 +25,6 @@ interface FinnhubCandleResponse {
   v: number[],
   t: number[],
   s: string
-}
-
-function milliSecondsToSeconds(milliseconds: number) {
-  return Math.floor(milliseconds / 1000);
-}
-
-function convertTime(time: Date | number) {
-  if (typeof time === 'number') {
-    return milliSecondsToSeconds(time);
-  } else { // Date object
-    return milliSecondsToSeconds(time.getTime());
-  }
 }
 
 export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
@@ -51,8 +39,8 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
     `${options.market}/candle?` +
     `symbol=${options.symbol}&` +
     `resolution=${options.resolution}&` +
-    `from=${convertTime(options.from)}&` +
-    `to=${convertTime(options.to)}&` +
+    `from=${options.from}&` +
+    `to=${options.to}&` +
     `token=${finnhub_api_key}`
 
   console.log('Fetching from url:\n' + url)
@@ -89,7 +77,7 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
         low: data.l[index],
         close: data.c[index],
         volume: data.v && data.v[index],
-        time: new Date(data.t[index] * 1000)
+        time: data.t[index]
       }));
 
       return new CandleSeries(...candles);
