@@ -79,14 +79,22 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
         );
       }
 
-      const candles: Candle[] = data.o.map((_, index) => ({
-        open: data.o[index],
-        high: data.h[index],
-        low: data.l[index],
-        close: data.c[index],
-        volume: data.v && data.v[index],
-        time: data.t[index],
-      }));
+      const candles: Candle[] = data.o.map((_, index) => {
+        const open = data.o[index];
+        const close = data.c[index];
+        const previousClose = index > 0 && data.c[index - 1];
+        const oldValue = previousClose || open;
+        const relativeChange = (close - oldValue) / oldValue;
+        return {
+          open,
+          high: data.h[index],
+          low: data.l[index],
+          close,
+          volume: data.v && data.v[index],
+          time: data.t[index],
+          relativeChange,
+        };
+      });
 
       return new CandleSeries(...candles);
     });

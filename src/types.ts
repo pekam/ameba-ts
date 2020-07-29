@@ -7,6 +7,7 @@ export interface Candle {
   close: number;
   volume?: number;
   time: number;
+  relativeChange: number;
 }
 
 export interface Order {
