@@ -85,14 +85,16 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
         const previousClose = index > 0 && data.c[index - 1];
         const oldValue = previousClose || open;
         const relativeChange = (close - oldValue) / oldValue;
+        const time = data.t[index];
         return {
           open,
           high: data.h[index],
           low: data.l[index],
           close,
           volume: data.v && data.v[index],
-          time: data.t[index],
           relativeChange,
+          time,
+          utcDate: new Date(time * 1000).toUTCString(),
         };
       });
 
