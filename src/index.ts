@@ -2,6 +2,7 @@ import { loadCandles } from "./loadData";
 import { Strategy, Order, Trade } from "./types";
 import { backtestStrategy } from "./backtest";
 import { timestampFromUTC } from "./dateUtil";
+import { addSMA } from "./indicators";
 
 const strat: Strategy = (state) => {
   const newCandle = state.series.last;
@@ -38,21 +39,9 @@ loadCandles({
   to: timestampFromUTC(2020, 2, 5),
 })
   .then((series) => {
-    const result: Trade[] = backtestStrategy(
-      strat,
-      series,
-      timestampFromUTC(2020, 2, 4, 5),
-      timestampFromUTC(2020, 2, 4, 6)
-    );
+    addSMA(series, 3);
 
-    console.log(result);
-
-    let balance = 1000;
-    result.forEach((trade) => {
-      balance *= 1 + trade.profit;
-      console.log(balance);
-    });
-    console.log("end balance: " + balance);
+    console.log(series.slice(0, 5));
   })
 
   .catch(console.error);

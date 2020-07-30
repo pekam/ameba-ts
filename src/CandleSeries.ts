@@ -1,4 +1,5 @@
 import { RawCandle } from "./types";
+import { SMA } from "technicalindicators";
 
 /**
  * Besides the OHLC data in RawCandle, this class
@@ -14,6 +15,8 @@ export class Candle implements RawCandle {
   open: number;
   time: number;
   volume?: number;
+
+  indicators: any = {};
 
   constructor(rawCandle: RawCandle, series: CandleSeries) {
     this.series = series;
