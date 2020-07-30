@@ -1,5 +1,5 @@
 import { RawCandle } from "../src/types";
-import { CandleSeries } from "../src/CandleSeries";
+import { CandleSeries } from "../src/candle-series";
 import { addRSI, addSMA } from "../src/indicators";
 import { initTestData } from "./testData";
 

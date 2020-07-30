@@ -1,4 +1,4 @@
-import { CandleSeries } from "./CandleSeries";
+import { CandleSeries } from "./candle-series";
 
 export interface RawCandle {
   open: number;

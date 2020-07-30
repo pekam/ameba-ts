@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import fetch from "node-fetch";
 import * as path from "path";
-import { CandleSeries } from "./CandleSeries";
+import { CandleSeries } from "./candle-series";
 import { RawCandle } from "./types";
 
 const { finnhub_api_key } = JSON.parse(

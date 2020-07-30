@@ -1,7 +1,7 @@
-import { loadCandles } from "./loadData";
+import { loadCandles } from "./load-data";
 import { Strategy, Order, Trade } from "./types";
 import { backtestStrategy } from "./backtest";
-import { timestampFromUTC } from "./dateUtil";
+import { timestampFromUTC } from "./date-util";
 import { addRSI, addSMA } from "./indicators";
 
 const strat: Strategy = (state) => {

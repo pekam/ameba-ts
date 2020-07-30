@@ -6,7 +6,7 @@ import {
   MarketPosition,
   Trade,
 } from "./types";
-import { Candle, CandleSeries, TimeTraveller } from "./CandleSeries";
+import { Candle, CandleSeries, TimeTraveller } from "./candle-series";
 
 /**
  * Tests how the given strategy would have performed with

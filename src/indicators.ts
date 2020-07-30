@@ -1,4 +1,4 @@
-import { Candle, CandleSeries } from "./CandleSeries";
+import { Candle, CandleSeries } from "./candle-series";
 import { RSI, SMA } from "technicalindicators";
 
 /**
