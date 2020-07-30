@@ -30,13 +30,11 @@ const strat: Strategy = (state) => {
 };
 
 loadCandles({
-  market: "forex",
-  symbol: "OANDA:EUR_USD",
-  // symbol: 'FXCM:EUR/USD',
-  // symbol: 'FXPRO:1',
-  resolution: "1",
-  from: timestampFromUTC(2020, 2, 4),
-  to: timestampFromUTC(2020, 2, 5),
+  market: "stock",
+  symbol: "AMZN",
+  resolution: "D",
+  from: timestampFromUTC(2020, 6, 1),
+  to: timestampFromUTC(2020, 7, 1),
 })
   .then((series) => {
     addSMA(series, 3);
