@@ -1,5 +1,5 @@
 import { Candle, CandleSeries } from "./CandleSeries";
-import { SMA } from "technicalindicators";
+import { RSI, SMA } from "technicalindicators";
 
 /**
  * Adds simple moving average values to the candles in the series.
@@ -17,10 +17,35 @@ export function addSMA(series: CandleSeries, period: number): void {
     values: series.map((c) => c.close),
   });
 
-  const lengthDiff: number = series.length - smaValues.length;
-  const key: string = "sma" + period;
+  setIndicatorValues(series, smaValues, "sma" + period);
+}
 
+/**
+ * Adds relative strength index to the candles in the series.
+ *
+ * @param series
+ * @param period
+ */
+export function addRSI(series: CandleSeries, period: number): void {
+  if (series.length < period) {
+    return;
+  }
+
+  const rsiValues = RSI.calculate({
+    period,
+    values: series.map((c) => c.close),
+  });
+
+  setIndicatorValues(series, rsiValues, "rsi" + period);
+}
+
+function setIndicatorValues(
+  series: CandleSeries,
+  indicatorValues: any[],
+  key: string
+) {
+  const lengthDiff: number = series.length - indicatorValues.length;
   series.forEach((candle: Candle, index: number) => {
-    candle.indicators[key] = smaValues[index - lengthDiff];
+    candle.indicators[key] = indicatorValues[index - lengthDiff];
   });
 }

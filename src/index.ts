@@ -2,7 +2,7 @@ import { loadCandles } from "./loadData";
 import { Strategy, Order, Trade } from "./types";
 import { backtestStrategy } from "./backtest";
 import { timestampFromUTC } from "./dateUtil";
-import { addSMA } from "./indicators";
+import { addRSI, addSMA } from "./indicators";
 
 const strat: Strategy = (state) => {
   const newCandle = state.series.last;
@@ -40,6 +40,7 @@ loadCandles({
 })
   .then((series) => {
     addSMA(series, 3);
+    addRSI(series, 4);
 
     console.log(series.slice(0, 5));
   })
