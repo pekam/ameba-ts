@@ -1,5 +1,4 @@
 import { RawCandle } from "./types";
-import { SMA } from "technicalindicators";
 
 /**
  * Besides the OHLC data in RawCandle, this class
@@ -16,6 +15,9 @@ export class Candle implements RawCandle {
   time: number;
   volume?: number;
 
+  utcDateString: string;
+  relativeChange: number;
+
   indicators: any = {};
 
   constructor(rawCandle: RawCandle, series: CandleSeries) {
@@ -23,21 +25,7 @@ export class Candle implements RawCandle {
     Object.getOwnPropertyNames(rawCandle).forEach(
       (propName) => (this[propName] = rawCandle[propName])
     );
-  }
-
-  get utcDateString(): string {
-    return new Date(this.time * 1000).toUTCString();
-  }
-
-  get relativeChange(): number {
-    const prev: Candle = this.previousCandle;
-    const oldValue: number = prev ? prev.close : this.open;
-    return (this.close - oldValue) / oldValue;
-  }
-
-  get previousCandle(): Candle {
-    const index = this.series.indexOf(this);
-    return this.series[index - 1];
+    this.utcDateString = new Date(this.time * 1000).toUTCString();
   }
 }
 
@@ -50,6 +38,12 @@ export class CandleSeries extends Array<Candle> {
 
     // https://github.com/Microsoft/TypeScript/issues/18035
     Object.setPrototypeOf(this, CandleSeries.prototype);
+
+    this.forEach((candle, index) => {
+      const prev: Candle = this[index - 1];
+      const oldValue: number = prev ? prev.close : candle.open;
+      candle.relativeChange = (candle.close - oldValue) / oldValue;
+    });
   }
 
   /**
