@@ -1,8 +1,8 @@
-import { loadCandles } from "./load-data";
-import { Strategy, Order, Trade } from "./types";
-import { backtestStrategy } from "./backtest";
-import { timestampFromUTC } from "./date-util";
-import { addRSI, addSMA } from "./indicators";
+import { loadCandles } from "./core/load-data";
+import { Strategy, Order, Trade } from "./core/types";
+import { backtestStrategy } from "./core/backtest";
+import { timestampFromUTC } from "./core/date-util";
+import { addRSI, addSMA } from "./core/indicators";
 
 const strat: Strategy = (state) => {
   const newCandle = state.series.last;

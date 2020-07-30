@@ -1,8 +1,9 @@
-import { loadCandles } from "../src/load-data";
-import { Strategy, Order, Trade } from "../src/types";
-import { backtestStrategy } from "../src/backtest";
-import { CandleSeries } from "../src/candle-series";
-import { timestampFromUTC } from "../src/date-util";
+import { loadCandles } from "../src/core/load-data";
+import { Strategy, Order, Trade } from "../src/core/types";
+import { backtestStrategy } from "../src/core/backtest";
+import { CandleSeries } from "../src/core/candle-series";
+import { timestampFromUTC } from "../src/core/date-util";
+import { addRSI, addSMA } from "../src/core/indicators";
 
 it("should get end balance from backtest", async () => {
   expect.assertions(1);

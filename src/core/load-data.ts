@@ -5,7 +5,7 @@ import { CandleSeries } from "./candle-series";
 import { RawCandle } from "./types";
 
 const { finnhub_api_key } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "properties.json"), "utf8")
+  fs.readFileSync(path.join(__dirname, "..", "..", "properties.json"), "utf8")
 );
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";

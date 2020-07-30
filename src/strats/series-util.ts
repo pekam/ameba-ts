@@ -1,4 +1,4 @@
-import { CandleSeries } from "../candle-series";
+import { CandleSeries } from "../core/candle-series";
 
 /**
  * Returns the indices of candles which have a local maximum.

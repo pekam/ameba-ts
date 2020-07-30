@@ -1,5 +1,5 @@
 import { initTestData } from "./testData";
-import { CandleSeries } from "../src/candle-series";
+import { CandleSeries } from "../src/core/candle-series";
 import { findHighIndices, findLowIndices } from "../src/strats/series-util";
 
 it("should find highs (local maximums)", () => {

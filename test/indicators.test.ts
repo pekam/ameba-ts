@@ -1,6 +1,6 @@
-import { RawCandle } from "../src/types";
-import { CandleSeries } from "../src/candle-series";
-import { addRSI, addSMA } from "../src/indicators";
+import { RawCandle } from "../src/core/types";
+import { CandleSeries } from "../src/core/candle-series";
+import { addRSI, addSMA } from "../src/core/indicators";
 import { initTestData } from "./testData";
 
 it("should calculate SMA", () => {
