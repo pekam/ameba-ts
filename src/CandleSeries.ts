@@ -1,11 +1,49 @@
-import { Candle } from "./types";
+import { RawCandle } from "./types";
+
+/**
+ * Besides the OHLC data in RawCandle, this class
+ * includes some helpers and is tightly coupled with the
+ * CandleSeries it belongs to.
+ */
+export class Candle implements RawCandle {
+  private readonly series: CandleSeries;
+
+  close: number;
+  high: number;
+  low: number;
+  open: number;
+  time: number;
+  volume?: number;
+
+  constructor(rawCandle: RawCandle, series: CandleSeries) {
+    this.series = series;
+    Object.getOwnPropertyNames(rawCandle).forEach(
+      (propName) => (this[propName] = rawCandle[propName])
+    );
+  }
+
+  get utcDateString(): string {
+    return new Date(this.time * 1000).toUTCString();
+  }
+
+  get relativeChange(): number {
+    const prev: Candle = this.previousCandle;
+    const oldValue: number = prev ? prev.close : this.open;
+    return (this.close - oldValue) / oldValue;
+  }
+
+  get previousCandle(): Candle {
+    const index = this.series.indexOf(this);
+    return this.series[index - 1];
+  }
+}
 
 export class CandleSeries extends Array<Candle> {
   /**
    * @param candles in chronological order
    */
-  constructor(...candles: Candle[]) {
-    super(...candles);
+  constructor(...candles: RawCandle[]) {
+    super(...candles.map((c) => new Candle(c, this)));
 
     // https://github.com/Microsoft/TypeScript/issues/18035
     Object.setPrototypeOf(this, CandleSeries.prototype);

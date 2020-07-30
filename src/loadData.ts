@@ -2,7 +2,7 @@ import * as fs from "fs";
 import fetch from "node-fetch";
 import * as path from "path";
 import { CandleSeries } from "./CandleSeries";
-import { Candle } from "./types";
+import { RawCandle } from "./types";
 
 const { finnhub_api_key } = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "properties.json"), "utf8")
@@ -79,22 +79,14 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
         );
       }
 
-      const candles: Candle[] = data.o.map((_, index) => {
-        const open = data.o[index];
-        const close = data.c[index];
-        const previousClose = index > 0 && data.c[index - 1];
-        const oldValue = previousClose || open;
-        const relativeChange = (close - oldValue) / oldValue;
-        const time = data.t[index];
+      const candles: RawCandle[] = data.o.map((_, index) => {
         return {
-          open,
+          open: data.o[index],
           high: data.h[index],
           low: data.l[index],
-          close,
+          close: data.c[index],
           volume: data.v && data.v[index],
-          relativeChange,
-          time,
-          utcDate: new Date(time * 1000).toUTCString(),
+          time: data.t[index],
         };
       });
 
