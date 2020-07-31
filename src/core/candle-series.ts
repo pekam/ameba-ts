@@ -1,49 +1,33 @@
 import { RawCandle } from "./types";
 
-/**
- * Besides the OHLC data in RawCandle, this class
- * includes some helpers and is tightly coupled with the
- * CandleSeries it belongs to.
- */
-export class Candle implements RawCandle {
-  private readonly series: CandleSeries;
-
-  close: number;
-  high: number;
-  low: number;
-  open: number;
-  time: number;
-  volume?: number;
-
+export interface Candle extends RawCandle {
   utcDateString: string;
   relativeChange: number;
-
-  indicators: any = {};
-
-  constructor(rawCandle: RawCandle, series: CandleSeries) {
-    this.series = series;
-    Object.getOwnPropertyNames(rawCandle).forEach(
-      (propName) => (this[propName] = rawCandle[propName])
-    );
-    this.utcDateString = new Date(this.time * 1000).toUTCString();
-  }
+  indicators: any;
 }
 
 export class CandleSeries extends Array<Candle> {
   /**
-   * @param candles in chronological order
+   * @param rawCandles in chronological order
    */
-  constructor(...candles: RawCandle[]) {
-    super(...candles.map((c) => new Candle(c, this)));
+  constructor(...rawCandles: RawCandle[]) {
+    super(
+      ...rawCandles.map((rawCandle, index) => {
+        const prev: RawCandle = rawCandles[index - 1];
+        const oldValue: number = prev ? prev.close : rawCandle.open;
+        const relativeChange = (rawCandle.close - oldValue) / oldValue;
+        const candle: Candle = {
+          ...rawCandle,
+          utcDateString: new Date(rawCandle.time * 1000).toUTCString(),
+          relativeChange,
+          indicators: {},
+        };
+        return candle;
+      })
+    );
 
     // https://github.com/Microsoft/TypeScript/issues/18035
     Object.setPrototypeOf(this, CandleSeries.prototype);
-
-    this.forEach((candle, index) => {
-      const prev: Candle = this[index - 1];
-      const oldValue: number = prev ? prev.close : candle.open;
-      candle.relativeChange = (candle.close - oldValue) / oldValue;
-    });
   }
 
   /**
