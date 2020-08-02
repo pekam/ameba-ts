@@ -1,7 +1,5 @@
 import { Strategy } from "../core/types";
-import { findLowIndices } from "./series-util";
-import { Candle, CandleSeries } from "../core/candle-series";
-import { avg } from "../util";
+import { findLowIndices, getAverageCandleSize } from "./series-util";
 
 /**
  * Updates stop loss to be always slightly below the latest low (local min).
@@ -35,9 +33,3 @@ export const trailingLowExit: Strategy = (tradeState) => {
 
   return { stopLoss };
 };
-
-function getAverageCandleSize(series: CandleSeries, countFromEnd: number) {
-  const head: Candle[] =
-    series.length >= countFromEnd ? series.slice(-countFromEnd) : series;
-  return avg(head.map((candle) => candle.high - candle.low));
-}
