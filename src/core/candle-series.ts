@@ -30,6 +30,10 @@ export class CandleSeries extends Array<Candle> {
     Object.setPrototypeOf(this, CandleSeries.prototype);
   }
 
+  slice(start?: number, end?: number): CandleSeries {
+    return new CandleSeries(...super.slice(start, end));
+  }
+
   /**
    * Returns a new series including only the candles
    * of this series that are in the given time range.
