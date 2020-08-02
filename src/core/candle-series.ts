@@ -1,4 +1,5 @@
 import { RawCandle } from "./types";
+import { timestampToUTCDateString } from "./date-util";
 
 export interface Candle extends RawCandle {
   utcDateString: string;
@@ -18,7 +19,7 @@ export class CandleSeries extends Array<Candle> {
         const relativeChange = (rawCandle.close - oldValue) / oldValue;
         const candle: Candle = {
           ...rawCandle,
-          utcDateString: new Date(rawCandle.time * 1000).toUTCString(),
+          utcDateString: timestampToUTCDateString(rawCandle.time),
           relativeChange,
           indicators: {},
         };

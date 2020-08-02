@@ -28,3 +28,7 @@ export function timestampFromUTC(
     ) / 1000
   );
 }
+
+export function timestampToUTCDateString(timestamp: number) {
+  return new Date(timestamp * 1000).toUTCString();
+}

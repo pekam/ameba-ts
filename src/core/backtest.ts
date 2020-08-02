@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { Candle, CandleSeries, TimeTraveller } from "./candle-series";
 import { avg } from "../util";
+import { timestampToUTCDateString } from "./date-util";
 
 /**
  * Tests how the given strategy would have performed with
@@ -200,7 +201,16 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
         const profit = entry.sell
           ? (entry.price - exit.price) / entry.price
           : (exit.price - entry.price) / entry.price;
-        return { entry, exit, position, profit };
+        return {
+          entry,
+          exit,
+          position,
+          profit,
+          period:
+            timestampToUTCDateString(entry.time) +
+            " - " +
+            timestampToUTCDateString(exit.time),
+        };
       })
   );
 }
