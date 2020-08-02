@@ -1,12 +1,14 @@
 import {
-  Strategy,
-  TradeState,
-  Order,
-  Transaction,
+  BacktestResult,
   MarketPosition,
+  Order,
+  Strategy,
   Trade,
+  TradeState,
+  Transaction,
 } from "./types";
 import { Candle, CandleSeries, TimeTraveller } from "./candle-series";
+import { avg } from "../util";
 
 /**
  * Tests how the given strategy would have performed with
@@ -27,7 +29,7 @@ export function backtestStrategy(
   series: CandleSeries,
   from: number,
   to?: number
-): Trade[] {
+): BacktestResult {
   const tt = series.getTimeTraveller(from, to);
 
   const initialState: TradeState = {
@@ -41,7 +43,20 @@ export function backtestStrategy(
 
   const finalState = nextState(initialState, tt, strat);
 
-  return convertToTrades(finalState.transactions);
+  const trades: Trade[] = convertToTrades(finalState.transactions);
+  const profits: number[] = trades.map((trade) => trade.profit);
+  const result: number = profits.reduce(
+    (acc, current) => acc * (1 + current),
+    1
+  );
+  return {
+    trades,
+    result,
+    profit: result - 1,
+    tradeCount: trades.length,
+    successRate: profits.filter((profit) => profit > 0).length / trades.length,
+    averageProfit: avg(profits),
+  };
 }
 
 function nextState(

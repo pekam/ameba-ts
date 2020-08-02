@@ -110,3 +110,18 @@ export interface Trade {
    */
   profit: number;
 }
+
+export interface BacktestResult {
+  trades: Trade[];
+  /**
+   * All the trade profits multiplied together
+   */
+  profit: number;
+  /**
+   * The multiplier of how much the balance changed
+   */
+  result: number;
+  tradeCount: number;
+  successRate: number;
+  averageProfit: number;
+}

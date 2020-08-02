@@ -1,9 +1,8 @@
 import { loadCandles } from "../src/core/load-data";
-import { Strategy, Order, Trade } from "../src/core/types";
+import { BacktestResult, Order, Strategy } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
 import { CandleSeries } from "../src/core/candle-series";
 import { timestampFromUTC } from "../src/core/date-util";
-import { addRSI, addSMA } from "../src/core/indicators";
 
 it("should get end balance from backtest", async () => {
   expect.assertions(1);
@@ -41,17 +40,12 @@ it("should get end balance from backtest", async () => {
     to: timestampFromUTC(2020, 3, 5),
   });
 
-  const result: Trade[] = backtestStrategy(
+  const result: BacktestResult = backtestStrategy(
     strat,
     series,
     timestampFromUTC(2020, 3, 4, 5),
     timestampFromUTC(2020, 3, 4, 6)
   );
 
-  let balance = 1000;
-  result.forEach((trade) => {
-    balance *= 1 + trade.profit;
-  });
-
-  expect(balance).toBe(999.600040003999);
+  expect(result.result).toBe(0.999600040003999);
 });
