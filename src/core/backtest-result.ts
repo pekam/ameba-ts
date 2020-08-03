@@ -1,6 +1,7 @@
 import { Trade, Transaction } from "./types";
 import { timestampToUTCDateString } from "./date-util";
 import { avg } from "../util";
+import { CandleSeries } from "./candle-series";
 
 export interface BacktestResult {
   trades: Trade[];
@@ -15,10 +16,15 @@ export interface BacktestResult {
   tradeCount: number;
   successRate: number;
   averageProfit: number;
+  /**
+   * How much was the relative value change during the series
+   */
+  buyAndHoldProfit: number;
 }
 
 export function convertToBacktestResult(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  series: CandleSeries
 ): BacktestResult {
   const trades: Trade[] = convertToTrades(transactions);
   const profits: number[] = trades.map((trade) => trade.profit);
@@ -26,6 +32,8 @@ export function convertToBacktestResult(
     (acc, current) => acc * (1 + current),
     1
   );
+  const buyAndHoldProfit =
+    (series.last.close - series[0].open) / series[0].open;
   return {
     trades,
     result,
@@ -33,6 +41,7 @@ export function convertToBacktestResult(
     tradeCount: trades.length,
     successRate: profits.filter((profit) => profit > 0).length / trades.length,
     averageProfit: avg(profits),
+    buyAndHoldProfit,
   };
 }
 

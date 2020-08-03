@@ -41,7 +41,7 @@ export function backtestStrategy(
 
   const finalState = nextState(initialState, tt, strat);
 
-  return convertToBacktestResult(finalState.transactions);
+  return convertToBacktestResult(finalState.transactions, series);
 }
 
 function nextState(
