@@ -41,6 +41,7 @@ export function backtestStrategy(
     transactions: [],
   };
 
+  console.log("Backtesting");
   const progressBar = new SingleBar({}, Presets.shades_classic);
   progressBar.start(tt.length, 0);
 

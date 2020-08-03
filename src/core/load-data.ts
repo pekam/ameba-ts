@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import * as path from "path";
 import { CandleSeries } from "./candle-series";
 import { RawCandle } from "./types";
+import { timestampToUTCDateString } from "./date-util";
 
 const { finnhub_api_key } = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "..", "properties.json"), "utf8")
@@ -29,7 +30,11 @@ interface FinnhubCandleResponse {
 }
 
 export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
-  console.log("\nFetching data with params:\n" + JSON.stringify(options));
+  console.log("\nFetching data with params:", {
+    ...options,
+    from: timestampToUTCDateString(options.from),
+    to: timestampToUTCDateString(options.to),
+  });
 
   if (!finnhub_api_key) {
     throw new Error("Failed to read finnhub_api_key from properties.json");
@@ -90,6 +95,13 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
         };
       });
 
-      return new CandleSeries(...candles);
+      const series = new CandleSeries(...candles);
+      console.log(
+        "Candle series initialized for time period: " +
+          series[0].utcDateString +
+          " - " +
+          series.last.utcDateString
+      );
+      return series;
     });
 }

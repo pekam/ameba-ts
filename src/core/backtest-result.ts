@@ -42,8 +42,10 @@ export function convertToBacktestResult(
     .reverse()
     .slice(0, Math.min(3, profits.length));
 
+  // Note: the period used in backtesting might not include the entire series
   const buyAndHoldProfit =
     (series.last.close - series[0].open) / series[0].open;
+
   return {
     trades,
     result,
