@@ -7,6 +7,7 @@ import {
 } from "./types";
 import { Candle, CandleSeries, TimeTraveller } from "./candle-series";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
+import { applyIf } from "../util";
 
 /**
  * Tests how the given strategy would have performed with
@@ -54,14 +55,53 @@ function nextState(
   }
 
   return nextState(
-    applyStrategy(
-      handleTakeProfit(
-        handleStopLoss(handleEntryOrder({ ...state, series: tt.next() }))
-      ),
-      strat
-    ),
+    applyStrategy(handleOrders({ ...state, series: tt.next() }), strat),
     tt,
     strat
+  );
+}
+
+function handleOrders(state: TradeState) {
+  if (!state.position) {
+    return handleOrdersOnEntryCandle(handleEntryOrder(state));
+  } else {
+    // Could be executed in an order based on candle direction,
+    // instead of always running stop loss first.
+    return handleTakeProfit(handleStopLoss(state));
+  }
+}
+
+// Stop loss and take profit need to be handled differently on the candle
+// where entry was triggered.
+function handleOrdersOnEntryCandle(state: TradeState): TradeState {
+  if (!state.position) {
+    // Entry not triggered.
+    return state;
+  }
+  return applyIf(
+    shouldHandleOrderOnEntryCandle(state, state.takeProfit),
+    handleTakeProfit,
+    applyIf(
+      shouldHandleOrderOnEntryCandle(state, state.stopLoss),
+      handleStopLoss,
+      state
+    )
+  );
+}
+
+function shouldHandleOrderOnEntryCandle(
+  state: TradeState,
+  orderPrice: number
+): boolean {
+  // If the candle was green, assume that only prices above the entry price
+  // are covered after the entry, and vice versa.
+  const priceMovedUp: boolean =
+    state.series.last.close > state.series.last.open;
+  const entryPrice = state.entryOrder.price;
+
+  return (
+    (priceMovedUp && orderPrice > entryPrice) ||
+    (!priceMovedUp && orderPrice < entryPrice)
   );
 }
 
@@ -101,9 +141,9 @@ function handleTakeProfit(state: TradeState) {
 
 function applyStrategy(state: TradeState, strat: Strategy) {
   const mutations = strat(state);
-  if (state.position && mutations.entryOrder) {
+  if (state.position && mutations && mutations.entryOrder) {
     throw new Error(
-      "Changing entry order while already " + "in a position is not allowed."
+      "Changing entry order while already in a position is not allowed."
     );
   }
   return { ...state, ...mutations };
