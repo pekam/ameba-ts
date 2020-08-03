@@ -16,6 +16,7 @@ export interface BacktestResult {
   tradeCount: number;
   successRate: number;
   averageProfit: number;
+  maxProfits: number[];
   /**
    * How much was the relative value change during the series
    */
@@ -27,11 +28,20 @@ export function convertToBacktestResult(
   series: CandleSeries
 ): BacktestResult {
   const trades: Trade[] = convertToTrades(transactions);
+
   const profits: number[] = trades.map((trade) => trade.profit);
+
   const result: number = profits.reduce(
     (acc, current) => acc * (1 + current),
     1
   );
+
+  const maxProfits: number[] = profits
+    .slice()
+    .sort()
+    .reverse()
+    .slice(0, Math.min(3, profits.length));
+
   const buyAndHoldProfit =
     (series.last.close - series[0].open) / series[0].open;
   return {
@@ -41,6 +51,7 @@ export function convertToBacktestResult(
     tradeCount: trades.length,
     successRate: profits.filter((profit) => profit > 0).length / trades.length,
     averageProfit: avg(profits),
+    maxProfits,
     buyAndHoldProfit,
   };
 }
