@@ -8,6 +8,7 @@ import {
 import { Candle, CandleSeries, TimeTraveller } from "./candle-series";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { applyIf } from "../util";
+import { Presets, SingleBar } from "cli-progress";
 
 /**
  * Tests how the given strategy would have performed with
@@ -40,11 +41,16 @@ export function backtestStrategy(
     transactions: [],
   };
 
+  const progressBar = new SingleBar({}, Presets.shades_classic);
+  progressBar.start(tt.length, 0);
+
   // Recursion removed to avoid heap out of memory
   let state = initialState;
   while (tt.hasNext()) {
     state = nextState(state, tt, strat);
+    progressBar.increment();
   }
+  progressBar.stop();
 
   return convertToBacktestResult(state.transactions, series);
 }

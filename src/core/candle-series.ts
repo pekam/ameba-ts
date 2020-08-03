@@ -100,6 +100,10 @@ export class TimeTraveller {
    * given endTime (if provided).
    */
   private endIndex: number;
+  /**
+   * The number of candles in the full time period.
+   */
+  length: number;
 
   constructor(series: CandleSeries, from: number, to: number) {
     this.series = series;
@@ -126,6 +130,7 @@ export class TimeTraveller {
           from
       );
     }
+    this.length = this.endIndex - this.nextIndex;
   }
 
   /**
