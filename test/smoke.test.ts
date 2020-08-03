@@ -1,8 +1,9 @@
 import { loadCandles } from "../src/core/load-data";
-import { BacktestResult, Order, Strategy } from "../src/core/types";
+import { Order, Strategy } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
 import { CandleSeries } from "../src/core/candle-series";
 import { timestampFromUTC } from "../src/core/date-util";
+import { BacktestResult } from "../src/core/backtest-result";
 
 it("should get end balance from backtest", async () => {
   expect.assertions(1);

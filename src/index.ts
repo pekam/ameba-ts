@@ -9,7 +9,7 @@ loadCandles({
   // market: "stock",
   // symbol: "AMZN",
   resolution: "60",
-  from: timestampFromUTC(2020, 1, 1),
+  from: timestampFromUTC(2020, 5, 1),
   to: timestampFromUTC(2020, 7, 31),
 })
   .then((series) => {
