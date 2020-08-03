@@ -40,9 +40,13 @@ export function backtestStrategy(
     transactions: [],
   };
 
-  const finalState = nextState(initialState, tt, strat);
+  // Recursion removed to avoid heap out of memory
+  let state = initialState;
+  while (tt.hasNext()) {
+    state = nextState(state, tt, strat);
+  }
 
-  return convertToBacktestResult(finalState.transactions, series);
+  return convertToBacktestResult(state.transactions, series);
 }
 
 function nextState(
@@ -50,15 +54,7 @@ function nextState(
   tt: TimeTraveller,
   strat: Strategy
 ): TradeState {
-  if (!tt.hasNext()) {
-    return state;
-  }
-
-  return nextState(
-    applyStrategy(handleOrders({ ...state, series: tt.next() }), strat),
-    tt,
-    strat
-  );
+  return applyStrategy(handleOrders({ ...state, series: tt.next() }), strat);
 }
 
 function handleOrders(state: TradeState) {
