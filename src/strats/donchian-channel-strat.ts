@@ -1,22 +1,26 @@
 import { Strategy } from "../core/types";
 import { CandleSeries } from "../core/candle-series";
 import { getAverageCandleSize } from "./series-util";
+import { addSMA } from "../core/indicators";
 
 const channelPeriod = 30;
 
 /**
  * Buy when making new high on the upper Donchian channel.
  *
- * Sell when crossing the middle Donchian channel.
+ * Sell when crossing SMA 20.
  */
 export const donchianChannelStrategy: Strategy = (state) => {
   const series = state.series;
 
+  addSMA(series, 20);
+  const sma = series.last.indicators.sma20;
+
   if (series.length < channelPeriod) {
-    return;
+    return {};
   }
 
-  const { middle, upper } = getDonchianChannel(series, channelPeriod);
+  const { upper } = getDonchianChannel(series, channelPeriod);
 
   if (!state.position) {
     return {
@@ -24,10 +28,10 @@ export const donchianChannelStrategy: Strategy = (state) => {
         price: upper + getAverageCandleSize(series, channelPeriod) / 5,
         type: "stop",
       },
-      stopLoss: middle,
+      stopLoss: sma,
     };
   } else {
-    return { stopLoss: middle };
+    return { stopLoss: sma };
   }
 };
 
