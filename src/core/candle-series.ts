@@ -1,5 +1,6 @@
 import { RawCandle } from "./types";
 import { timestampToUTCDateString } from "./date-util";
+import { Indicators } from "./indicators";
 
 export class Candle implements RawCandle {
   close: number;
@@ -11,9 +12,10 @@ export class Candle implements RawCandle {
 
   utcDateString: string;
   relativeChange: number;
-  indicators: any;
+  indicators: Indicators;
 
   series: CandleSeries;
+  index: number;
 
   constructor(rawCandles: RawCandle[], index: number) {
     const rawCandle = rawCandles[index];
@@ -27,7 +29,9 @@ export class Candle implements RawCandle {
 
     this.utcDateString = timestampToUTCDateString(rawCandle.time);
 
-    this.indicators = {};
+    this.indicators = new Indicators(this);
+
+    this.index = index;
   }
 }
 

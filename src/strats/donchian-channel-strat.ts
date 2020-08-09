@@ -1,7 +1,6 @@
 import { Strategy } from "../core/types";
 import { CandleSeries } from "../core/candle-series";
 import { getAverageCandleSize } from "./series-util";
-import { addSMA } from "../core/indicators";
 
 const channelPeriod = 30;
 
@@ -13,8 +12,7 @@ const channelPeriod = 30;
 export const donchianChannelStrategy: Strategy = (state) => {
   const series = state.series;
 
-  addSMA(series, 20);
-  const sma = series.last.indicators.sma20;
+  const sma = series.last.indicators.sma(20);
 
   if (series.length < channelPeriod) {
     return {};
