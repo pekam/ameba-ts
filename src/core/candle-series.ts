@@ -1,10 +1,34 @@
 import { RawCandle } from "./types";
 import { timestampToUTCDateString } from "./date-util";
 
-export interface Candle extends RawCandle {
+export class Candle implements RawCandle {
+  close: number;
+  high: number;
+  low: number;
+  open: number;
+  time: number;
+  volume: number;
+
   utcDateString: string;
   relativeChange: number;
   indicators: any;
+
+  series: CandleSeries;
+
+  constructor(rawCandles: RawCandle[], index: number) {
+    const rawCandle = rawCandles[index];
+    Object.getOwnPropertyNames(rawCandle).forEach(
+      (propName) => (this[propName] = rawCandle[propName])
+    );
+
+    const prev = rawCandles[index - 1];
+    const oldValue: number = prev ? prev.close : rawCandle.open;
+    this.relativeChange = (rawCandle.close - oldValue) / oldValue;
+
+    this.utcDateString = timestampToUTCDateString(rawCandle.time);
+
+    this.indicators = {};
+  }
 }
 
 export class CandleSeries extends Array<Candle> {
@@ -14,18 +38,10 @@ export class CandleSeries extends Array<Candle> {
   constructor(...rawCandles: RawCandle[]) {
     super(
       ...rawCandles.map((rawCandle, index) => {
-        const prev: RawCandle = rawCandles[index - 1];
-        const oldValue: number = prev ? prev.close : rawCandle.open;
-        const relativeChange = (rawCandle.close - oldValue) / oldValue;
-        const candle: Candle = {
-          ...rawCandle,
-          utcDateString: timestampToUTCDateString(rawCandle.time),
-          relativeChange,
-          indicators: {},
-        };
-        return candle;
+        return new Candle(rawCandles, index);
       })
     );
+    this.forEach((candle) => (candle.series = this));
 
     // https://github.com/Microsoft/TypeScript/issues/18035
     Object.setPrototypeOf(this, CandleSeries.prototype);
