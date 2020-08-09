@@ -48,5 +48,5 @@ it("should get end balance from backtest", async () => {
     timestampFromUTC(2020, 3, 4, 6)
   );
 
-  expect(result.result).toBe(0.9995000899949997);
+  expect(result.result).toBe(0.9997060970954589);
 });

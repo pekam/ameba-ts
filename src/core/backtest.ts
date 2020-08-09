@@ -109,13 +109,12 @@ function shouldHandleOrderOnEntryCandle(
 }
 
 function handleEntryOrder(state: TradeState) {
-  if (
-    !state.position &&
-    state.entryOrder &&
-    isOrderFulfilled(state.entryOrder, state.series.last)
-  ) {
-    const mutations = fulfillEntryOrder(state);
-    return { ...state, ...mutations };
+  if (!state.position && state.entryOrder) {
+    const price = isOrderFulfilled(state.entryOrder, state.series.last);
+    if (price) {
+      const mutations = fulfillEntryOrder(state, price);
+      return { ...state, ...mutations };
+    }
   }
   return state;
 }
@@ -123,8 +122,9 @@ function handleEntryOrder(state: TradeState) {
 function handleStopLoss(state: TradeState) {
   if (state.position && state.stopLoss) {
     const stopLossOrder: Order = createStopLossOrder(state);
-    if (isOrderFulfilled(stopLossOrder, state.series.last)) {
-      const mutations = fulfillExitOrder(stopLossOrder, state);
+    const price = isOrderFulfilled(stopLossOrder, state.series.last);
+    if (price) {
+      const mutations = fulfillExitOrder(stopLossOrder, state, price);
       return { ...state, ...mutations };
     }
   }
@@ -134,8 +134,9 @@ function handleStopLoss(state: TradeState) {
 function handleTakeProfit(state: TradeState) {
   if (state.position && state.takeProfit) {
     const takeProfitOrder: Order = createTakeProfitOrder(state);
-    if (isOrderFulfilled(takeProfitOrder, state.series.last)) {
-      const mutations = fulfillExitOrder(takeProfitOrder, state);
+    const price = isOrderFulfilled(takeProfitOrder, state.series.last);
+    if (price) {
+      const mutations = fulfillExitOrder(takeProfitOrder, state, price);
       return { ...state, ...mutations };
     }
   }
@@ -152,38 +153,46 @@ function applyStrategy(state: TradeState, strat: Strategy) {
   return { ...state, ...mutations };
 }
 
-function isOrderFulfilled(order: Order, newCandle: Candle): boolean {
+/**
+ * If the order should become fulfilled with the new candle, returns
+ * the price where the transaction took place. Otherwise returns undefined.
+ *
+ * The price ignores slippage except that caused by gaps between previous
+ * candle's close and current candle's open.
+ */
+function isOrderFulfilled(order: Order, newCandle: Candle): number {
   const priceBelowOrder = newCandle.low <= order.price;
-  const priceAboveOrder = newCandle.high >= order.price;
+  if (priceBelowOrder) {
+    const buyPriceCrossed = !order.sell && order.type === "limit";
+    const sellPriceCrossed = order.sell && order.type === "stop";
+    if (buyPriceCrossed || sellPriceCrossed) {
+      return Math.min(order.price, newCandle.open);
+    }
+  }
 
-  return (
-    (!order.sell && order.type === "limit" && priceBelowOrder) ||
-    (!order.sell && order.type === "stop" && priceAboveOrder) ||
-    (order.sell && order.type === "limit" && priceAboveOrder) ||
-    (order.sell && order.type === "stop" && priceBelowOrder)
-  );
+  const priceAboveOrder = newCandle.high >= order.price;
+  if (priceAboveOrder) {
+    const buyPriceCrossed = !order.sell && order.type === "stop";
+    const sellPriceCrossed = order.sell && order.type === "limit";
+    if (buyPriceCrossed || sellPriceCrossed) {
+      return Math.max(order.price, newCandle.open);
+    }
+  }
 }
 
-function fulfillEntryOrder(state: TradeState) {
-  const transaction = createTransaction(
-    state.entryOrder,
-    state.series.last.time
-  );
+function fulfillEntryOrder(state: TradeState, price: number) {
+  const transaction: Transaction = {
+    order: state.entryOrder,
+    sell: state.entryOrder.sell,
+    price,
+    time: state.series.last.time,
+  };
 
   const transactions = state.transactions.concat(transaction);
 
   const position: MarketPosition = state.entryOrder.sell ? "short" : "long";
 
   return { transactions, position };
-}
-
-function createTransaction(order: Order, time: number): Transaction {
-  return {
-    sell: order.sell,
-    order,
-    price: order.price, // ignoring slippage
-    time,
-  };
 }
 
 function createStopLossOrder(state: TradeState): Order {
@@ -202,11 +211,13 @@ function createTakeProfitOrder(state: TradeState): Order {
   };
 }
 
-function fulfillExitOrder(order: Order, state: TradeState) {
-  const transaction: Transaction = createTransaction(
+function fulfillExitOrder(order: Order, state: TradeState, price: number) {
+  const transaction: Transaction = {
     order,
-    state.series.last.time
-  );
+    sell: order.sell,
+    price,
+    time: state.series.last.time,
+  };
   return {
     transactions: state.transactions.concat(transaction),
     position: null,
