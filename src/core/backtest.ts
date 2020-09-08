@@ -5,7 +5,7 @@ import {
   TradeState,
   Transaction,
 } from "./types";
-import { Candle, CandleSeries, TimeTraveller } from "./candle-series";
+import { Candle, CandleSeries } from "./candle-series";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { applyIf } from "../util";
 import { Presets, SingleBar } from "cli-progress";
@@ -47,8 +47,14 @@ export function backtestStrategy(
 
   // Recursion removed to avoid heap out of memory
   let state = initialState;
+  let initCalled = false;
   while (tt.hasNext()) {
-    state = nextState(state, tt, strat);
+    const stateWithNewCandles = { ...state, series: tt.next() };
+    if (!initCalled) {
+      strat.init(stateWithNewCandles);
+      initCalled = true;
+    }
+    state = nextState(stateWithNewCandles, strat);
     progressBar.increment();
   }
   progressBar.stop();
@@ -56,12 +62,8 @@ export function backtestStrategy(
   return convertToBacktestResult(state.transactions, series);
 }
 
-function nextState(
-  state: TradeState,
-  tt: TimeTraveller,
-  strat: Strategy
-): TradeState {
-  return applyStrategy(handleOrders({ ...state, series: tt.next() }), strat);
+function nextState(state: TradeState, strat: Strategy): TradeState {
+  return applyStrategy(handleOrders(state), strat);
 }
 
 function handleOrders(state: TradeState) {
@@ -144,7 +146,7 @@ function handleTakeProfit(state: TradeState) {
 }
 
 function applyStrategy(state: TradeState, strat: Strategy) {
-  const mutations = strat(state);
+  const mutations = strat.update(state);
   if (state.position && mutations && mutations.entryOrder) {
     throw new Error(
       "Changing entry order while already in a position is not allowed."

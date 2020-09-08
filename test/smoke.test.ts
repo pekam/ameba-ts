@@ -1,5 +1,5 @@
 import { loadCandles } from "../src/core/load-data";
-import { Order, Strategy } from "../src/core/types";
+import { Order, Strategy, TradeState } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
 import { CandleSeries } from "../src/core/candle-series";
 import { timestampFromUTC } from "../src/core/date-util";
@@ -8,29 +8,32 @@ import { BacktestResult } from "../src/core/backtest-result";
 it("should get end balance from backtest", async () => {
   expect.assertions(1);
 
-  const strat: Strategy = (state) => {
-    const newCandle = state.series.last;
-    if (!state.position) {
-      if (newCandle.close > newCandle.open) {
-        const entryOrder: Order = {
-          type: "limit",
-          price: newCandle.high,
-        };
-        return {
-          entryOrder,
-          stopLoss: newCandle.high * 0.9999,
-          takeProfit: newCandle.high * 1.0001,
-        };
+  const strat: Strategy = {
+    init(state: TradeState): void {},
+    update(state) {
+      const newCandle = state.series.last;
+      if (!state.position) {
+        if (newCandle.close > newCandle.open) {
+          const entryOrder: Order = {
+            type: "limit",
+            price: newCandle.high,
+          };
+          return {
+            entryOrder,
+            stopLoss: newCandle.high * 0.9999,
+            takeProfit: newCandle.high * 1.0001,
+          };
+        } else {
+          return {
+            entryOrder: null,
+            stopLoss: null,
+            takeProfit: null,
+          };
+        }
       } else {
-        return {
-          entryOrder: null,
-          stopLoss: null,
-          takeProfit: null,
-        };
+        return {};
       }
-    } else {
-      return {};
-    }
+    },
   };
 
   const series: CandleSeries = await loadCandles({

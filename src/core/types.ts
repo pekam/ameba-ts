@@ -90,12 +90,28 @@ export interface Transaction {
  * When in a position, changes to entryOrder
  * should not be made, and they will be ignored.
  */
-export interface Strategy {
+export interface StrategyUpdate {
   (tradeState: TradeState): {
     entryOrder?: Order;
     stopLoss?: number;
     takeProfit?: number;
   };
+}
+
+export interface Strategy {
+  /**
+   * Called once during a backtest,
+   * right before calling update for
+   * the first time.
+   */
+  init(tradeState: TradeState): void;
+  /**
+   * Called once per candle during
+   * a backtest.
+   *
+   * @see StrategyUpdate
+   */
+  update: StrategyUpdate;
 }
 
 export interface Trade {

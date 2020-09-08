@@ -1,4 +1,4 @@
-import { Strategy } from "../core/types";
+import { Order, Strategy, TradeState } from "../core/types";
 import { CandleSeries } from "../core/candle-series";
 import { getAverageCandleSize } from "./series-util";
 
@@ -9,29 +9,35 @@ const channelPeriod = 30;
  *
  * Sell when crossing SMA 20.
  */
-export const donchianChannelStrategy: Strategy = (state) => {
-  const series = state.series;
+export class DonchianChannelStrategy implements Strategy {
+  init(tradeState: TradeState): void {}
 
-  const sma = series.last.indicators.sma(20);
+  update(
+    state: TradeState
+  ): { entryOrder?: Order; stopLoss?: number; takeProfit?: number } {
+    const series = state.series;
 
-  if (series.length < channelPeriod) {
-    return {};
+    const sma = series.last.indicators.sma(20);
+
+    if (series.length < channelPeriod) {
+      return {};
+    }
+
+    const { upper } = getDonchianChannel(series, channelPeriod);
+
+    if (!state.position) {
+      return {
+        entryOrder: {
+          price: upper + getAverageCandleSize(series, channelPeriod) / 5,
+          type: "stop",
+        },
+        stopLoss: sma,
+      };
+    } else {
+      return { stopLoss: sma };
+    }
   }
-
-  const { upper } = getDonchianChannel(series, channelPeriod);
-
-  if (!state.position) {
-    return {
-      entryOrder: {
-        price: upper + getAverageCandleSize(series, channelPeriod) / 5,
-        type: "stop",
-      },
-      stopLoss: sma,
-    };
-  } else {
-    return { stopLoss: sma };
-  }
-};
+}
 
 function getDonchianChannel(
   series: CandleSeries,

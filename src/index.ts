@@ -1,7 +1,7 @@
 import { loadCandles } from "./core/load-data";
 import { timestampFromUTC } from "./core/date-util";
 import { backtestStrategy } from "./core/backtest";
-import { donchianChannelStrategy } from "./strats/donchian-channel-strat";
+import { DonchianChannelStrategy } from "./strats/donchian-channel-strat";
 
 loadCandles({
   market: "forex",
@@ -14,7 +14,7 @@ loadCandles({
 })
   .then((series) => {
     const result = backtestStrategy(
-      donchianChannelStrategy,
+      new DonchianChannelStrategy(),
       series,
       series[30].time
     );

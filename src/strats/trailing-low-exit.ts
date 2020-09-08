@@ -1,4 +1,4 @@
-import { Strategy } from "../core/types";
+import { StrategyUpdate } from "../core/types";
 import { findLowIndices, getAverageCandleSize } from "./series-util";
 
 /**
@@ -6,7 +6,7 @@ import { findLowIndices, getAverageCandleSize } from "./series-util";
  *
  * However, never decreases the stop loss level.
  */
-export const trailingLowExit: Strategy = (tradeState) => {
+export const trailingLowExit: StrategyUpdate = (tradeState) => {
   // Could be optimized to find only the latest low.
   const lowIndices = findLowIndices(tradeState.series);
 
