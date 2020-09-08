@@ -1,9 +1,52 @@
 import { Order, Strategy, TradeState } from "../core/types";
 import { CandleSeries } from "../core/candle-series";
 import { getAverageCandleSize } from "./series-util";
-import { SMA } from "technicalindicators";
+import { RSI, SMA } from "technicalindicators";
 
 const channelPeriod = 30;
+
+class Indicators {
+  private readonly sma: SMA;
+  private readonly rsi: RSI;
+
+  constructor(
+    public readonly settings: IndicatorSettings,
+    initialSeries: CandleSeries
+  ) {
+    const closes = initialSeries
+      .slice(0, initialSeries.length - 1)
+      .map((c) => c.close);
+
+    if (settings.smaPeriod) {
+      this.sma = new SMA({ period: this.settings.smaPeriod, values: closes });
+    }
+    if (settings.rsiPeriod) {
+      this.rsi = new RSI({ period: settings.rsiPeriod, values: closes });
+    }
+  }
+
+  update(
+    series: CandleSeries
+  ): {
+    sma?: number;
+    rsi?: number;
+    donchianChannel?: { upper: number; middle: number; lower: number };
+  } {
+    return {
+      sma: this.sma && this.sma.nextValue(series.last.close),
+      rsi: this.rsi && this.rsi.nextValue(series.last.close),
+      donchianChannel:
+        this.settings.donchianChannelPeriod &&
+        getDonchianChannel(series, this.settings.donchianChannelPeriod),
+    };
+  }
+}
+
+interface IndicatorSettings {
+  readonly smaPeriod?: number;
+  readonly rsiPeriod?: number;
+  readonly donchianChannelPeriod?: number;
+}
 
 /**
  * Buy when making new high on the upper Donchian channel.
@@ -11,15 +54,13 @@ const channelPeriod = 30;
  * Sell when crossing SMA 20.
  */
 export class DonchianChannelStrategy implements Strategy {
-  private sma: SMA;
+  private indicators: Indicators;
 
   init(state: TradeState): void {
-    this.sma = new SMA({
-      period: 20,
-      values: state.series
-        .slice(0, state.series.length - 1)
-        .map((c) => c.close),
-    });
+    this.indicators = new Indicators(
+      { smaPeriod: 20, donchianChannelPeriod: channelPeriod },
+      state.series
+    );
   }
 
   update(
@@ -27,18 +68,18 @@ export class DonchianChannelStrategy implements Strategy {
   ): { entryOrder?: Order; stopLoss?: number; takeProfit?: number } {
     const series = state.series;
 
-    const sma = this.sma.nextValue(state.series.last.close);
+    const { sma, donchianChannel } = this.indicators.update(series);
 
     if (series.length < channelPeriod) {
       return {};
     }
 
-    const { upper } = getDonchianChannel(series, channelPeriod);
-
     if (!state.position) {
       return {
         entryOrder: {
-          price: upper + getAverageCandleSize(series, channelPeriod) / 5,
+          price:
+            donchianChannel.upper +
+            getAverageCandleSize(series, channelPeriod) / 5,
           type: "stop",
         },
         stopLoss: sma,
