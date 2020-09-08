@@ -1,5 +1,6 @@
 import { Candle, CandleSeries } from "../core/candle-series";
 import { findLowIndices } from "./series-util";
+import { RSI } from "technicalindicators";
 
 /**
  * Returns the candles where there is a positive RSI divergence.
@@ -12,14 +13,21 @@ export function findRSIDivergences(
 ): Candle[] {
   const lowIndices = findLowIndices(series);
 
+  const rsiValues = RSI.calculate({
+    period: rsiPeriod,
+    values: series.map((c) => c.close),
+  });
+  const lengthDiff: number = series.length - rsiValues.length;
+
+  // TODO should be tested again before using
   const divergenceIndices = lowIndices.filter((lowIndex, indexInList) => {
     const currentLowCandle = series[lowIndex];
     const previousLowCandle = series[lowIndices[indexInList - 1]];
     return (
       previousLowCandle &&
       currentLowCandle.low < previousLowCandle.low &&
-      currentLowCandle.indicators.rsi(rsiPeriod) >
-        previousLowCandle.indicators.rsi(rsiPeriod)
+      rsiValues[lowIndex + lengthDiff] >
+        rsiValues[lowIndices[indexInList - 1] + lengthDiff]
     );
   });
 

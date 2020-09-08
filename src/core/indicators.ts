@@ -1,56 +1,56 @@
-import { Candle } from "./candle-series";
 import { RSI, SMA } from "technicalindicators";
+import { CandleSeries } from "./candle-series";
+
+export interface IndicatorSettings {
+  readonly smaPeriod?: number;
+  readonly rsiPeriod?: number;
+  readonly donchianChannelPeriod?: number;
+}
+
+export interface IndicatorValues {
+  sma?: number;
+  rsi?: number;
+  donchianChannel?: { upper: number; middle: number; lower: number };
+}
 
 export class Indicators {
-  private readonly candle: Candle;
-  private readonly cache: any;
+  private readonly sma: SMA;
+  private readonly rsi: RSI;
 
-  constructor(candle: Candle) {
-    this.candle = candle;
-    this.cache = {};
-  }
+  constructor(
+    public readonly settings: IndicatorSettings,
+    initialSeries: CandleSeries
+  ) {
+    const closes = initialSeries
+      .slice(0, initialSeries.length - 1)
+      .map((c) => c.close);
 
-  /**
-   * Simple moving average.
-   */
-  sma(period: number): number {
-    const key = "sma" + period;
-    const isCached = Object.getOwnPropertyNames(this.cache).includes(key);
-    if (!isCached) {
-      const candlesToInclude = this.candle.series.slice(
-        Math.max(this.candle.index - period, 0),
-        this.candle.index + 1
-      );
-      const smaValues = SMA.calculate({
-        period,
-        values: candlesToInclude.map((c) => c.close),
-      });
-      this.cache[key] = smaValues[smaValues.length - 1];
+    if (settings.smaPeriod) {
+      this.sma = new SMA({ period: this.settings.smaPeriod, values: closes });
     }
-    return this.cache[key];
+    if (settings.rsiPeriod) {
+      this.rsi = new RSI({ period: settings.rsiPeriod, values: closes });
+    }
   }
 
-  /**
-   * Relative strength index.
-   *
-   * Note: Usually only the first RSI value is calculated in isolation, and the
-   * following ones are based on the previous values. Here each value is calculated
-   * in isolation, so the values are not exactly the same as in e.g. charting tools.
-   */
-  rsi(period: number): number {
-    const key = "rsi" + period;
-    const isCached = Object.getOwnPropertyNames(this.cache).includes(key);
-    if (!isCached) {
-      const candlesToInclude = this.candle.series.slice(
-        Math.max(this.candle.index - period, 0),
-        this.candle.index + 1
-      );
-      const rsiValues = RSI.calculate({
-        period,
-        values: candlesToInclude.map((c) => c.close),
-      });
-      this.cache[key] = rsiValues[rsiValues.length - 1];
-    }
-    return this.cache[key];
+  update(series: CandleSeries): IndicatorValues {
+    return {
+      sma: this.sma && this.sma.nextValue(series.last.close),
+      rsi: this.rsi && this.rsi.nextValue(series.last.close),
+      donchianChannel:
+        this.settings.donchianChannelPeriod &&
+        getDonchianChannel(series, this.settings.donchianChannelPeriod),
+    };
   }
+}
+
+function getDonchianChannel(
+  series: CandleSeries,
+  period: number
+): { upper: number; middle: number; lower: number } {
+  const subseries = series.slice(-period);
+  const upper = Math.max(...subseries.map((candle) => candle.high));
+  const lower = Math.min(...subseries.map((candle) => candle.low));
+  const middle = lower + (upper - lower) / 2;
+  return { upper, lower, middle };
 }

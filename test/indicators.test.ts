@@ -1,6 +1,7 @@
 import { RawCandle } from "../src/core/types";
 import { CandleSeries } from "../src/core/candle-series";
 import { initTestData } from "./testData";
+import { Indicators } from "../src/core/indicators";
 
 it("should calculate SMA", () => {
   const rawCandles: RawCandle[] = Array.from(Array(5).keys()).map(
@@ -10,25 +11,21 @@ it("should calculate SMA", () => {
   );
   const series = new CandleSeries(...rawCandles);
 
-  const smaValues: number[] = series.map((c) => c.indicators.sma(3));
-
-  expect(smaValues).toEqual([undefined, undefined, 2, 3, 4]);
+  const indicators = new Indicators(
+    { smaPeriod: 3 },
+    series.slice(0, series.length - 1)
+  );
+  expect(indicators.update(series.slice(0, series.length - 1)).sma).toEqual(3);
+  expect(indicators.update(series.slice(0, series.length)).sma).toEqual(4);
 });
 
 it("should calculate RSI", () => {
   const series: CandleSeries = initTestData();
 
-  /*
-   This is basically a snapshot test (the expected values haven't been verified).
-   The values are slightly different compared to what TradingView displays,
-   because usually RSI is calculated based on previous RSI, but we are calculating
-   each RSI in isolation as the "initial" RSI value.
-   */
-  const expectedRSI: number[] = Array(14)
-    .fill(undefined)
-    .concat([72.95, 75.05, 77.16, 75.41, 75.31, 65.15, 58.07, 60.61]);
+  const indicators = new Indicators(
+    { rsiPeriod: 14 },
+    series.slice(0, series.length)
+  );
 
-  const actualRSI = series.map((candle) => candle.indicators.rsi(14));
-
-  expect(actualRSI).toEqual(expectedRSI);
+  expect(indicators.update(series).rsi).toEqual(68.64);
 });

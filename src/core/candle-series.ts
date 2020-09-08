@@ -1,6 +1,5 @@
 import { RawCandle } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-import { Indicators } from "./indicators";
 
 export class Candle implements RawCandle {
   close: number;
@@ -12,7 +11,6 @@ export class Candle implements RawCandle {
 
   utcDateString: string;
   relativeChange: number;
-  indicators: Indicators;
 
   series: CandleSeries;
   index: number;
@@ -28,8 +26,6 @@ export class Candle implements RawCandle {
     this.relativeChange = (rawCandle.close - oldValue) / oldValue;
 
     this.utcDateString = timestampToUTCDateString(rawCandle.time);
-
-    this.indicators = new Indicators(this);
 
     this.index = index;
   }
