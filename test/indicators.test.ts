@@ -29,3 +29,18 @@ it("should calculate RSI", () => {
 
   expect(indicators.update(series).rsi).toEqual(68.64);
 });
+
+it("should calculate ADX, -DI and +DI", () => {
+  const series: CandleSeries = initTestData();
+
+  const indicators = new Indicators(
+    { adxPeriod: 5 },
+    series.slice(0, series.length)
+  );
+
+  const indicatorValues = indicators.update(series.slice(0, series.length));
+
+  expect(indicatorValues.adx).toEqual(51.13149970472207);
+  expect(indicatorValues.mdi).toEqual(16.371051834388975);
+  expect(indicatorValues.pdi).toEqual(41.70673288249668);
+});
