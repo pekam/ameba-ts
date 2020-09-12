@@ -12,6 +12,7 @@ if (!finnhub_api_key) {
 
 export function fetchFromFinnhub(
   market: "forex" | "stock",
+  type: "candle" | "symbol",
   queryParams: any
 ): Promise<any> {
   const queryParamsString =
@@ -24,7 +25,7 @@ export function fetchFromFinnhub(
 
   const url: string =
     `https://finnhub.io/api/v1/` +
-    `${market}/candle?` +
+    `${market}/${type}?` +
     `token=${finnhub_api_key}` +
     queryParamsString;
 

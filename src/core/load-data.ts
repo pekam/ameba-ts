@@ -30,7 +30,7 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
     to: timestampToUTCDateString(options.to),
   });
 
-  return fetchFromFinnhub(options.market, options).then((json) => {
+  return fetchFromFinnhub(options.market, "candle", options).then((json) => {
     const data: FinnhubCandleResponse = json;
 
     if (data.s === "no_data") {
