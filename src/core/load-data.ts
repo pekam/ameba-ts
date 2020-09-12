@@ -1,13 +1,7 @@
-import * as fs from "fs";
-import fetch from "node-fetch";
-import * as path from "path";
 import { CandleSeries } from "./candle-series";
 import { RawCandle } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-
-const { finnhub_api_key } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "..", "properties.json"), "utf8")
-);
+import { fetchFromFinnhub } from "../finnhub";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
 
@@ -36,72 +30,47 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
     to: timestampToUTCDateString(options.to),
   });
 
-  if (!finnhub_api_key) {
-    throw new Error("Failed to read finnhub_api_key from properties.json");
-  }
+  return fetchFromFinnhub(options.market, options).then((json) => {
+    const data: FinnhubCandleResponse = json;
 
-  const url: string =
-    `https://finnhub.io/api/v1/` +
-    `${options.market}/candle?` +
-    `symbol=${options.symbol}&` +
-    `resolution=${options.resolution}&` +
-    `from=${options.from}&` +
-    `to=${options.to}&` +
-    `token=${finnhub_api_key}`;
+    if (data.s === "no_data") {
+      throw new Error("No data received.");
+    }
 
-  console.log("Fetching from url:\n" + url);
+    const length = data.o.length;
 
-  return fetch(url)
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch data: ${res.status} ${res.statusText}`
-        );
-      }
-      return res.json();
-    })
-
-    .then((json) => {
-      const data: FinnhubCandleResponse = json;
-
-      if (data.s === "no_data") {
-        throw new Error("No data received.");
-      }
-
-      const length = data.o.length;
-
-      if (
-        !(
-          data.h.length === length &&
-          data.l.length === length &&
-          data.c.length === length &&
-          (!data.v || data.v.length === length) &&
-          data.t.length === length
-        )
-      ) {
-        throw new Error(
-          "Invalid data. Candlestick property lists have unequal lengths."
-        );
-      }
-
-      const candles: RawCandle[] = data.o.map((_, index) => {
-        return {
-          open: data.o[index],
-          high: data.h[index],
-          low: data.l[index],
-          close: data.c[index],
-          volume: data.v && data.v[index],
-          time: data.t[index],
-        };
-      });
-
-      const series = new CandleSeries(...candles);
-      console.log(
-        "Candle series initialized for time period: " +
-          series[0].utcDateString +
-          " - " +
-          series.last.utcDateString
+    if (
+      !(
+        data.h.length === length &&
+        data.l.length === length &&
+        data.c.length === length &&
+        (!data.v || data.v.length === length) &&
+        data.t.length === length
+      )
+    ) {
+      throw new Error(
+        "Invalid data. Candlestick property lists have unequal lengths."
       );
-      return series;
+    }
+
+    const candles: RawCandle[] = data.o.map((_, index) => {
+      return {
+        open: data.o[index],
+        high: data.h[index],
+        low: data.l[index],
+        close: data.c[index],
+        volume: data.v && data.v[index],
+        time: data.t[index],
+      };
     });
+
+    const series = new CandleSeries(...candles);
+    console.log(
+      "Candle series initialized for time period: " +
+        series[0].utcDateString +
+        " - " +
+        series.last.utcDateString
+    );
+    return series;
+  });
 }
