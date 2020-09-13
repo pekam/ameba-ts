@@ -1,4 +1,4 @@
-import { loadCandles } from "../src/core/load-data";
+import { loadCandles } from "../src/data/load-candle-data";
 import { Order, Strategy, TradeState } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
 import { CandleSeries } from "../src/core/candle-series";

@@ -1,7 +1,7 @@
-import { CandleSeries } from "./candle-series";
-import { RawCandle } from "./types";
-import { timestampToUTCDateString } from "./date-util";
-import { fetchFromFinnhub } from "../finnhub";
+import { CandleSeries } from "../core/candle-series";
+import { RawCandle } from "../core/types";
+import { timestampToUTCDateString } from "../core/date-util";
+import { fetchFromFinnhub } from "./finnhub";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
 

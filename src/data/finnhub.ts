@@ -3,7 +3,7 @@ import * as path from "path";
 import fetch from "node-fetch";
 
 const { finnhub_api_key } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "properties.json"), "utf8")
+  fs.readFileSync(path.join(__dirname, "..", "..", "properties.json"), "utf8")
 );
 
 if (!finnhub_api_key) {

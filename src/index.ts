@@ -1,4 +1,4 @@
-import { loadCandles } from "./core/load-data";
+import { loadCandles } from "./data/load-candle-data";
 import { timestampFromUTC } from "./core/date-util";
 import { backtestStrategy } from "./core/backtest";
 import { DonchianChannelStrategy } from "./strats/donchian-channel-strat";

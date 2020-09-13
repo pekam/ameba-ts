@@ -1,5 +1,5 @@
 import { fetchFromFinnhub } from "./finnhub";
-import { writeDataToFile } from "./util";
+import { writeDataToFile } from "./data-caching";
 
 interface FinnhubSymbolResponse {
   currency: string;
