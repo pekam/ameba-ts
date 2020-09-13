@@ -10,7 +10,34 @@ if (!finnhub_api_key) {
   throw new Error("Failed to read finnhub_api_key from properties.json");
 }
 
+// Finnhub API call limits
+const MAX_CALLS_IN_SEC = 30;
+const MAX_CALLS_IN_MIN = 60;
+
+let callsInSec = 0;
+let callsInMin = 0;
+
 export function fetchFromFinnhub(
+  market: "forex" | "stock",
+  type: "candle" | "symbol",
+  queryParams: any
+): Promise<any> {
+  if (callsInSec >= MAX_CALLS_IN_SEC || callsInMin >= MAX_CALLS_IN_MIN) {
+    return new Promise((resolve) => setTimeout(resolve, 1000)).then(() =>
+      fetchFromFinnhub(market, type, queryParams)
+    );
+  } else {
+    callsInSec++;
+    callsInMin++;
+
+    return doFetchFromFinnhub(market, type, queryParams).finally(() => {
+      setTimeout(() => callsInSec--, 1000);
+      setTimeout(() => callsInMin--, 60000);
+    });
+  }
+}
+
+function doFetchFromFinnhub(
   market: "forex" | "stock",
   type: "candle" | "symbol",
   queryParams: any
