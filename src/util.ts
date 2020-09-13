@@ -1,3 +1,6 @@
+import * as fs from "fs";
+import * as path from "path";
+
 /**
  * Returns the average of the provided numbers.
  */
@@ -16,3 +19,23 @@ export const applyIf = <T>(condition: boolean, func: (T) => T, value: T): T => {
     return value;
   }
 };
+
+const dataDirPath = path.join(__dirname, "..", "data");
+export function writeDataToFile(data: any, fileName: string) {
+  if (!fs.existsSync(dataDirPath)) {
+    fs.mkdirSync(dataDirPath);
+  }
+  fs.writeFileSync(
+    path.join(dataDirPath, fileName),
+    JSON.stringify(data),
+    "utf8"
+  );
+}
+
+export function readDataFromFile(fileName: string) {
+  const filePath = path.join(dataDirPath, fileName);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
