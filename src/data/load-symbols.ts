@@ -1,5 +1,5 @@
 import { fetchFromFinnhub } from "./finnhub";
-import { writeDataToFile } from "./data-caching";
+import { readDataFromFile, writeDataToFile } from "./data-caching";
 
 interface FinnhubSymbolResponse {
   currency: string;
@@ -9,10 +9,16 @@ interface FinnhubSymbolResponse {
   type: string;
 }
 
+const fileName = "symbols.json";
+
 fetchFromFinnhub("stock", "symbol", { exchange: "US" }).then((json) => {
   const data: FinnhubSymbolResponse[] = json;
 
   const usStockSymbols = data.filter((symbolInfo) => symbolInfo.type === "EQS");
 
-  writeDataToFile(usStockSymbols, "symbols.json");
+  writeDataToFile(usStockSymbols, fileName);
 });
+
+export function readCachedSymbols(): { symbol: string }[] {
+  return readDataFromFile(fileName);
+}

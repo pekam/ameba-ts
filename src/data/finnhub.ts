@@ -19,7 +19,7 @@ let callsInMin = 0;
 
 export function fetchFromFinnhub(
   market: "forex" | "stock",
-  type: "candle" | "symbol",
+  type: "candle" | "symbol" | "profile2",
   queryParams: any
 ): Promise<any> {
   if (callsInSec >= MAX_CALLS_IN_SEC || callsInMin >= MAX_CALLS_IN_MIN) {
@@ -39,7 +39,7 @@ export function fetchFromFinnhub(
 
 function doFetchFromFinnhub(
   market: "forex" | "stock",
-  type: "candle" | "symbol",
+  type: "candle" | "symbol" | "profile2",
   queryParams: any
 ): Promise<any> {
   const queryParamsString =
