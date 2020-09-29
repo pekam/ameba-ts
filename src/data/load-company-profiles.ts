@@ -2,10 +2,11 @@ import { readCachedSymbols } from "./load-symbols";
 import { fetchFromFinnhub } from "./finnhub";
 import { isCached, readDataFromFile, writeDataToFile } from "./data-caching";
 
-// NOTE: Does not re-load already cached file
-
 const getProfileFileName = (symbol: string) => `profile.${symbol}.json`;
 
+/**
+ * NOTE: Does not re-load already cached file
+ */
 export function loadAndCacheProfiles() {
   readCachedSymbols()
     .map((symbol) => ({ symbol, fileName: getProfileFileName(symbol) }))
@@ -28,6 +29,10 @@ export function getStocksByMarketCap(min: number, max: number) {
     (profile) =>
       profile.marketCapitalization >= min && profile.marketCapitalization < max
   );
+}
+
+export function getMidCapStocks() {
+  return getStocksByMarketCap(2000, 10000);
 }
 
 // https://finnhub.io/docs/api#company-profile2
