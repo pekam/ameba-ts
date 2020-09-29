@@ -12,7 +12,6 @@ export class Candle implements RawCandle {
   utcDateString: string;
   relativeChange: number;
 
-  series: CandleSeries;
   index: number;
 
   constructor(rawCandles: RawCandle[], index: number) {
@@ -41,7 +40,6 @@ export class CandleSeries extends Array<Candle> {
         return new Candle(rawCandles, index);
       })
     );
-    this.forEach((candle) => (candle.series = this));
 
     // https://github.com/Microsoft/TypeScript/issues/18035
     Object.setPrototypeOf(this, CandleSeries.prototype);
