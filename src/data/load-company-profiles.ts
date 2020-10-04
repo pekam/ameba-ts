@@ -1,31 +1,30 @@
 import { readCachedSymbols } from "./load-symbols";
 import { fetchFromFinnhub } from "./finnhub";
-import { isCached, readDataFromFile, writeDataToFile } from "./data-caching";
+import { db } from "./mongo";
 
-const getProfileFileName = (symbol: string) => `profile.${symbol}.json`;
+const collection = "company-profiles";
 
 /**
- * NOTE: Does not re-load already cached file
+ * NOTE: Does not re-load already cached profiles
  */
-export function loadAndCacheProfiles() {
-  readCachedSymbols()
-    .map((symbol) => ({ symbol, fileName: getProfileFileName(symbol) }))
-    .filter(({ symbol, fileName }) => !isCached(fileName))
-    .forEach(({ symbol, fileName }) => {
-      fetchFromFinnhub("stock", "profile2", { symbol }).then((data) => {
-        writeDataToFile(data, fileName);
-      });
+export async function loadAndCacheProfiles() {
+  (await readCachedSymbols()).forEach((symbol) => {
+    db.get(collection, symbol).then((oldValue) => {
+      if (!oldValue) {
+        fetchFromFinnhub("stock", "profile2", { symbol }).then((data) =>
+          db.set(collection, symbol, data)
+        );
+      }
     });
-}
-
-export function readCachedProfiles(): CompanyProfile[] {
-  return readCachedSymbols().map((symbol) => {
-    return { symbol, ...readDataFromFile(getProfileFileName(symbol)) };
   });
 }
 
-export function getStocksByMarketCap(min: number, max: number) {
-  return readCachedProfiles().filter(
+export async function readCachedProfiles(): Promise<CompanyProfile[]> {
+  return db.access((db) => db.collection(collection).find().toArray());
+}
+
+export async function getStocksByMarketCap(min: number, max: number) {
+  return (await readCachedProfiles()).filter(
     (profile) =>
       profile.marketCapitalization >= min && profile.marketCapitalization < max
   );
