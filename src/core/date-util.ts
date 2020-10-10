@@ -20,7 +20,7 @@ export function timestampFromUTC(
     Date.UTC(
       year,
       month - 1,
-      date,
+      date || 1,
       hours || 0,
       minutes || 0,
       seconds || 0,

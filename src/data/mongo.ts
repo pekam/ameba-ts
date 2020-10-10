@@ -14,6 +14,8 @@ async function access(func: (db: Db) => any) {
     const db: Db = await client.db("trade");
     const result = await func(db);
     return result;
+  } catch (e) {
+    console.log(e);
   } finally {
     await client.close();
   }

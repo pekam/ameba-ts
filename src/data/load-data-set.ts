@@ -1,22 +1,56 @@
-import { CompanyProfile, getMidCapStocks } from "./load-company-profiles";
+import { CompanyProfile, getStocksByMarketCap } from "./load-company-profiles";
 import { loadCandles, Resolution } from "./load-candle-data";
 import { db } from "./mongo";
 import { timestampFromUTC } from "../core/date-util";
+import { CandleSeries } from "../core/candle-series";
 
 const collection = "data-sets";
 
+const getCandleCollection = (dataSetId: string) => "candlesFor-" + dataSetId;
+/**
+ * A data set contains a list of companies with price candles, loaded
+ * with the same set of parameters (candle time frame, start and end time).
+ */
+export interface DataSet {
+  _id: string;
+  description: string;
+  resolution: Resolution;
+  from: number;
+  to: number;
+  companies: CompanyWithCandles[];
+}
+
+export interface CompanyWithCandles extends CompanyProfile {
+  getCandleSeries: () => Promise<CandleSeries>;
+}
+
+/**
+ * Loads the data set with the given id from the database.
+ */
+export async function getDataSet(id: string): Promise<DataSet> {
+  const dataSet = await db.get(collection, id);
+
+  dataSet.companies.forEach((company) => {
+    company.getCandleSeries = async () => {
+      const candles = (await db.get(getCandleCollection(id), company.symbol))
+        .candles;
+      return new CandleSeries(...candles);
+    };
+  });
+
+  return dataSet;
+}
+
 /**
  * Loads a data set and saves it to the database.
- * A data set contains a list of companies and their price candles,
- * plus information of the candle time frame, and the start/end times
- * of the entire data series.
  *
  * Does not override any existing data.
  * Creates a new data set if the one with this id doesn't yet exists.
- * Pushes the candle series of the provided companies that are not
- * yet pushed to the data set.
+ * Saves the candle series of the provided companies that are not
+ * yet included in the data set. So populating the data set into database
+ * can be paused and continued later by just running the function again.
  */
-export async function loadDataSet(
+async function loadDataSet(
   id: string,
   description: string,
   resolution: Resolution,
@@ -35,6 +69,8 @@ export async function loadDataSet(
     });
   }
 
+  const candleCollection = getCandleCollection(id);
+
   const loadedSymbols = (await db.get(collection, id)).companies.map(
     (c) => c.symbol
   );
@@ -52,12 +88,14 @@ export async function loadDataSet(
         from,
         to,
       })
-        .then((series) => {
-          const companyWithData = { ...company, series };
+        .then(async (candles) => {
+          // Set the candles in another collection with company symbol as the id,
+          // to avoid mongodb's 16mb per document limit
+          await db.set(candleCollection, symbol, { symbol, candles });
           return db.access((db) =>
             db
               .collection(collection)
-              .updateOne({ _id: id }, { $push: { companies: companyWithData } })
+              .updateOne({ _id: id }, { $push: { companies: company } })
           );
         })
         .then(() => console.log(`Data for ${symbol} added to data set ` + id));
@@ -65,15 +103,26 @@ export async function loadDataSet(
 }
 
 async function run() {
-  const companies = await getMidCapStocks();
+  const companies = await getStocksByMarketCap(10000, 100000);
   loadDataSet(
-    "foo",
-    "Daily candles for mid-cap in 2020 h1",
-    "D",
-    timestampFromUTC(2020, 1, 1),
-    timestampFromUTC(2020, 6, 1),
-    companies.slice(0, 3)
+    "makkara",
+    "Hourly candles for lower large-cap (10-100 billion), 1.5.-10.10.2020",
+    "60",
+    timestampFromUTC(2020, 5),
+    timestampFromUTC(2020, 10, 10),
+    companies
   );
 }
 
-// run();
+run();
+
+// (async () => {
+//   const dataSet = await getDataSet("makkara");
+//   console.log(dataSet.companies);
+//   dataSet.companies.slice(0, 2).forEach((comp) => {
+//     comp.getCandleSeries().then((series) => {
+//       console.log(comp.symbol);
+//       console.log(series.slice(-2));
+//     });
+//   });
+// })();
