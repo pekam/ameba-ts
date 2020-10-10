@@ -31,15 +31,15 @@ export async function loadDataSet(
   }
 
   const loadedSymbols = (await db.get(collection, id)).companies.map(
-    (c) => c["_id"]
+    (c) => c.symbol
   );
 
-  const isLoaded = (company) => loadedSymbols.includes(company["_id"]);
+  const isLoaded = (company) => loadedSymbols.includes(company.symbol);
 
   const promises = companies
     .filter((c) => !isLoaded(c))
     .map((company) => {
-      const symbol = company["_id"]; // todo: company profile doesn't have 'symbol'
+      const symbol = company.symbol;
       return loadCandles({
         market: "stock",
         symbol,

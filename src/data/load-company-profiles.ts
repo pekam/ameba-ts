@@ -12,7 +12,7 @@ export async function loadAndCacheProfiles() {
     db.get(collection, symbol).then((oldValue) => {
       if (!oldValue) {
         fetchFromFinnhub("stock", "profile2", { symbol }).then((data) =>
-          db.set(collection, symbol, data)
+          db.set(collection, symbol, { symbol, ...data })
         );
       }
     });
@@ -53,3 +53,5 @@ export interface CompanyProfile {
   logo: string;
   finnhubIndustry: string;
 }
+
+// loadAndCacheProfiles();
