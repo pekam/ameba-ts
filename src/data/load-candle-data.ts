@@ -23,6 +23,9 @@ interface FinnhubCandleResponse {
   s: string;
 }
 
+/**
+ * Fetches the candle stick price data of a stock or a currency.
+ */
 export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
   console.log("\nFetching data with params:", {
     ...options,

@@ -17,6 +17,12 @@ const MAX_CALLS_IN_MIN = 60;
 let callsInSec = 0;
 let callsInMin = 0;
 
+/**
+ * Loads financial data from https://finnhub.io/.
+ *
+ * Finnhub has API call limits 60/min and 30/sec, and this function takes care of
+ * postponing requests automatically when hitting those limits.
+ */
 export function fetchFromFinnhub(
   market: "forex" | "stock",
   type: "candle" | "symbol" | "profile2",

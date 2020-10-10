@@ -1,6 +1,12 @@
 import * as path from "path";
 import * as fs from "fs";
 
+/*
+DEPRECATED!
+This was used for caching data inside files in a cache folder.
+You should use mongo.ts to store data in MongoDB instead.
+ */
+
 const cacheDirPath = path.join(__dirname, "..", "..", "cache");
 
 export function writeDataToFile(data: any, fileName: string) {

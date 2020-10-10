@@ -1,5 +1,9 @@
 import { Db, MongoClient } from "mongodb";
 
+/*
+Functions for saving and loading data in MongoDB.
+ */
+
 // Expecting mongodb to run locally in the default port
 const uri = "mongodb://localhost:27017/";
 

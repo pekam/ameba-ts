@@ -5,6 +5,9 @@ import { db } from "./mongo";
 const collection = "company-profiles";
 
 /**
+ * Loads the company profiles of all US stock symbols
+ * and saves them to the database.
+ *
  * NOTE: Does not re-load already cached profiles
  */
 export async function loadAndCacheProfiles() {

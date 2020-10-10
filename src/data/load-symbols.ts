@@ -12,6 +12,10 @@ interface FinnhubSymbolResponse {
 const key = "symbols";
 
 /**
+ * Loads the list of US stock symbols and saves them to the database.
+ * This list can be e.g. iterated to load and scan the price data of
+ * multiple stocks.
+ *
  * Replaces the entire collection by removing the old data first.
  */
 export async function loadAndCacheSymbols() {

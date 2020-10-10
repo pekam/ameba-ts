@@ -6,6 +6,11 @@ import { timestampFromUTC } from "../core/date-util";
 const collection = "data-sets";
 
 /**
+ * Loads a data set and saves it to the database.
+ * A data set contains a list of companies and their price candles,
+ * plus information of the candle time frame, and the start/end times
+ * of the entire data series.
+ *
  * Does not override any existing data.
  * Creates a new data set if the one with this id doesn't yet exists.
  * Pushes the candle series of the provided companies that are not
