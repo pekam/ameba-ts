@@ -114,7 +114,7 @@ async function run() {
   );
 }
 
-run();
+// run();
 
 // (async () => {
 //   const dataSet = await getDataSet("makkara");

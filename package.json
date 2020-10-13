@@ -5,7 +5,9 @@
   "main": "build/index.js",
   "scripts": {
     "start": "tsc && node build/index.js",
-    "test": "jest"
+    "test": "jest",
+    "server": "ts-node src/server.ts",
+    "client": "cd webapp && npm run start"
   },
   "author": "Pekka Maanpää",
   "dependencies": {
@@ -13,7 +15,9 @@
     "cli-progress": "^3.8.2",
     "mongodb": "^3.6.2",
     "node-fetch": "^2.6.0",
-    "technicalindicators": "^3.1.0"
+    "technicalindicators": "^3.1.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4"
   },
   "devDependencies": {
     "@types/jest": "24.9.1",

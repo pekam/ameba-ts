@@ -1,16 +1,40 @@
 {
-  "name": "trade-bot-webapp",
-  "version": "1.0.0",
-  "scripts": {
-    "client": "cd client && npm run start",
-    "server": "nodemon server.js",
-    "start": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
-  },
+  "name": "trade-bot-client",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
-    "body-parser": "^1.18.3",
-    "express": "^4.16.4"
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1",
+    "@types/jest": "^24.9.1",
+    "@types/node": "^12.12.67",
+    "@types/react": "^16.9.51",
+    "@types/react-dom": "^16.9.8",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.3",
+    "typescript": "^3.7.5"
   },
-  "devDependencies": {
-    "concurrently": "^4.0.1"
-  }
+  "scripts": {
+    "start": "node_modules/.bin/react-scripts start",
+    "build": "node_modules/.bin/react-scripts build",
+    "test": "node_modules/.bin/react-scripts test",
+    "eject": "node_modules/.bin/react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:5000/"
 }
