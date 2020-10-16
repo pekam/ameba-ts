@@ -17,11 +17,15 @@ export interface DataSet {
   resolution: Resolution;
   from: number;
   to: number;
-  companies: CompanyWithCandles[];
+  companies: CompanyWithAsyncCandles[];
+}
+
+export interface CompanyWithAsyncCandles extends CompanyProfile {
+  getCandleSeries: () => Promise<CandleSeries>;
 }
 
 export interface CompanyWithCandles extends CompanyProfile {
-  getCandleSeries: () => Promise<CandleSeries>;
+  candles: CandleSeries;
 }
 
 /**
