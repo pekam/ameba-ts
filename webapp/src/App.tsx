@@ -12,7 +12,7 @@ function App() {
     const symbols = urlParams.get("symbols");
     if (dataSet && symbols) {
       setDataSet(dataSet);
-      setSymbols(JSON.parse(symbols));
+      setSymbols(symbols.split(","));
     }
   }, []);
 
