@@ -122,7 +122,12 @@ export class TimeTraveller {
   constructor(series: CandleSeries, from: number, to: number) {
     this.series = series;
 
-    this.nextIndex = series.findIndex((candle) => candle.time === from);
+    if (from) {
+      this.nextIndex = series.findIndex((candle) => candle.time === from);
+    } else {
+      // Default to 1 instead of 0 so that indicators can be initialized
+      this.nextIndex = 1;
+    }
 
     if (to) {
       this.endIndex = series.findIndex((candle) => candle.time === to);
@@ -141,7 +146,7 @@ export class TimeTraveller {
       throw new Error(
         "Failed to create TimeTraveller. " +
           "Could not find a candle with endTime " +
-          from
+          to
       );
     }
     this.length = this.endIndex - this.nextIndex;

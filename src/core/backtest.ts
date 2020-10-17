@@ -27,7 +27,7 @@ import { Presets, SingleBar } from "cli-progress";
 export function backtestStrategy(
   strat: Strategy,
   series: CandleSeries,
-  from: number,
+  from?: number,
   to?: number
 ): BacktestResult {
   const tt = series.getTimeTraveller(from, to);
