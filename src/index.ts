@@ -1,25 +1,13 @@
-import { loadCandles } from "./data/load-candle-data";
-import { timestampFromUTC } from "./core/date-util";
+import { getDataSet } from "./data/load-data-set";
 import { backtestStrategy } from "./core/backtest";
-import { DonchianChannelStrategy } from "./strats/donchian-channel-strat";
+import { RsiReversalStrategy } from "./strats/RsiReversalStrat";
 
-loadCandles({
-  market: "forex",
-  symbol: "OANDA:EUR_USD",
-  // market: "stock",
-  // symbol: "AMZN",
-  resolution: "60",
-  from: timestampFromUTC(2020, 5, 1),
-  to: timestampFromUTC(2020, 7, 31),
-})
-  .then((series) => {
-    const result = backtestStrategy(
-      new DonchianChannelStrategy(),
-      series,
-      series[30].time
-    );
+// index.ts contains random testing stuff that changes all the time
 
-    console.log(result);
-  })
-
-  .catch(console.error);
+(async () => {
+  const dataSet = await getDataSet("makkara");
+  const company = await dataSet.companies[5].withCandleSeries();
+  console.log(company.symbol);
+  const result = backtestStrategy(new RsiReversalStrategy(), company.candles);
+  console.log(result);
+})();
