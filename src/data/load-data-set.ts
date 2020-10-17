@@ -22,6 +22,7 @@ export interface DataSet {
 
 export interface CompanyWithAsyncCandles extends CompanyProfile {
   getCandleSeries: () => Promise<CandleSeries>;
+  withCandleSeries: () => Promise<CompanyWithCandles>;
 }
 
 export interface CompanyWithCandles extends CompanyProfile {
@@ -40,6 +41,10 @@ export async function getDataSet(id: string): Promise<DataSet> {
         .candles;
       return new CandleSeries(...candles);
     };
+    company.withCandleSeries = async () => ({
+      ...company,
+      candles: await company.getCandleSeries(),
+    });
   });
 
   return dataSet;
