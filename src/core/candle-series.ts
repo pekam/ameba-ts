@@ -49,6 +49,15 @@ export class CandleSeries extends Array<Candle> {
     return new CandleSeries(...super.slice(start, end));
   }
 
+  // Needs to be implemented to avoid breaking when filter returns empty array
+  filter(f) {
+    const res = [];
+    this.forEach((c) => {
+      f(c) && res.push(c);
+    });
+    return new CandleSeries(...res);
+  }
+
   /**
    * Returns a new series including only the candles
    * of this series that are in the given time range.
