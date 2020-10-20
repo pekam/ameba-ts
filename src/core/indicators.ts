@@ -62,7 +62,7 @@ export class Indicators {
   }
 }
 
-function getDonchianChannel(
+export function getDonchianChannel(
   series: CandleSeries,
   period: number
 ): { upper: number; middle: number; lower: number } {
