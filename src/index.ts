@@ -1,13 +1,18 @@
 import { getDataSet } from "./data/load-data-set";
-import { backtestStrategy } from "./core/backtest";
-import { RsiReversalStrategy } from "./strats/RsiReversalStrat";
+import { backtestMultiple } from "./core/backtest-multiple";
+import { DonchianChannelStrategy } from "./strats/donchian-channel-strat";
+import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profitable";
 
 // index.ts contains random testing stuff that changes all the time
 
 (async () => {
   const dataSet = await getDataSet("makkara");
-  const company = await dataSet.companies[5].withCandleSeries();
-  console.log(company.symbol);
-  const result = backtestStrategy(new RsiReversalStrategy(), company.candles);
+  const companiesWithCandles = await Promise.all(
+    dataSet.companies.slice(0, 30).map((comp) => comp.withCandleSeries())
+  );
+  const result = backtestMultiple(
+    () => new TradeOnlyRecentlyProfitable(() => new DonchianChannelStrategy()),
+    companiesWithCandles.map((c) => c.candles)
+  );
   console.log(result);
 })();

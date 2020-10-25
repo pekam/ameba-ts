@@ -28,7 +28,26 @@ export function convertToBacktestResult(
   series: CandleSeries
 ): BacktestResult {
   const trades: Trade[] = convertToTrades(transactions);
+  return tradesToResult(trades, [series]);
+}
 
+/**
+ * Combines the individual backtest results.
+ * The buy-and-hold-profit will be the average
+ * of all the serieses.
+ */
+export function combineResults(
+  results: BacktestResult[],
+  serieses: CandleSeries[]
+) {
+  const allTrades: Trade[] = [].concat(...results.map((r) => r.trades));
+  return tradesToResult(allTrades, serieses);
+}
+
+function tradesToResult(
+  trades: Trade[],
+  serieses: CandleSeries[]
+): BacktestResult {
   const profits: number[] = trades.map((trade) => trade.profit);
 
   const result: number = profits.reduce(
@@ -43,8 +62,11 @@ export function convertToBacktestResult(
     .slice(0, Math.min(3, profits.length));
 
   // Note: the period used in backtesting might not include the entire series
-  const buyAndHoldProfit =
-    (series.last.close - series[0].open) / series[0].open;
+  const buyAndHoldProfit = avg(
+    serieses.map(
+      (series) => (series.last.close - series[0].open) / series[0].open
+    )
+  );
 
   return {
     trades,
