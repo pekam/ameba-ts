@@ -1,7 +1,8 @@
+import { Presets, SingleBar } from "cli-progress";
+
 /**
  * Returns the average of the provided numbers.
  */
-
 export const avg: (values: number[]) => number = (values) =>
   values.reduce((sum, value) => sum + value, 0) / values.length;
 
@@ -15,4 +16,20 @@ export const applyIf = <T>(condition: boolean, func: (T) => T, value: T): T => {
   } else {
     return value;
   }
+};
+
+export const startProgressBar = (length: number, enabled = true) => {
+  if (!enabled) {
+    return {
+      increment: () => {},
+      stop: () => {},
+    };
+  }
+  const progressBar = new SingleBar({}, Presets.shades_classic);
+  progressBar.start(length, 0);
+
+  return {
+    increment: () => progressBar.increment(),
+    stop: () => progressBar.stop(),
+  };
 };

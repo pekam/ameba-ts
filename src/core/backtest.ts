@@ -7,8 +7,7 @@ import {
 } from "./types";
 import { Candle, CandleSeries } from "./candle-series";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { applyIf } from "../util";
-import { Presets, SingleBar } from "cli-progress";
+import { applyIf, startProgressBar } from "../util";
 
 /**
  * Tests how the given strategy would have performed with
@@ -27,6 +26,7 @@ import { Presets, SingleBar } from "cli-progress";
 export function backtestStrategy(
   stratProvider: () => Strategy,
   series: CandleSeries,
+  showProgressBar = true,
   from?: number,
   to?: number
 ): BacktestResult {
@@ -45,9 +45,7 @@ export function backtestStrategy(
     transactions: [],
   };
 
-  console.log("Backtesting");
-  const progressBar = new SingleBar({}, Presets.shades_classic);
-  progressBar.start(tt.length, 0);
+  const progressBar = startProgressBar(tt.length, showProgressBar);
 
   // Recursion removed to avoid heap out of memory
   let state = initialState;
