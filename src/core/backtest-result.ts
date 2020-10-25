@@ -21,6 +21,14 @@ export interface BacktestResult {
    * How much was the relative value change during the series
    */
   buyAndHoldProfit: number;
+  /**
+   * Simulates transaction costs and slippage by adding
+   * a cost relative to the entry and exit prices.
+   *
+   * @param cost e.g. 0.001 to have 0.1% cost per transaction
+   * @return a new result with the costs applied
+   */
+  withRelativeTransactionCost: (relativeCost: number) => BacktestResult;
 }
 
 export function convertToBacktestResult(
@@ -77,6 +85,14 @@ function tradesToResult(
     averageProfit: avg(profits),
     maxProfits,
     buyAndHoldProfit,
+
+    withRelativeTransactionCost: (relativeCost) => {
+      const updatedTrades = trades.map((trade) => ({
+        ...trade,
+        profit: getTradeProfit(trade, relativeCost),
+      }));
+      return tradesToResult(updatedTrades, serieses);
+    },
   };
 }
 
@@ -89,9 +105,7 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
       .map((exit, i) => {
         const entry = transactions[i * 2];
         const position = entry.sell ? "short" : "long";
-        const profit = entry.sell
-          ? (entry.price - exit.price) / entry.price
-          : (exit.price - entry.price) / entry.price;
+        const profit = getTradeProfit({ entry, exit });
         return {
           entry,
           exit,
@@ -104,4 +118,16 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
         };
       })
   );
+}
+
+function getTradeProfit({ entry, exit }, relativeTransactionCost = 0) {
+  const transactionCosts =
+    relativeTransactionCost * entry.price +
+    relativeTransactionCost * exit.price;
+
+  if (entry.sell) {
+    return (entry.price - exit.price - transactionCosts) / entry.price;
+  } else {
+    return (exit.price - entry.price - transactionCosts) / entry.price;
+  }
 }
