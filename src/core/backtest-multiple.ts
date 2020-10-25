@@ -12,7 +12,7 @@ export function backtestMultiple(
   multiSeries: CandleSeries[]
 ) {
   const results = multiSeries.map((series) =>
-    backtestStrategy(stratProvider(), series)
+    backtestStrategy(stratProvider, series)
   );
   return combineResults(results, multiSeries);
 }

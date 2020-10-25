@@ -45,7 +45,7 @@ it("should get end balance from backtest", async () => {
   });
 
   const result: BacktestResult = backtestStrategy(
-    strat,
+    () => strat,
     series,
     timestampFromUTC(2020, 3, 4, 5),
     timestampFromUTC(2020, 3, 4, 6)

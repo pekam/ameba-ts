@@ -14,7 +14,7 @@ import { Presets, SingleBar } from "cli-progress";
  * Tests how the given strategy would have performed with
  * the provided historical price data.
  *
- * @param strat the strategy to test
+ * @param stratProvider the provider for the strategy to test
  * @param series data series covering at least the range
  * between 'from' and 'to' arguments, plus X time before
  * to have some history for the first values
@@ -25,11 +25,15 @@ import { Presets, SingleBar } from "cli-progress";
  * to test until the end of the series
  */
 export function backtestStrategy(
-  strat: Strategy,
+  stratProvider: () => Strategy,
   series: CandleSeries,
   from?: number,
   to?: number
 ): BacktestResult {
+  // Strategies are stateful, which is why a new instance is needed
+  // for each backtest.
+  const strat: Strategy = stratProvider();
+
   const tt = series.getTimeTraveller(from, to);
 
   const initialState: TradeState = {
