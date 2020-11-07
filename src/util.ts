@@ -4,7 +4,10 @@ import { Presets, SingleBar } from "cli-progress";
  * Returns the average of the provided numbers.
  */
 export const avg: (values: number[]) => number = (values) =>
-  values.reduce((sum, value) => sum + value, 0) / values.length;
+  sum(values) / values.length;
+
+export const sum: (values: number[]) => number = (values) =>
+  values.reduce((sum, value) => sum + value, 0);
 
 /**
  * Applies the function to the value if the condition is true, otherwise

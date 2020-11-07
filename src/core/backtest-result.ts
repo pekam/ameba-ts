@@ -1,6 +1,6 @@
 import { Trade, Transaction } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-import { avg } from "../util";
+import { avg, sum } from "../util";
 import { CandleSeries } from "./candle-series";
 
 export interface BacktestResult {
@@ -13,6 +13,7 @@ export interface BacktestResult {
    * The multiplier of how much the balance changed
    */
   result: number;
+  profitWithConstantStake: number;
   tradeCount: number;
   successRate: number;
   averageProfit: number;
@@ -63,6 +64,8 @@ function tradesToResult(
     1
   );
 
+  const profitWithConstantStake = sum(profits);
+
   const maxProfits: number[] = profits
     .slice()
     .sort()
@@ -80,6 +83,7 @@ function tradesToResult(
     trades,
     result,
     profit: result - 1,
+    profitWithConstantStake,
     tradeCount: trades.length,
     successRate: profits.filter((profit) => profit > 0).length / trades.length,
     averageProfit: avg(profits),
