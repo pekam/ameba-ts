@@ -9,6 +9,9 @@ export const avg: (values: number[]) => number = (values) =>
 export const sum: (values: number[]) => number = (values) =>
   values.reduce((sum, value) => sum + value, 0);
 
+export const range: (length: number) => number[] = (length) =>
+  Array.from(Array(length).keys());
+
 /**
  * Applies the function to the value if the condition is true, otherwise
  * returns the value.
