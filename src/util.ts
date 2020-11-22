@@ -12,6 +12,13 @@ export const sum: (values: number[]) => number = (values) =>
 export const range: (length: number) => number[] = (length) =>
   Array.from(Array(length).keys());
 
+export function sortDescending<T>(
+  items: T[],
+  sortBy: (item: T) => number
+): T[] {
+  return items.slice().sort((a, b) => sortBy(b) - sortBy(a));
+}
+
 /**
  * Applies the function to the value if the condition is true, otherwise
  * returns the value.

@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { createChart } from "lightweight-charts";
+import { createChart, SeriesMarker } from "lightweight-charts";
 import { CompanyWithCandles } from "../../src/data/load-data-set";
 import "./Chart.css";
 
-function Chart({ dataSet, symbol }: { dataSet: string; symbol: string }) {
+function Chart({
+  dataSet,
+  symbolAndMaybeCandleTime,
+}: {
+  dataSet: string;
+  symbolAndMaybeCandleTime: string;
+}) {
+  const symbolAndCandleTime = symbolAndMaybeCandleTime.split("_");
+  const symbol = symbolAndCandleTime[0];
+  const candleTime = parseInt(symbolAndCandleTime[1]);
+
   const chartId = `${dataSet}-${symbol}`;
   const [company, setCompany] = useState<CompanyWithCandles | null>(null);
+
   useEffect(() => {
     fetch(`api/${dataSet}/${symbol}`)
       .then((res) => res.json())
@@ -17,6 +28,19 @@ function Chart({ dataSet, symbol }: { dataSet: string; symbol: string }) {
           height: 500,
         });
         const series = chart.addCandlestickSeries();
+
+        if (candleTime) {
+          const marker: SeriesMarker<number> = {
+            time: candleTime,
+            position: "aboveBar",
+            color: "#2196F3",
+            shape: "arrowDown",
+            size: 0.5,
+          };
+
+          // @ts-ignore
+          series.setMarkers([marker]);
+        }
 
         // @ts-ignore
         series.setData(data.candles);

@@ -1,18 +1,8 @@
 import { CandleSeries } from "../core/candle-series";
-import { rankAndReport } from "./rank-and-report";
-import { range } from "../util";
 import { getAverageCandleSize } from "../strats/series-util";
+import { rankAndReport } from "./rank-and-report";
 
-/**
- */
 const scoreByBullishPinBar = (series: CandleSeries) => {
-  const scores = range(10).map((i) =>
-    scorePinBar(series.slice(0, series.length - i - 10))
-  );
-  return Math.max(...scores);
-};
-
-const scorePinBar = (series: CandleSeries) => {
   const candle = series.last;
   const height = candle.high - candle.low;
   const limit = candle.low + 0.8 * height;
@@ -26,4 +16,4 @@ const scorePinBar = (series: CandleSeries) => {
   return height / getAverageCandleSize(series, 30);
 };
 
-rankAndReport("makkara", scoreByBullishPinBar, 20);
+rankAndReport("makkara", scoreByBullishPinBar, 20, 80);
