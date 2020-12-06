@@ -1,106 +1,26 @@
-import { RawCandle } from "./types";
+import { Candle, RawCandle } from "./types";
 import { timestampToUTCDateString } from "./date-util";
+import { last } from "../util";
 
-export class Candle implements RawCandle {
-  close: number;
-  high: number;
-  low: number;
-  open: number;
-  time: number;
-  volume: number;
+export type CandleSeries = Array<Candle>;
 
-  utcDateString: string;
-  relativeChange: number;
+export function toCandleSeries(candles: RawCandle[]): CandleSeries {
+  const series = candles.reduce((series, rawCandle, index) => {
+    const previous = last(series);
+    const oldValue = previous ? previous.close : rawCandle.open;
 
-  index: number;
-
-  constructor(rawCandles: RawCandle[], index: number) {
-    const rawCandle = rawCandles[index];
-    Object.getOwnPropertyNames(rawCandle).forEach(
-      (propName) => (this[propName] = rawCandle[propName])
-    );
-
-    const prev = rawCandles[index - 1];
-    const oldValue: number = prev ? prev.close : rawCandle.open;
-    this.relativeChange = (rawCandle.close - oldValue) / oldValue;
-
-    this.utcDateString = timestampToUTCDateString(rawCandle.time);
-
-    this.index = index;
-  }
-}
-
-export class CandleSeries extends Array<Candle> {
-  /**
-   * @param rawCandles in chronological order
-   */
-  constructor(...rawCandles: RawCandle[]) {
-    super(
-      ...rawCandles.map((rawCandle, index) => {
-        return new Candle(rawCandles, index);
-      })
-    );
-
-    // https://github.com/Microsoft/TypeScript/issues/18035
-    Object.setPrototypeOf(this, CandleSeries.prototype);
-  }
-
-  slice(start?: number, end?: number): CandleSeries {
-    return new CandleSeries(...super.slice(start, end));
-  }
-
-  // Needs to be implemented to avoid breaking when filter returns empty array
-  filter(f) {
-    const res = [];
-    this.forEach((c) => {
-      f(c) && res.push(c);
-    });
-    return new CandleSeries(...res);
-  }
-
-  /**
-   * Returns a new series including only the candles
-   * of this series that are in the given time range.
-   *
-   * @param from the lower limit as unix timestamp, inclusive
-   * @param to the upper limit as unix timestamp, exclusive
-   */
-  subSeries(from: number, to: number): CandleSeries {
-    return new CandleSeries(
-      ...this.filter((candle) => candle.time >= from && candle.time < to)
-    );
-  }
-
-  /**
-   * Returns a TimeTraveller for this series, that can be
-   * used to simulate how the data is received one candle
-   * at a time.
-   *
-   * @param from the unix time of the last candle to
-   * be included in the first iteration
-   * @param to the unix time of the candle which will
-   * end the iteration once encountered
-   */
-  getTimeTraveller(from: number, to: number): TimeTraveller {
-    return new TimeTraveller(this, from, to);
-  }
-
-  /**
-   * Gets the last candle in the series.
-   */
-  get last(): Candle {
-    return this[this.length - 1];
-  }
-
-  /**
-   * Gets the time range of the candles as unix timestamps.
-   */
-  get range(): { start: number; end: number } {
-    return {
-      start: this[0].time,
-      end: this.last.time,
+    const candle: Candle = {
+      ...rawCandle,
+      previous,
+      index,
+      utcDateString: timestampToUTCDateString(this.time),
+      relativeChange: (rawCandle.close - oldValue) / oldValue,
     };
-  }
+    series.push(candle);
+    return series;
+  }, []);
+
+  return series;
 }
 
 /**
@@ -169,7 +89,7 @@ export class TimeTraveller {
     if (!this.hasNext()) {
       throw new Error("TimeTraveller index out of bounds.");
     }
-    return new CandleSeries(...this.series.slice(0, ++this.nextIndex));
+    return this.series.slice(0, ++this.nextIndex);
   }
 
   /**

@@ -9,6 +9,13 @@ export interface RawCandle {
   time: number;
 }
 
+export interface Candle extends RawCandle {
+  utcDateString: string;
+  index: number;
+  previous: Candle;
+  relativeChange: number;
+}
+
 export interface Order {
   /**
    * Defines if this is a buy or a sell order.

@@ -1,6 +1,7 @@
-import { Candle, CandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/candle-series";
 import { findLowIndices } from "./series-util";
 import { RSI } from "technicalindicators";
+import { Candle } from "../core/types";
 
 /**
  * Returns the candles where there is a positive RSI divergence.

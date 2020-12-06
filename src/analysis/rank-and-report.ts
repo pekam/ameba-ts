@@ -1,6 +1,6 @@
 import { CompanyWithAsyncCandles, getDataSet } from "../data/load-data-set";
-import { Candle } from "../core/candle-series";
-import { range, sortDescending } from "../util";
+import { last, range, sortDescending } from "../util";
+import { Candle } from "../core/types";
 
 /**
  * Loads the data set from the database, runs the scoring function
@@ -38,7 +38,7 @@ export async function rankAndReport(
         .map((i) => candleSeries.slice(0, candleSeries.length - i - 1))
         .map((subSeries) => {
           const score = scoringFunction(subSeries);
-          return { company, score, candle: subSeries.last };
+          return { company, score, candle: last(subSeries) };
         });
 
       const bestResultForSeries = sortDescending(

@@ -1,5 +1,6 @@
 import { ADX, RSI, SMA } from "technicalindicators";
 import { CandleSeries } from "./candle-series";
+import { last } from "../util";
 
 export interface IndicatorSettings {
   readonly smaPeriod?: number;
@@ -43,7 +44,7 @@ export class Indicators {
   }
 
   update(series: CandleSeries): IndicatorValues {
-    const candle = series.last;
+    const candle = last(series);
 
     // Result has values for adx, mdi and pdi
     const directionalIndicators = this.adx

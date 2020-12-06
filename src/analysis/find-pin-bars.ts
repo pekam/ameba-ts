@@ -1,9 +1,10 @@
 import { CandleSeries } from "../core/candle-series";
 import { getAverageCandleSize } from "../strats/series-util";
 import { rankAndReport } from "./rank-and-report";
+import { last } from "../util";
 
 const scoreByBullishPinBar = (series: CandleSeries) => {
-  const candle = series.last;
+  const candle = last(series);
   const height = candle.high - candle.low;
   const limit = candle.low + 0.8 * height;
   if (candle.open < limit || candle.close < limit) {

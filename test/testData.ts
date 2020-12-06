@@ -1,8 +1,8 @@
 import { RawCandle } from "../src/core/types";
-import { CandleSeries } from "../src/core/candle-series";
+import { CandleSeries, toCandleSeries } from "../src/core/candle-series";
 
 export function initTestData(): CandleSeries {
-  return new CandleSeries(...rawCandles);
+  return toCandleSeries(rawCandles);
 }
 
 /*

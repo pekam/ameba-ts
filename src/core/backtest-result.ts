@@ -1,6 +1,6 @@
 import { Trade, Transaction } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-import { avg, sum } from "../util";
+import { avg, last, sum } from "../util";
 import { CandleSeries } from "./candle-series";
 
 export interface BacktestResult {
@@ -75,7 +75,7 @@ function tradesToResult(
   // Note: the period used in backtesting might not include the entire series
   const buyAndHoldProfit = avg(
     serieses.map(
-      (series) => (series.last.close - series[0].open) / series[0].open
+      (series) => (last(series).close - series[0].open) / series[0].open
     )
   );
 

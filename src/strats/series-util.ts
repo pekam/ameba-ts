@@ -1,5 +1,6 @@
-import { Candle, CandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/candle-series";
 import { avg } from "../util";
+import { Candle } from "../core/types";
 
 /**
  */

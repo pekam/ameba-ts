@@ -1,5 +1,9 @@
 import { Presets, SingleBar } from "cli-progress";
 
+export function last<T>(array: Array<T>) {
+  return array[array.length - 1];
+}
+
 /**
  * Returns the average of the provided numbers.
  */

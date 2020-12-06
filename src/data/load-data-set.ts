@@ -39,7 +39,7 @@ export async function getDataSet(id: string): Promise<DataSet> {
     company.getCandleSeries = async () => {
       const candles = (await db.get(getCandleCollection(id), company.symbol))
         .candles;
-      return new CandleSeries(...candles);
+      return candles;
     };
     company.withCandleSeries = async () => ({
       ...company,

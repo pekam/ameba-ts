@@ -1,5 +1,6 @@
-import { Candle, CandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/candle-series";
 import { rankAndReport } from "./rank-and-report";
+import { Candle } from "../core/types";
 
 const getCandlesBetween = (c: Candle, c2: Candle, series: CandleSeries) => {
   const index1 = series.findIndex((cc) => cc.time === c.time);

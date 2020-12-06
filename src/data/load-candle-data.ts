@@ -1,7 +1,8 @@
-import { CandleSeries } from "../core/candle-series";
-import { RawCandle } from "../core/types";
+import { CandleSeries, toCandleSeries } from "../core/candle-series";
 import { timestampToUTCDateString } from "../core/date-util";
 import { fetchFromFinnhub } from "./finnhub";
+import { last } from "../util";
+import { RawCandle } from "../core/types";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
 
@@ -67,12 +68,13 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
       };
     });
 
-    const series = new CandleSeries(...candles);
+    const series: CandleSeries = toCandleSeries(candles);
+
     console.log(
       "Candle series initialized for time period: " +
         series[0].utcDateString +
         " - " +
-        series.last.utcDateString
+        last(series).utcDateString
     );
     return series;
   });

@@ -1,5 +1,5 @@
 import { RawCandle } from "../src/core/types";
-import { CandleSeries } from "../src/core/candle-series";
+import { CandleSeries, toCandleSeries } from "../src/core/candle-series";
 import { initTestData } from "./testData";
 import { Indicators } from "../src/core/indicators";
 
@@ -9,7 +9,7 @@ it("should calculate SMA", () => {
       return { close: index + 1, high: 0, low: 0, open: 0, time: 0, volume: 0 };
     }
   );
-  const series = new CandleSeries(...rawCandles);
+  const series = toCandleSeries(rawCandles);
 
   const indicators = new Indicators(
     { smaPeriod: 3 },
