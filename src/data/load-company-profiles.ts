@@ -1,6 +1,7 @@
 import { readCachedSymbols } from "./load-symbols";
 import { fetchFromFinnhub } from "./finnhub";
 import { db } from "./mongo";
+import { sortDescending } from "../util";
 
 const collection = "company-profiles";
 
@@ -31,6 +32,15 @@ export async function getStocksByMarketCap(min: number, max: number) {
     (profile) =>
       profile.marketCapitalization >= min && profile.marketCapitalization < max
   );
+}
+
+export async function getStocksSortedByMarketCap(count?: number) {
+  const profiles = await readCachedProfiles();
+  const sorted = sortDescending(
+    profiles,
+    (profile) => profile.marketCapitalization
+  );
+  return count ? sorted.slice(0, count) : sorted;
 }
 
 export function getMidCapStocks() {
