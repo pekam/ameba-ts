@@ -13,7 +13,7 @@ export function toCandleSeries(candles: RawCandle[]): CandleSeries {
       ...rawCandle,
       previous,
       index,
-      utcDateString: timestampToUTCDateString(this.time),
+      utcDateString: timestampToUTCDateString(rawCandle.time),
       relativeChange: (rawCandle.close - oldValue) / oldValue,
     };
     series.push(candle);

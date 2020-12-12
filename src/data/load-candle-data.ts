@@ -1,4 +1,3 @@
-import { CandleSeries, toCandleSeries } from "../core/candle-series";
 import { timestampToUTCDateString } from "../core/date-util";
 import { fetchFromFinnhub } from "./finnhub";
 import { last } from "../util";
@@ -27,7 +26,7 @@ interface FinnhubCandleResponse {
 /**
  * Fetches the candle stick price data of a stock or a currency.
  */
-export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
+export function loadCandles(options: CandleRequest): Promise<RawCandle[]> {
   console.log("\nFetching data with params:", {
     ...options,
     from: timestampToUTCDateString(options.from),
@@ -68,14 +67,12 @@ export function loadCandles(options: CandleRequest): Promise<CandleSeries> {
       };
     });
 
-    const series: CandleSeries = toCandleSeries(candles);
-
     console.log(
-      "Candle series initialized for time period: " +
-        series[0].utcDateString +
+      "Candles loaded for time period: " +
+        timestampToUTCDateString(candles[0].time) +
         " - " +
-        last(series).utcDateString
+        timestampToUTCDateString(last(candles).time)
     );
-    return series;
+    return candles;
   });
 }

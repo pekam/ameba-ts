@@ -1,7 +1,7 @@
 import { loadCandles } from "../src/data/load-candle-data";
 import { Order, Strategy, TradeState } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
-import { CandleSeries } from "../src/core/candle-series";
+import { CandleSeries, toCandleSeries } from "../src/core/candle-series";
 import { timestampFromUTC } from "../src/core/date-util";
 import { BacktestResult } from "../src/core/backtest-result";
 import { last } from "../src/util";
@@ -37,13 +37,15 @@ it("should get end balance from backtest", async () => {
     },
   };
 
-  const series: CandleSeries = await loadCandles({
-    market: "forex",
-    symbol: "OANDA:EUR_USD",
-    resolution: "1",
-    from: timestampFromUTC(2020, 3, 4),
-    to: timestampFromUTC(2020, 3, 5),
-  });
+  const series: CandleSeries = toCandleSeries(
+    await loadCandles({
+      market: "forex",
+      symbol: "OANDA:EUR_USD",
+      resolution: "1",
+      from: timestampFromUTC(2020, 3, 4),
+      to: timestampFromUTC(2020, 3, 5),
+    })
+  );
 
   const result: BacktestResult = backtestStrategy(
     () => strat,
