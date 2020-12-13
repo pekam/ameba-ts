@@ -20,7 +20,7 @@ function App() {
     <div className="App">
       {dataSet &&
         symbols.map((s) => (
-          <Chart dataSet={dataSet} symbolAndMaybeCandleTime={s} key={s} />
+          <Chart dataSet={dataSet} symbolAndCandleTimes={s} key={s} />
         ))}
     </div>
   );
