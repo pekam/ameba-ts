@@ -1,5 +1,5 @@
 import { CandleSeries } from "../core/candle-series";
-import { avg } from "../util";
+import { avg, range } from "../util";
 import { Candle } from "../core/types";
 
 /**
@@ -16,20 +16,26 @@ export function getAverageCandleSize(
 /**
  * Returns the indices of candles which have a local maximum.
  */
-export function findHighIndices(series: CandleSeries): number[] {
+export function findHighIndices(
+  series: CandleSeries,
+  distanceToCompare = 1
+): number[] {
   return filterIndices(
     series.map((candle) => candle.high),
-    isLocalMax
+    (series, num) => isLocalMax(series, num, distanceToCompare)
   );
 }
 
 /**
  * Returns the indices of candles which have a local minimum.
  */
-export function findLowIndices(series: CandleSeries): number[] {
+export function findLowIndices(
+  series: CandleSeries,
+  distanceToCompare = 1
+): number[] {
   return filterIndices(
     series.map((candle) => candle.low),
-    isLocalMin
+    (series, num) => isLocalMin(series, num, distanceToCompare)
   );
 }
 
@@ -45,35 +51,47 @@ function filterIndices(
   }, []);
 }
 
-function isLocalMax(series: number[], index: number): boolean {
+function isLocalMax(
+  series: number[],
+  index: number,
+  distanceToCompare
+): boolean {
   return compareToNeighbours(
     series,
     index,
-    (current, neighbour) => current > neighbour
+    (current, neighbour) => current > neighbour,
+    distanceToCompare
   );
 }
 
-function isLocalMin(series: number[], index: number): boolean {
+function isLocalMin(
+  series: number[],
+  index: number,
+  distanceToCompare
+): boolean {
   return compareToNeighbours(
     series,
     index,
-    (current, neighbour) => current < neighbour
+    (current, neighbour) => current < neighbour,
+    distanceToCompare
   );
 }
 
 function compareToNeighbours(
   series: number[],
   index: number,
-  comparator: (current: number, neighbour: number) => boolean
+  comparator: (current: number, neighbour: number) => boolean,
+  distanceToCompare
 ): boolean {
   const current = series[index];
-  const previous = series[index - 1];
-  const next = series[index + 1];
 
-  return (
-    previous !== undefined &&
-    next !== undefined &&
-    comparator(current, previous) &&
-    comparator(current, next)
+  const neighbours = range(distanceToCompare)
+    .map((dist) => dist + 1)
+    .reduce((acc, dist) => {
+      return acc.concat(series[index - dist], series[index + dist]);
+    }, []);
+
+  return neighbours.every(
+    (num) => num !== undefined && comparator(current, num)
   );
 }
