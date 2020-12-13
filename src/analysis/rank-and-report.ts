@@ -1,5 +1,5 @@
 import { CompanyWithAsyncCandles, getDataSet } from "../data/load-data-set";
-import { last, range, sortDescending } from "../util";
+import { getUrl, last, range, sortDescending } from "../util";
 import { Candle } from "../core/types";
 
 /**
@@ -63,9 +63,14 @@ export async function rankAndReport(
 
   console.log(topResults);
 
-  const url = `http://localhost:3000/?dataSet=${dataSetId}&symbols=${topResults.map(
-    (result) => result.symbol + "_" + result.candle.time
-  )}`;
+  const url = getUrl(
+    dataSetId,
+    topResults.map((result) => ({
+      symbol: result.symbol,
+      markersAbove: [result.candle],
+      markersBelow: [],
+    }))
+  );
 
   console.log(url);
 }
