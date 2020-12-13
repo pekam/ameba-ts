@@ -16,75 +16,72 @@ export function getAverageCandleSize(
 /**
  * Returns the indices of candles which have a local maximum.
  */
-export function findHighIndices(
+export function getSwingHighs(
   series: CandleSeries,
   distanceToCompare = 1
-): number[] {
-  return filterIndices(
-    series.map((candle) => candle.high),
-    (series, num) => isLocalMax(series, num, distanceToCompare)
+): Candle[] {
+  return filterCandles(series, (series, candle) =>
+    isLocalMax(series, candle, distanceToCompare)
   );
 }
 
 /**
  * Returns the indices of candles which have a local minimum.
  */
-export function findLowIndices(
+export function getSwingLows(
   series: CandleSeries,
   distanceToCompare = 1
-): number[] {
-  return filterIndices(
-    series.map((candle) => candle.low),
-    (series, num) => isLocalMin(series, num, distanceToCompare)
+): Candle[] {
+  return filterCandles(series, (series, candle) =>
+    isLocalMin(series, candle, distanceToCompare)
   );
 }
 
-function filterIndices(
-  series: number[],
-  filter: (series: number[], index: number) => boolean
-) {
-  return series.reduce((acc, current, index) => {
-    if (filter(series, index)) {
-      return acc.concat(index);
+function filterCandles(
+  series: Candle[],
+  filter: (series: Candle[], candle: Candle) => boolean
+): Candle[] {
+  return series.reduce((acc, current) => {
+    if (filter(series, current)) {
+      return acc.concat(current);
     }
     return acc;
   }, []);
 }
 
 function isLocalMax(
-  series: number[],
-  index: number,
+  series: Candle[],
+  candle: Candle,
   distanceToCompare
 ): boolean {
   return compareToNeighbours(
     series,
-    index,
-    (current, neighbour) => current > neighbour,
+    candle,
+    (candle, neighbour) => candle.high > neighbour.high,
     distanceToCompare
   );
 }
 
 function isLocalMin(
-  series: number[],
-  index: number,
+  series: Candle[],
+  candle: Candle,
   distanceToCompare
 ): boolean {
   return compareToNeighbours(
     series,
-    index,
-    (current, neighbour) => current < neighbour,
+    candle,
+    (candle, neighbour) => candle.low < neighbour.low,
     distanceToCompare
   );
 }
 
 function compareToNeighbours(
-  series: number[],
-  index: number,
-  comparator: (current: number, neighbour: number) => boolean,
+  series: Candle[],
+  candle: Candle,
+  comparator: (current: Candle, neighbour: Candle) => boolean,
   distanceToCompare
 ): boolean {
-  const current = series[index];
-
+  const index = candle.index;
   const neighbours = range(distanceToCompare)
     .map((dist) => dist + 1)
     .reduce((acc, dist) => {
@@ -92,6 +89,6 @@ function compareToNeighbours(
     }, []);
 
   return neighbours.every(
-    (num) => num !== undefined && comparator(current, num)
+    (neighbour) => neighbour !== undefined && comparator(candle, neighbour)
   );
 }

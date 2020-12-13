@@ -1,5 +1,5 @@
 import { CandleSeries } from "../core/candle-series";
-import { findLowIndices } from "./series-util";
+import { getSwingLows } from "./series-util";
 import { RSI } from "technicalindicators";
 import { Candle } from "../core/types";
 
@@ -12,7 +12,7 @@ export function findRSIDivergences(
   series: CandleSeries,
   rsiPeriod: number
 ): Candle[] {
-  const lowIndices = findLowIndices(series);
+  const swingLows = getSwingLows(series);
 
   const rsiValues = RSI.calculate({
     period: rsiPeriod,
@@ -21,16 +21,14 @@ export function findRSIDivergences(
   const lengthDiff: number = series.length - rsiValues.length;
 
   // TODO should be tested again before using
-  const divergenceIndices = lowIndices.filter((lowIndex, indexInList) => {
-    const currentLowCandle = series[lowIndex];
-    const previousLowCandle = series[lowIndices[indexInList - 1]];
+  const divergenceCandles = swingLows.filter((lowCandle, indexInList) => {
+    const previousLowCandle = swingLows[indexInList - 1];
     return (
       previousLowCandle &&
-      currentLowCandle.low < previousLowCandle.low &&
-      rsiValues[lowIndex + lengthDiff] >
-        rsiValues[lowIndices[indexInList - 1] + lengthDiff]
+      lowCandle.low < previousLowCandle.low &&
+      rsiValues[lowCandle.index + lengthDiff] >
+        rsiValues[swingLows[indexInList - 1].index + lengthDiff]
     );
   });
-
-  return divergenceIndices.map((index) => series[index]);
+  return divergenceCandles;
 }

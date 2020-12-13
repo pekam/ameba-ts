@@ -1,5 +1,5 @@
 import { StrategyUpdate } from "../core/types";
-import { findLowIndices, getAverageCandleSize } from "./series-util";
+import { getAverageCandleSize, getSwingLows } from "./series-util";
 
 /**
  * Updates stop loss to be always slightly below the latest low (local min).
@@ -8,21 +8,21 @@ import { findLowIndices, getAverageCandleSize } from "./series-util";
  */
 export const trailingLowExit: StrategyUpdate = (tradeState) => {
   // Could be optimized to find only the latest low.
-  const lowIndices = findLowIndices(tradeState.series);
+  const swingLows = getSwingLows(tradeState.series);
 
-  if (!lowIndices.length) {
+  if (!swingLows.length) {
     return {};
   }
 
-  const latestLowIndex = lowIndices[lowIndices.length - 1];
-
-  const latestLowCandle = tradeState.series[latestLowIndex];
+  const latestLowCandle = swingLows[swingLows.length - 1];
 
   // Stop loss should be slightly below the support level.
   // Here the margin is relative to the recent average candle size.
   const margin =
-    getAverageCandleSize(tradeState.series.slice(0, latestLowIndex + 1), 10) /
-    4;
+    getAverageCandleSize(
+      tradeState.series.slice(0, latestLowCandle.index + 1),
+      10
+    ) / 4;
 
   const stopLoss = latestLowCandle.low - margin;
 
