@@ -51,7 +51,7 @@ function Chart({
           };
         });
         // @ts-ignore
-        series.setMarkers(markers);
+        series.setMarkers(markers.sort((a, b) => a.time - b.time));
 
         // @ts-ignore
         series.setData(data.candles);
