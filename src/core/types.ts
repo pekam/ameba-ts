@@ -1,10 +1,13 @@
 import { CandleSeries } from "./candle-series";
 
-export interface RawCandle {
+export interface OHLC {
   open: number;
   high: number;
   low: number;
   close: number;
+}
+
+export interface RawCandle extends OHLC {
   volume?: number;
   time: number;
 }

@@ -1,5 +1,5 @@
 import { CandleSeries } from "../core/candle-series";
-import { Candle } from "../core/types";
+import { Candle, OHLC } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 
 /**
@@ -52,6 +52,15 @@ const getAverageCandleSize = function (
   return avg(head.map((candle) => candle.high - candle.low));
 };
 
+const combine = function (candles: CandleSeries): OHLC {
+  return {
+    open: candles[0].open,
+    close: last(candles).close,
+    low: Math.min(...candles.map((c) => c.low)),
+    high: Math.max(...candles.map((c) => c.high)),
+  };
+};
+
 /**
  * Collection of utility functions.
  */
@@ -64,6 +73,7 @@ export const m = {
   sortDescending,
   applyIf,
   getAverageCandleSize,
+  combine,
   getSwingHighs,
   getSwingLows,
 };
