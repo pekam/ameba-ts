@@ -1,12 +1,12 @@
 import { Candle, RawCandle } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-import { last } from "../util";
+import { m } from "../functions/functions";
 
 export type CandleSeries = Array<Candle>;
 
 export function toCandleSeries(candles: RawCandle[]): CandleSeries {
   const series = candles.reduce((series, rawCandle, index) => {
-    const previous = last(series);
+    const previous = m.last(series);
     const oldValue = previous ? previous.close : rawCandle.open;
 
     const candle: Candle = {

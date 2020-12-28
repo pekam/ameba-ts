@@ -1,7 +1,7 @@
 import { Trade, Transaction } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-import { avg, last, sum } from "../util";
 import { CandleSeries } from "./candle-series";
+import { m } from "../functions/functions";
 
 export interface BacktestResult {
   trades: Trade[];
@@ -64,7 +64,7 @@ function tradesToResult(
     1
   );
 
-  const profitWithConstantStake = sum(profits);
+  const profitWithConstantStake = m.sum(profits);
 
   const maxProfits: number[] = profits
     .slice()
@@ -73,9 +73,9 @@ function tradesToResult(
     .slice(0, Math.min(3, profits.length));
 
   // Note: the period used in backtesting might not include the entire series
-  const buyAndHoldProfit = avg(
+  const buyAndHoldProfit = m.avg(
     serieses.map(
-      (series) => (last(series).close - series[0].open) / series[0].open
+      (series) => (m.last(series).close - series[0].open) / series[0].open
     )
   );
 
@@ -86,7 +86,7 @@ function tradesToResult(
     profitWithConstantStake,
     tradeCount: trades.length,
     successRate: profits.filter((profit) => profit > 0).length / trades.length,
-    averageProfit: avg(profits),
+    averageProfit: m.avg(profits),
     maxProfits,
     buyAndHoldProfit,
 

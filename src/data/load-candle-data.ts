@@ -1,7 +1,7 @@
 import { timestampToUTCDateString } from "../core/date-util";
 import { fetchFromFinnhub } from "./finnhub";
-import { last } from "../util";
 import { RawCandle } from "../core/types";
+import { m } from "../functions/functions";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
 
@@ -71,7 +71,7 @@ export function loadCandles(options: CandleRequest): Promise<RawCandle[]> {
       "Candles loaded for time period: " +
         timestampToUTCDateString(candles[0].time) +
         " - " +
-        timestampToUTCDateString(last(candles).time)
+        timestampToUTCDateString(m.last(candles).time)
     );
     return candles;
   });

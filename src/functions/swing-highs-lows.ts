@@ -1,6 +1,6 @@
 import { CandleSeries } from "../core/candle-series";
-import { range } from "../util";
 import { Candle } from "../core/types";
+import { m } from "./functions";
 
 /**
  * Returns the candles which have a local maximum.
@@ -71,7 +71,8 @@ function compareToNeighbours(
   distanceToCompare
 ): boolean {
   const index = candle.index;
-  const neighbours = range(distanceToCompare)
+  const neighbours = m
+    .range(distanceToCompare)
     .map((dist) => dist + 1)
     .reduce((acc, dist) => {
       return acc.concat(series[index - dist], series[index + dist]);

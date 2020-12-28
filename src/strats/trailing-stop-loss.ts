@@ -1,8 +1,8 @@
 import { StrategyUpdate } from "../core/types";
-import { last } from "../util";
+import { m } from "../functions/functions";
 
 export const trailingStopLoss: StrategyUpdate = (state) => {
   return {
-    stopLoss: Math.max(state.stopLoss, last(state.series).high * 0.95),
+    stopLoss: Math.max(state.stopLoss, m.last(state.series).high * 0.95),
   };
 };

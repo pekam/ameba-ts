@@ -4,7 +4,7 @@ import { backtestStrategy } from "../src/core/backtest";
 import { CandleSeries, toCandleSeries } from "../src/core/candle-series";
 import { timestampFromUTC } from "../src/core/date-util";
 import { BacktestResult } from "../src/core/backtest-result";
-import { last } from "../src/util";
+import { m } from "../src/functions/functions";
 
 it("should get end balance from backtest", async () => {
   expect.assertions(1);
@@ -12,7 +12,7 @@ it("should get end balance from backtest", async () => {
   const strat: Strategy = {
     init(state: TradeState): void {},
     update(state) {
-      const newCandle = last(state.series);
+      const newCandle = m.last(state.series);
       if (!state.position) {
         if (newCandle.close > newCandle.open) {
           const entryOrder: Order = {

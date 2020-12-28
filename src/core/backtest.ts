@@ -8,7 +8,8 @@ import {
 } from "./types";
 import { CandleSeries, TimeTraveller } from "./candle-series";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { applyIf, last, startProgressBar } from "../util";
+import { startProgressBar } from "../util";
+import { m } from "../functions/functions";
 
 /**
  * Tests how the given strategy would have performed with
@@ -86,10 +87,10 @@ function handleOrdersOnEntryCandle(state: TradeState): TradeState {
     // Entry not triggered.
     return state;
   }
-  return applyIf(
+  return m.applyIf(
     shouldHandleOrderOnEntryCandle(state, state.takeProfit),
     handleTakeProfit,
-    applyIf(
+    m.applyIf(
       shouldHandleOrderOnEntryCandle(state, state.stopLoss),
       handleStopLoss,
       state
@@ -104,7 +105,7 @@ function shouldHandleOrderOnEntryCandle(
   // If the candle was green, assume that only prices above the entry price
   // are covered after the entry, and vice versa.
   const priceMovedUp: boolean =
-    last(state.series).close > last(state.series).open;
+    m.last(state.series).close > m.last(state.series).open;
   const entryPrice = state.entryOrder.price;
 
   return (
@@ -115,7 +116,7 @@ function shouldHandleOrderOnEntryCandle(
 
 function handleEntryOrder(state: TradeState) {
   if (!state.position && state.entryOrder) {
-    const price = isOrderFulfilled(state.entryOrder, last(state.series));
+    const price = isOrderFulfilled(state.entryOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillEntryOrder(state, price);
       return { ...state, ...mutations };
@@ -127,7 +128,7 @@ function handleEntryOrder(state: TradeState) {
 function handleStopLoss(state: TradeState) {
   if (state.position && state.stopLoss) {
     const stopLossOrder: Order = createStopLossOrder(state);
-    const price = isOrderFulfilled(stopLossOrder, last(state.series));
+    const price = isOrderFulfilled(stopLossOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillExitOrder(stopLossOrder, state, price);
       return { ...state, ...mutations };
@@ -139,7 +140,7 @@ function handleStopLoss(state: TradeState) {
 function handleTakeProfit(state: TradeState) {
   if (state.position && state.takeProfit) {
     const takeProfitOrder: Order = createTakeProfitOrder(state);
-    const price = isOrderFulfilled(takeProfitOrder, last(state.series));
+    const price = isOrderFulfilled(takeProfitOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillExitOrder(takeProfitOrder, state, price);
       return { ...state, ...mutations };
@@ -190,7 +191,7 @@ function fulfillEntryOrder(state: TradeState, price: number) {
     order: state.entryOrder,
     sell: state.entryOrder.sell,
     price,
-    time: last(state.series).time,
+    time: m.last(state.series).time,
   };
 
   const transactions = state.transactions.concat(transaction);
@@ -221,7 +222,7 @@ function fulfillExitOrder(order: Order, state: TradeState, price: number) {
     order,
     sell: order.sell,
     price,
-    time: last(state.series).time,
+    time: m.last(state.series).time,
   };
   return {
     transactions: state.transactions.concat(transaction),

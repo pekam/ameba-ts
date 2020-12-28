@@ -1,41 +1,6 @@
 import { Presets, SingleBar } from "cli-progress";
 import { Candle } from "./core/types";
 
-export function last<T>(array: Array<T>) {
-  return array[array.length - 1];
-}
-
-/**
- * Returns the average of the provided numbers.
- */
-export const avg: (values: number[]) => number = (values) =>
-  sum(values) / values.length;
-
-export const sum: (values: number[]) => number = (values) =>
-  values.reduce((sum, value) => sum + value, 0);
-
-export const range: (length: number) => number[] = (length) =>
-  Array.from(Array(length).keys());
-
-export function sortDescending<T>(
-  items: T[],
-  sortBy: (item: T) => number
-): T[] {
-  return items.slice().sort((a, b) => sortBy(b) - sortBy(a));
-}
-
-/**
- * Applies the function to the value if the condition is true, otherwise
- * returns the value.
- */
-export const applyIf = <T>(condition: boolean, func: (T) => T, value: T): T => {
-  if (condition) {
-    return func(value);
-  } else {
-    return value;
-  }
-};
-
 export const startProgressBar = (length: number, enabled = true) => {
   if (!enabled) {
     return {

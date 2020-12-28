@@ -1,6 +1,5 @@
 import { Order, Strategy, TradeState } from "../core/types";
 import { Indicators } from "../core/indicators";
-import { last } from "../util";
 import { m } from "../functions/functions";
 
 const rsiPeriod = 10;
@@ -31,10 +30,10 @@ export class RsiReversalStrategy implements Strategy {
       if (adx < 25 && rsi < 30) {
         return {
           entryOrder: {
-            price: last(series).low,
+            price: m.last(series).low,
             type: "limit",
           },
-          stopLoss: last(series).low - m.getAverageCandleSize(series, 5) / 2,
+          stopLoss: m.last(series).low - m.getAverageCandleSize(series, 5) / 2,
         };
       } else {
         return {
@@ -43,7 +42,10 @@ export class RsiReversalStrategy implements Strategy {
       }
     } else {
       if (rsi > 70) {
-        return { takeProfit: last(series).high, stopLoss: last(series).low };
+        return {
+          takeProfit: m.last(series).high,
+          stopLoss: m.last(series).low,
+        };
       }
     }
   }

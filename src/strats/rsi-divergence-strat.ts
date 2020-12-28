@@ -1,7 +1,7 @@
 import { Order, Strategy, TradeState } from "../core/types";
 import { findRSIDivergences } from "./rsi-divergence";
 import { trailingLowExit } from "./trailing-low-exit";
-import { last } from "../util";
+import { m } from "../functions/functions";
 
 export class RsiDivergenceStrategy implements Strategy {
   init(tradeState: TradeState): void {}
@@ -31,7 +31,7 @@ export class RsiDivergenceStrategy implements Strategy {
         (rsiDivCandle) => rsiDivCandle.time === olderCandle.time
       );
       if (isRSIDivergence) {
-        const lastCandle = last(state.series);
+        const lastCandle = m.last(state.series);
         const candleSize = lastCandle.high - lastCandle.low;
         const limitPrice = lastCandle.high + candleSize;
 
