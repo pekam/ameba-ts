@@ -20,7 +20,10 @@ export const trailingLowExit: StrategyUpdate = (tradeState) => {
   // Here the margin is relative to the recent average candle size.
   const margin =
     m.getAverageCandleSize(
-      tradeState.series.slice(0, latestLowCandle.index + 1),
+      tradeState.series.slice(
+        0,
+        m.indexOf(tradeState.series, latestLowCandle) + 1
+      ),
       10
     ) / 4;
 

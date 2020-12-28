@@ -26,8 +26,8 @@ export function findRSIDivergences(
     return (
       previousLowCandle &&
       lowCandle.low < previousLowCandle.low &&
-      rsiValues[lowCandle.index + lengthDiff] >
-        rsiValues[swingLows[indexInList - 1].index + lengthDiff]
+      rsiValues[m.indexOf(series, lowCandle) + lengthDiff] >
+        rsiValues[m.indexOf(series, swingLows[indexInList - 1]) + lengthDiff]
     );
   });
   return divergenceCandles;

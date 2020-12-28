@@ -17,6 +17,21 @@ function last<T>(array: Array<T>) {
   return get(array, -1);
 }
 
+function indexOf(candles: CandleSeries, candle: Candle): number {
+  if (candles.length === 0) {
+    throw new Error("Candle not found.");
+  }
+  const i = Math.floor(candles.length / 2);
+  const t = candles[i].time;
+  if (t === candle.time) {
+    return i;
+  } else if (t > candle.time) {
+    return indexOf(candles.slice(0, i), candle);
+  } else {
+    return indexOf(candles.slice(i + 1, candles.length), candle) + i + 1;
+  }
+}
+
 /**
  * Returns the average of the provided numbers.
  */
@@ -67,6 +82,7 @@ const combine = function (candles: CandleSeries): OHLC {
 export const m = {
   get,
   last,
+  indexOf,
   avg,
   sum,
   range,

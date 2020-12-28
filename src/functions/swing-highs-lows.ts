@@ -70,7 +70,7 @@ function compareToNeighbours(
   comparator: (current: Candle, neighbour: Candle) => boolean,
   distanceToCompare
 ): boolean {
-  const index = candle.index;
+  const index = m.indexOf(series, candle);
   const neighbours = m
     .range(distanceToCompare)
     .map((dist) => dist + 1)
