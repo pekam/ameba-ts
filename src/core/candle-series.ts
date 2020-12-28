@@ -11,7 +11,6 @@ export function toCandleSeries(candles: RawCandle[]): CandleSeries {
 
     const candle: Candle = {
       ...rawCandle,
-      previous,
       utcDateString: timestampToUTCDateString(rawCandle.time),
       relativeChange: (rawCandle.close - oldValue) / oldValue,
     };

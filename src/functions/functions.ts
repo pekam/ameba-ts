@@ -32,6 +32,11 @@ function indexOf(candles: CandleSeries, candle: Candle): number {
   }
 }
 
+function previous(candles: CandleSeries, candle: Candle): Candle {
+  const index = indexOf(candles, candle);
+  return candles[index - 1];
+}
+
 /**
  * Returns the average of the provided numbers.
  */
@@ -83,6 +88,7 @@ export const m = {
   get,
   last,
   indexOf,
+  previous,
   avg,
   sum,
   range,

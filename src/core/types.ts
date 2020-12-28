@@ -14,7 +14,6 @@ export interface RawCandle extends OHLC {
 
 export interface Candle extends RawCandle {
   utcDateString: string;
-  previous: Candle;
   relativeChange: number;
 }
 
