@@ -1,6 +1,6 @@
 import { Order, Strategy, TradeState } from "../core/types";
-import { getAverageCandleSize } from "./series-util";
 import { Indicators } from "../core/indicators";
+import { m } from "../functions/functions";
 
 const channelPeriod = 30;
 
@@ -35,7 +35,7 @@ export class DonchianChannelStrategy implements Strategy {
         entryOrder: {
           price:
             donchianChannel.upper +
-            getAverageCandleSize(series, channelPeriod) / 5,
+            m.getAverageCandleSize(series, channelPeriod) / 5,
           type: "stop",
         },
         stopLoss: sma,

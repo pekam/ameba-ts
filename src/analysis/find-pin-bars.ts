@@ -1,5 +1,5 @@
 import { CandleSeries } from "../core/candle-series";
-import { getAverageCandleSize } from "../strats/series-util";
+import { m } from "../functions/functions";
 import { rankAndReport } from "./rank-and-report";
 import { last } from "../util";
 
@@ -14,7 +14,7 @@ const scoreByBullishPinBar = (series: CandleSeries) => {
     return -1;
   }
 
-  return height / getAverageCandleSize(series, 30);
+  return height / m.getAverageCandleSize(series, 30);
 };
 
 rankAndReport("makkara", scoreByBullishPinBar, 20, 80);

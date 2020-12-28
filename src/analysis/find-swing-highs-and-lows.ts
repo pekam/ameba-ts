@@ -1,6 +1,6 @@
 import { getDataSet } from "../data/load-data-set";
-import { getSwingHighs, getSwingLows } from "../strats/series-util";
 import { getUrl } from "../util";
+import { m } from "../functions/functions";
 
 // const dataSetId = "bigday19";
 const dataSetId = "makkara";
@@ -18,8 +18,8 @@ async function run() {
   );
   const params = companies.slice(200, 220).map((company) => {
     const candles = company.candles;
-    const swingHighs = getSwingHighs(candles, distanceToCompare);
-    const swingLows = getSwingLows(candles, distanceToCompare);
+    const swingHighs = m.getSwingHighs(candles, distanceToCompare);
+    const swingLows = m.getSwingLows(candles, distanceToCompare);
 
     return {
       symbol: company.symbol,

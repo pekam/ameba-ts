@@ -1,7 +1,7 @@
 import { CandleSeries } from "../core/candle-series";
-import { getSwingLows } from "./series-util";
 import { RSI } from "technicalindicators";
 import { Candle } from "../core/types";
+import { m } from "../functions/functions";
 
 /**
  * Returns the candles where there is a positive RSI divergence.
@@ -12,7 +12,7 @@ export function findRSIDivergences(
   series: CandleSeries,
   rsiPeriod: number
 ): Candle[] {
-  const swingLows = getSwingLows(series);
+  const swingLows = m.getSwingLows(series);
 
   const rsiValues = RSI.calculate({
     period: rsiPeriod,

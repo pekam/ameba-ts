@@ -1,7 +1,7 @@
 import { Order, Strategy, TradeState } from "../core/types";
 import { Indicators } from "../core/indicators";
-import { getAverageCandleSize } from "./series-util";
 import { last } from "../util";
+import { m } from "../functions/functions";
 
 const rsiPeriod = 10;
 const adxPeriod = 20;
@@ -34,7 +34,7 @@ export class RsiReversalStrategy implements Strategy {
             price: last(series).low,
             type: "limit",
           },
-          stopLoss: last(series).low - getAverageCandleSize(series, 5) / 2,
+          stopLoss: last(series).low - m.getAverageCandleSize(series, 5) / 2,
         };
       } else {
         return {

@@ -1,9 +1,9 @@
 import { CandleSeries } from "../core/candle-series";
-import { getSwingLows } from "../strats/series-util";
 import { rankAndReport } from "./rank-and-report";
+import { m } from "../functions/functions";
 
 const scoreBySupport = (series: CandleSeries) => {
-  const swingLows = getSwingLows(series);
+  const swingLows = m.getSwingLows(series);
   if (swingLows.length < 5) {
     return -9999;
   }

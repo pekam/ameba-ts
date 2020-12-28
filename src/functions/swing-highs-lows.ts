@@ -1,20 +1,9 @@
 import { CandleSeries } from "../core/candle-series";
-import { avg, range } from "../util";
+import { range } from "../util";
 import { Candle } from "../core/types";
 
 /**
- */
-export function getAverageCandleSize(
-  series: CandleSeries,
-  countFromEnd: number
-) {
-  const head: Candle[] =
-    series.length >= countFromEnd ? series.slice(-countFromEnd) : series;
-  return avg(head.map((candle) => candle.high - candle.low));
-}
-
-/**
- * Returns the indices of candles which have a local maximum.
+ * Returns the candles which have a local maximum.
  */
 export function getSwingHighs(
   series: CandleSeries,
@@ -26,7 +15,7 @@ export function getSwingHighs(
 }
 
 /**
- * Returns the indices of candles which have a local minimum.
+ * Returns the candles which have a local minimum.
  */
 export function getSwingLows(
   series: CandleSeries,
