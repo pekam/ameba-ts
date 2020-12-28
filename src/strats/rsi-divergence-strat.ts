@@ -25,7 +25,7 @@ export class RsiDivergenceStrategy implements Strategy {
       }
       // Could be optimized to find only the latest divergence
       const rsiDivergences = findRSIDivergences(series, 14);
-      const olderCandle = series[series.length - 2];
+      const olderCandle = m.get(series, -2);
 
       const isRSIDivergence = rsiDivergences.find(
         (rsiDivCandle) => rsiDivCandle.time === olderCandle.time

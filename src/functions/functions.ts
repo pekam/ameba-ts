@@ -2,8 +2,19 @@ import { CandleSeries } from "../core/candle-series";
 import { Candle } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 
+/**
+ * Supports negative index to get from the end of the array.
+ */
+function get<T>(array: Array<T>, index: number) {
+  if (index < 0) {
+    return array[array.length + index];
+  } else {
+    return array[index];
+  }
+}
+
 function last<T>(array: Array<T>) {
-  return array[array.length - 1];
+  return get(array, -1);
 }
 
 /**
@@ -45,6 +56,7 @@ const getAverageCandleSize = function (
  * Collection of utility functions.
  */
 export const m = {
+  get,
   last,
   avg,
   sum,
