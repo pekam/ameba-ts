@@ -15,8 +15,9 @@ export function backtestMultiple(
 ) {
   const progressBar = startProgressBar(multiSeries.length, showProgressBar);
   const results = multiSeries.map((series) => {
+    const result = backtestStrategy(stratProvider, series, false);
     progressBar.increment();
-    return backtestStrategy(stratProvider, series, false);
+    return result;
   });
   progressBar.stop();
   return combineResults(results, multiSeries);
