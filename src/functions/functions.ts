@@ -1,6 +1,7 @@
 import { CandleSeries } from "../core/candle-series";
 import { Candle, OHLC } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
+import { candlePatterns } from "./candle-patterns";
 
 /**
  * Supports negative index to get from the end of the array.
@@ -98,4 +99,5 @@ export const m = {
   combine,
   getSwingHighs,
   getSwingLows,
+  ...candlePatterns,
 };
