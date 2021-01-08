@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 /**
  * @param year
  * @param month 1-12
@@ -27,6 +29,10 @@ export function timestampFromUTC(
       ms || 0
     ) / 1000
   );
+}
+
+export function getTimeInNewYork(timestamp: number): DateTime {
+  return DateTime.fromSeconds(timestamp).setZone("America/New_York");
 }
 
 export function timestampToUTCDateString(timestamp: number) {
