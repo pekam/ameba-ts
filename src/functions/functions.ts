@@ -82,6 +82,21 @@ const combine = function (candles: CandleSeries): OHLC {
   };
 };
 
+const getCandlesBetween = function (
+  candles: CandleSeries,
+  candle1: Candle,
+  candle2: Candle
+): CandleSeries {
+  const index1 = indexOf(candles, candle1);
+  const index2 = indexOf(candles, candle2);
+  if (index1 < 0 || index2 < 0) {
+    throw new Error("Candle not found in series.");
+  }
+  const lowIndex = Math.min(index1, index2);
+  const highIndex = Math.max(index1, index2);
+  return candles.slice(lowIndex + 1, highIndex);
+};
+
 /**
  * Collection of utility functions.
  */
@@ -97,6 +112,7 @@ export const m = {
   applyIf,
   getAverageCandleSize,
   combine,
+  getCandlesBetween,
   getSwingHighs,
   getSwingLows,
   ...candlePatterns,

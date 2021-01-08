@@ -1,17 +1,10 @@
 import { CandleSeries } from "../core/candle-series";
 import { rankAndReport } from "./rank-and-report";
 import { Candle } from "../core/types";
-
-const getCandlesBetween = (c: Candle, c2: Candle, series: CandleSeries) => {
-  const index1 = series.findIndex((cc) => cc.time === c.time);
-  const index2 = series.findIndex((cc) => cc.time === c2.time);
-  const lowInd = Math.min(index1, index2);
-  const highInd = Math.max(index1, index2);
-  return series.slice(lowInd + 1, highInd);
-};
+import { m } from "../functions/functions";
 
 const getLowestHighBetween = (c: Candle, c2: Candle, series: CandleSeries) => {
-  const between = getCandlesBetween(c, c2, series);
+  const between = m.getCandlesBetween(series, c, c2);
   if (!between.length) {
     return null;
   }
