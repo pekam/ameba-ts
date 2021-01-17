@@ -2,6 +2,7 @@ import { CompanyWithAsyncCandles, getDataSet } from "../data/load-data-set";
 import { getUrl } from "../util";
 import { Candle } from "../core/types";
 import { m } from "../functions/functions";
+import _ = require("lodash");
 
 /**
  * Loads the data set from the database, runs the scoring function
@@ -11,6 +12,7 @@ import { m } from "../functions/functions";
  * which requires the webapp to be running in localhost.
  *
  * NOTE: ignores the last candle in the series because it is often not complete
+ * NOTE: includes only positive results
  *
  * @param dataSetId
  * @param scoringFunction
@@ -56,14 +58,17 @@ export async function rankAndReport(
     (r) => r.score
   );
 
-  const topResults = sortedResults.slice(0, reportCount).map((result) => ({
-    symbol: result.company.symbol,
-    name: result.company.name,
-    score: result.score,
-    candle: result.candle,
-  }));
+  const topResults = sortedResults
+    .slice(0, reportCount)
+    .filter((result) => result.score > 0) // Only positive scores reported
+    .map((result) => ({
+      symbol: result.company.symbol,
+      name: result.company.name,
+      score: result.score,
+      candle: result.candle,
+    }));
 
-  console.log(topResults);
+  console.log(topResults.map((res) => _.omit(res, "candle")));
 
   const url = getUrl(
     dataSetId,
