@@ -48,6 +48,10 @@ const sum: (values: number[]) => number = (values) =>
 const range: (length: number) => number[] = (length) =>
   Array.from(Array(length).keys());
 
+function sortAscending<T>(items: T[], sortBy: (item: T) => number): T[] {
+  return items.slice().sort((a, b) => sortBy(a) - sortBy(b));
+}
+
 function sortDescending<T>(items: T[], sortBy: (item: T) => number): T[] {
   return items.slice().sort((a, b) => sortBy(b) - sortBy(a));
 }
@@ -97,6 +101,11 @@ const getCandlesBetween = function (
   return candles.slice(lowIndex + 1, highIndex);
 };
 
+function getRelativeDiff(value1: number, value2: number) {
+  const [low, high] = sortAscending([value1, value2], (v) => v);
+  return (high - low) / low;
+}
+
 /**
  * Collection of utility functions.
  */
@@ -108,11 +117,13 @@ export const m = {
   avg,
   sum,
   range,
+  sortAscending,
   sortDescending,
   applyIf,
   getAverageCandleSize,
   combine,
   getCandlesBetween,
+  getRelativeDiff,
   getSwingHighs,
   getSwingLows,
   ...candlePatterns,
