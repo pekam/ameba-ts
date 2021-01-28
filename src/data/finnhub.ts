@@ -1,10 +1,7 @@
-import * as fs from "fs";
-import * as path from "path";
 import fetch from "node-fetch";
+import { properties } from "../properties";
 
-const { finnhub_api_key } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "..", "properties.json"), "utf8")
-);
+const { finnhub_api_key } = properties;
 
 if (!finnhub_api_key) {
   throw new Error("Failed to read finnhub_api_key from properties.json");

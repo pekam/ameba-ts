@@ -15,6 +15,7 @@
     "body-parser": "^1.18.3",
     "cli-progress": "^3.8.2",
     "express": "^4.16.4",
+    "ftx-api-rest": "0.0.6",
     "lodash": "^4.17.20",
     "luxon": "^1.25.0",
     "mongodb": "^3.6.2",
