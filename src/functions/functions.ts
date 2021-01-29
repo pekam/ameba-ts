@@ -106,6 +106,14 @@ function getRelativeDiff(value1: number, value2: number) {
   return (high - low) / low;
 }
 
+function isGrowingSeries(values: number[]): boolean {
+  return values.every((value, i) => i === 0 || value > values[i - 1]);
+}
+
+function isDecreasingSeries(values: number[]): boolean {
+  return values.every((value, i) => i === 0 || value < values[i - 1]);
+}
+
 /**
  * Collection of utility functions.
  */
@@ -124,6 +132,9 @@ export const m = {
   combine,
   getCandlesBetween,
   getRelativeDiff,
+  isGrowingSeries,
+  isDecreasingSeries,
+
   getSwingHighs,
   getSwingLows,
   ...candlePatterns,
