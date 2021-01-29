@@ -22,14 +22,6 @@ export interface BacktestResult {
    * How much was the relative value change during the series
    */
   buyAndHoldProfit: number;
-  /**
-   * Simulates transaction costs and slippage by adding
-   * a cost relative to the entry and exit prices.
-   *
-   * @param cost e.g. 0.001 to have 0.1% cost per transaction
-   * @return a new result with the costs applied
-   */
-  withRelativeTransactionCost: (relativeCost: number) => BacktestResult;
 }
 
 export function convertToBacktestResult(
@@ -37,7 +29,7 @@ export function convertToBacktestResult(
   series: CandleSeries
 ): BacktestResult {
   const trades: Trade[] = convertToTrades(transactions);
-  return tradesToResult(trades, [series]);
+  return tradesToResult(trades, getBuyAndHoldProfit([series]));
 }
 
 /**
@@ -50,12 +42,12 @@ export function combineResults(
   serieses: CandleSeries[]
 ) {
   const allTrades: Trade[] = [].concat(...results.map((r) => r.trades));
-  return tradesToResult(allTrades, serieses);
+  return tradesToResult(allTrades, getBuyAndHoldProfit(serieses));
 }
 
 function tradesToResult(
   trades: Trade[],
-  serieses: CandleSeries[]
+  buyAndHoldProfit: number
 ): BacktestResult {
   const profits: number[] = trades.map((trade) => trade.profit);
 
@@ -72,13 +64,6 @@ function tradesToResult(
     .reverse()
     .slice(0, Math.min(3, profits.length));
 
-  // Note: the period used in backtesting might not include the entire series
-  const buyAndHoldProfit = m.avg(
-    serieses.map(
-      (series) => (m.last(series).close - series[0].open) / series[0].open
-    )
-  );
-
   return {
     trades,
     result,
@@ -89,15 +74,25 @@ function tradesToResult(
     averageProfit: m.avg(profits),
     maxProfits,
     buyAndHoldProfit,
-
-    withRelativeTransactionCost: (relativeCost) => {
-      const updatedTrades = trades.map((trade) => ({
-        ...trade,
-        profit: getTradeProfit(trade, relativeCost),
-      }));
-      return tradesToResult(updatedTrades, serieses);
-    },
   };
+}
+
+/**
+ * Simulates transaction costs and slippage by adding
+ * a cost relative to the entry and exit prices.
+ *
+ * @param cost e.g. 0.001 to have 0.1% cost per transaction
+ * @return a new result with the costs applied
+ */
+export function withRelativeTransactionCost(
+  result: BacktestResult,
+  relativeCost: number
+) {
+  const updatedTrades = result.trades.map((trade) => ({
+    ...trade,
+    profit: getTradeProfit(trade, relativeCost),
+  }));
+  return tradesToResult(updatedTrades, result.buyAndHoldProfit);
 }
 
 function convertToTrades(transactions: Transaction[]): Trade[] {
@@ -121,6 +116,15 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
             timestampToUTCDateString(exit.time),
         };
       })
+  );
+}
+
+function getBuyAndHoldProfit(serieses: CandleSeries[]): number {
+  // Note: the period used in backtesting might not include the entire series
+  return m.avg(
+    serieses.map(
+      (series) => (m.last(series).close - series[0].open) / series[0].open
+    )
   );
 }
 
