@@ -1,15 +1,20 @@
-import { timestampFromUTC } from "../core/date-util";
-import { m } from "../functions/functions";
-import { ftx } from "./ftx";
+import { backtestStrategy } from "../core/backtest";
+import { withRelativeTransactionCost } from "../core/backtest-result";
+import { loadFtxDataFromDb } from "./ftx-db";
+import { SmaPullbackStrategy } from "../strats/sma-pullback-strat";
 
-ftx.getAccount().then(console.log);
-ftx
-  .getCandles({
-    marketName: "BTC/USD",
-    resolution: "5min",
-    startTime: timestampFromUTC(2021, 1, 28, 17, 15),
-    endTime: timestampFromUTC(2021, 1, 29),
-  })
-  .then((series) => {
-    console.log(m.last(series));
-  });
+async function run() {
+  const series = await loadFtxDataFromDb("bar");
+
+  const backtestResult = backtestStrategy(
+    () => new SmaPullbackStrategy(),
+    series
+  );
+  console.log({ ...backtestResult, trades: [] });
+  const resultWithTransactionCosts = withRelativeTransactionCost(
+    backtestResult,
+    0.0005
+  );
+  console.log({ ...resultWithTransactionCosts, trades: [] });
+}
+run();
