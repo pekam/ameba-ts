@@ -1,5 +1,17 @@
 import { properties } from "../properties";
 import { CandleSeries, toCandleSeries } from "../core/candle-series";
+import { m } from "../functions/functions";
+
+export const FtxMarkets = [
+  "BTC/USD",
+  "ETH/USD",
+  "FTT/USD",
+  "SUSHI/USD",
+  "DOGE/USD",
+  "LINK/USD",
+  "XRP/USD",
+] as const;
+export type FtxMarket = typeof FtxMarkets[number];
 
 const FtxRest = require("ftx-api-rest");
 
@@ -26,8 +38,6 @@ async function get(path: string) {
 async function getAccount() {
   return get("/account");
 }
-
-export type FtxMarket = "BTC/USD";
 
 const resolutionsInSeconds = [15, 60, 300, 900, 3600, 14400, 86400];
 const resolutionValues = [
@@ -67,7 +77,7 @@ async function getCandleSeries(params: FtxCandleRequestParams) {
   return toCandleSeries(await getCandles(params));
 }
 
-interface OrderBookEntry {
+export interface OrderBookEntry {
   price: number;
   /**
    * The amount of bid/ask at this price.
@@ -84,9 +94,18 @@ interface OrderBookEntry {
   relDiff: number;
 }
 
-interface OrderBook {
+export interface OrderBook {
+  market: FtxMarket;
   asks: OrderBookEntry[];
   bids: OrderBookEntry[];
+  /**
+   * The middle point between best bid and ask prices.
+   */
+  midPrice: number;
+  /**
+   * The bid-ask spread relative to the best bid price.
+   */
+  relSpread: number;
 }
 
 /**
@@ -117,10 +136,13 @@ async function getOrderBook(
       return acc;
     }, []);
 
-  return {
-    asks: convertEntries(response.asks),
-    bids: convertEntries(response.bids),
-  };
+  const asks = convertEntries(response.asks);
+  const bids = convertEntries(response.bids);
+
+  const midPrice = m.avg([asks[0].price, bids[0].price]);
+  const relSpread = (asks[0].price - bids[0].price) / bids[0].price;
+
+  return { market, asks, bids, midPrice, relSpread };
 }
 
 export const ftx = {
