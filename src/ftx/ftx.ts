@@ -69,8 +69,19 @@ async function getCandleSeries(params: FtxCandleRequestParams) {
 
 interface OrderBookEntry {
   price: number;
+  /**
+   * The amount of bid/ask at this price.
+   */
   volume: number;
+  /**
+   * The cumulative amount of bid/ask up to and including this price.
+   */
   cumulative: number;
+  /**
+   * The relative difference between this price and the best bid/ask price.
+   * It's a positive number, also for bids although they're decreasing.
+   */
+  relDiff: number;
 }
 
 interface OrderBook {
@@ -92,7 +103,16 @@ async function getOrderBook(
     entry.reduce((acc, [price, volume]) => {
       const cumulative =
         (acc.length ? acc[acc.length - 1].cumulative : 0) + volume;
-      const entry: OrderBookEntry = { price, volume, cumulative };
+
+      const bestPrice = acc.length ? acc[0].price : price;
+      const relDiff = Math.abs((price - bestPrice) / bestPrice);
+
+      const entry: OrderBookEntry = {
+        price,
+        volume,
+        cumulative,
+        relDiff,
+      };
       acc.push(entry);
       return acc;
     }, []);
