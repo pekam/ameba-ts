@@ -13,6 +13,7 @@ const api = new FtxRest({
 });
 
 async function get(path: string) {
+  console.log(`GET ftx.com${path}`);
   return api.request({ method: "GET", path }).then((response) => {
     if (response.success) {
       return response.result;
@@ -26,7 +27,7 @@ async function getAccount() {
   return get("/account");
 }
 
-export type Pair = "BTC/USD";
+export type FtxMarket = "BTC/USD";
 
 const resolutionsInSeconds = [15, 60, 300, 900, 3600, 14400, 86400];
 const resolutionValues = [
@@ -41,7 +42,7 @@ const resolutionValues = [
 export type FtxResolution = typeof resolutionValues[number];
 
 export interface FtxCandleRequestParams {
-  marketName: Pair;
+  market: FtxMarket;
   resolution: FtxResolution;
   startTime: number;
   endTime: number;
@@ -54,7 +55,7 @@ async function getCandles(
     resolutionsInSeconds[resolutionValues.indexOf(params.resolution)];
   // optional "limit" parameter omitted
   return get(
-    `/markets/${params.marketName}/candles?resolution=${resInSecs}` +
+    `/markets/${params.market}/candles?resolution=${resInSecs}` +
       `&start_time=${params.startTime}&end_time=${params.endTime}`
   ).then((candles) =>
     // ftx returns time in milliseconds, which is inconsistent with finnhub
@@ -66,8 +67,45 @@ async function getCandleSeries(params: FtxCandleRequestParams) {
   return toCandleSeries(await getCandles(params));
 }
 
+interface OrderBookEntry {
+  price: number;
+  volume: number;
+  cumulative: number;
+}
+
+interface OrderBook {
+  asks: OrderBookEntry[];
+  bids: OrderBookEntry[];
+}
+
+/**
+ * @param market
+ * @param depth max 100, default 20
+ */
+async function getOrderBook(
+  market: FtxMarket,
+  depth: number = 20
+): Promise<OrderBook> {
+  const response = await get(`/markets/${market}/orderbook?depth=${depth}`);
+
+  const convertEntries = (entry) =>
+    entry.reduce((acc, [price, volume]) => {
+      const cumulative =
+        (acc.length ? acc[acc.length - 1].cumulative : 0) + volume;
+      const entry: OrderBookEntry = { price, volume, cumulative };
+      acc.push(entry);
+      return acc;
+    }, []);
+
+  return {
+    asks: convertEntries(response.asks),
+    bids: convertEntries(response.bids),
+  };
+}
+
 export const ftx = {
   getAccount,
   getCandles,
   getCandleSeries,
+  getOrderBook,
 };

@@ -21,7 +21,7 @@ export async function loadFtxDataFromDb(id: string): Promise<CandleSeries> {
 
 async function run() {
   await loadFromFtxToDb("bar", {
-    marketName: "BTC/USD",
+    market: "BTC/USD",
     resolution: "5min",
     startTime: timestampFromUTC(2020, 7),
     endTime: timestampFromUTC(2020, 12),
