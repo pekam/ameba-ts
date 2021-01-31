@@ -40,12 +40,16 @@ const resolutionValues = [
 ] as const;
 export type FtxResolution = typeof resolutionValues[number];
 
-async function getCandles(params: {
+export interface FtxCandleRequestParams {
   marketName: Pair;
   resolution: FtxResolution;
   startTime: number;
   endTime: number;
-}): Promise<CandleSeries> {
+}
+
+async function getCandles(
+  params: FtxCandleRequestParams
+): Promise<CandleSeries> {
   const resInSecs =
     resolutionsInSeconds[resolutionValues.indexOf(params.resolution)];
   // optional "limit" parameter omitted
@@ -54,11 +58,16 @@ async function getCandles(params: {
       `&start_time=${params.startTime}&end_time=${params.endTime}`
   ).then((candles) =>
     // ftx returns time in milliseconds, which is inconsistent with finnhub
-    toCandleSeries(candles.map((c) => ({ ...c, time: c.time / 1000 })))
+    candles.map((c) => ({ ...c, time: c.time / 1000 }))
   );
+}
+
+async function getCandleSeries(params: FtxCandleRequestParams) {
+  return toCandleSeries(await getCandles(params));
 }
 
 export const ftx = {
   getAccount,
   getCandles,
+  getCandleSeries,
 };
