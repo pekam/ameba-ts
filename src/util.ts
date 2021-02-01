@@ -47,3 +47,6 @@ export function getUrl(
   );
   return `http://localhost:3000/?dataSet=${dataSetId}&symbols=${chartParams}`;
 }
+
+export const getCurrentTimestampInSeconds = () =>
+  Math.round(Date.now() * 0.001);

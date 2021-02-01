@@ -1,6 +1,7 @@
 import { properties } from "../properties";
 import { CandleSeries, toCandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
+import { getCurrentTimestampInSeconds } from "../util";
 
 export const FtxMarkets = [
   "BTC/USD",
@@ -106,6 +107,11 @@ export interface OrderBook {
    * The bid-ask spread relative to the best bid price.
    */
   relSpread: number;
+  /**
+   * Timestamp of the moment when the order book was requested,
+   * as seconds since the Unix epoch.
+   */
+  time: number;
 }
 
 /**
@@ -117,6 +123,7 @@ async function getOrderBook(
   depth: number = 20
 ): Promise<OrderBook> {
   const response = await get(`/markets/${market}/orderbook?depth=${depth}`);
+  const time = getCurrentTimestampInSeconds();
 
   const convertEntries = (entry) =>
     entry.reduce((acc, [price, volume]) => {
@@ -142,7 +149,7 @@ async function getOrderBook(
   const midPrice = m.avg([asks[0].price, bids[0].price]);
   const relSpread = (asks[0].price - bids[0].price) / bids[0].price;
 
-  return { market, asks, bids, midPrice, relSpread };
+  return { market, asks, bids, midPrice, relSpread, time };
 }
 
 export const ftx = {
