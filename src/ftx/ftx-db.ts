@@ -1,31 +1,46 @@
-import { ftx, FtxCandleRequestParams } from "./ftx";
+import {
+  ftx,
+  FtxCandleRequestParams,
+  FtxMarket,
+  FtxOrderBookParams,
+  OrderBook,
+} from "./ftx";
 import { db } from "../data/mongo";
-import { timestampFromUTC } from "../core/date-util";
 import { RawCandle } from "../core/types";
 import { CandleSeries, toCandleSeries } from "../core/candle-series";
 
 const collectionId = "ftx";
 
-export async function loadFromFtxToDb(
-  id: string,
-  params: FtxCandleRequestParams
-) {
+async function loadCandleDataToDb(id: string, params: FtxCandleRequestParams) {
   const candles = await ftx.getCandles(params);
   await db.set(collectionId, id, { params, candles });
 }
 
-export async function loadFtxDataFromDb(id: string): Promise<CandleSeries> {
+async function loadCandleDataFromDb(id: string): Promise<CandleSeries> {
   const candles: RawCandle[] = (await db.get(collectionId, id)).candles;
   return toCandleSeries(candles);
 }
 
-async function run() {
-  await loadFromFtxToDb("bar", {
-    market: "BTC/USD",
-    resolution: "5min",
-    startTime: timestampFromUTC(2020, 7),
-    endTime: timestampFromUTC(2020, 12),
-  });
+const getOrderBookDocId = (market) => "orderbooks-" + market;
+
+async function loadOrderBookToDb(params: FtxOrderBookParams) {
+  const book = await ftx.getOrderBook(params);
+  const id = getOrderBookDocId(params.market);
+  // todo: optimize updating one item
+  const old = await db.get(collectionId, id);
+  const books = old ? old.books : [];
+  books.push(book);
+  await db.set(collectionId, id, { books });
 }
 
-// run();
+async function loadOrderBooksFromDb(market: FtxMarket): Promise<OrderBook[]> {
+  const result = await db.get(collectionId, getOrderBookDocId(market));
+  return result && result.books;
+}
+
+export const ftxDb = {
+  loadCandleDataToDb,
+  loadCandleDataFromDb,
+  loadOrderBookToDb,
+  loadOrderBooksFromDb,
+};

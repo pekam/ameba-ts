@@ -114,14 +114,16 @@ export interface OrderBook {
   time: number;
 }
 
-/**
- * @param market
- * @param depth max 100, default 20
- */
-async function getOrderBook(
-  market: FtxMarket,
-  depth: number = 20
-): Promise<OrderBook> {
+export interface FtxOrderBookParams {
+  market: FtxMarket;
+  /**
+   * max 100, default 20
+   */
+  depth: number;
+}
+
+async function getOrderBook(params: FtxOrderBookParams): Promise<OrderBook> {
+  const { market, depth } = params;
   const response = await get(`/markets/${market}/orderbook?depth=${depth}`);
   const time = getCurrentTimestampInSeconds();
 
