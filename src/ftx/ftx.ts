@@ -189,6 +189,16 @@ async function getOpenOrders(
   return get(`/orders?market=${market}`);
 }
 
+async function getOrderStatus(
+  id: number
+): Promise<{
+  status: "new" | "open" | "closed";
+  filledSize: number;
+  remainingSize: number;
+}> {
+  return get(`/orders/${id}`);
+}
+
 async function cancelOrder(id: number): Promise<string> {
   return request("DELETE", `/orders/${id}`);
 }
@@ -217,6 +227,7 @@ export const ftx = {
   getCandleSeries,
   getOrderBook,
   getOpenOrders,
+  getOrderStatus,
   cancelOrder,
   cancelAllOrders,
   addOrder,
