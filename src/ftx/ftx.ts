@@ -26,11 +26,12 @@ const api = new FtxRest({
 });
 
 async function request(
-  method: "GET" | "PUT" | "DELETE",
-  path: string
+  method: "GET" | "POST" | "DELETE",
+  path: string,
+  data?: any
 ): Promise<any> {
   console.log(`${method} ftx.com${path}`);
-  return api.request({ method, path }).then((response) => {
+  return api.request({ method, path, data }).then((response) => {
     if (response.success) {
       return response.result;
     } else {
@@ -41,6 +42,10 @@ async function request(
 
 async function get(path: string): Promise<any> {
   return request("GET", path);
+}
+
+async function post(path: string, data: any): Promise<any> {
+  return request("POST", path, data);
 }
 
 async function getAccount() {
@@ -178,8 +183,25 @@ async function getOpenOrders(
   return get(`/orders?market=${market}`);
 }
 
-async function cancelOrder(id: number) {
+async function cancelOrder(id: number): Promise<string> {
   return request("DELETE", `/orders/${id}`);
+}
+
+async function cancelAllOrders(market: FtxMarket): Promise<string> {
+  return request("DELETE", `/orders`, { market });
+}
+
+interface FtxAddOrderParams {
+  market: FtxMarket;
+  side: "buy" | "sell";
+  price: number;
+  type: "market" | "limit";
+  size: number;
+  postOnly: boolean;
+}
+
+async function addOrder(params: FtxAddOrderParams): Promise<{ id: number }> {
+  return post("/orders", params);
 }
 
 export const ftx = {
@@ -189,4 +211,6 @@ export const ftx = {
   getOrderBook,
   getOpenOrders,
   cancelOrder,
+  cancelAllOrders,
+  addOrder,
 };
