@@ -52,6 +52,12 @@ async function getAccount() {
   return get("/account");
 }
 
+async function getBalances(): Promise<
+  { coin: string; free: number; total: number; usdValue: number }[]
+> {
+  return get("/wallet/balances");
+}
+
 const resolutionsInSeconds = [15, 60, 300, 900, 3600, 14400, 86400];
 const resolutionValues = [
   "15sec",
@@ -206,6 +212,7 @@ async function addOrder(params: FtxAddOrderParams): Promise<{ id: number }> {
 
 export const ftx = {
   getAccount,
+  getBalances,
   getCandles,
   getCandleSeries,
   getOrderBook,
