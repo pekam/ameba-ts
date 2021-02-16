@@ -67,7 +67,7 @@ async function getCandles(
   // optional "limit" parameter omitted
   return get(
     `/markets/${params.market}/candles?resolution=${resInSecs}` +
-      `&start_time=${params.startTime}&end_time=${params.endTime}`
+      `&start_time=${params.startTime}&end_time=${params.endTime}&limit=${5000}`
   ).then((candles) =>
     // ftx returns time in milliseconds, which is inconsistent with finnhub
     candles.map((c) => ({ ...c, time: c.time / 1000 }))
