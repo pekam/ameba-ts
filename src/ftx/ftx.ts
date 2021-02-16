@@ -17,7 +17,7 @@ export type FtxMarket = typeof FtxMarkets[number];
 const FtxRest = require("ftx-api-rest");
 
 const { ftx_api_key, ftx_s } = properties;
-const subaccount = undefined;
+const subaccount = "bot";
 
 const api = new FtxRest({
   key: ftx_api_key,
@@ -25,15 +25,22 @@ const api = new FtxRest({
   subaccount,
 });
 
-async function get(path: string) {
-  console.log(`GET ftx.com${path}`);
-  return api.request({ method: "GET", path }).then((response) => {
+async function request(
+  method: "GET" | "PUT" | "DELETE",
+  path: string
+): Promise<any> {
+  console.log(`${method} ftx.com${path}`);
+  return api.request({ method, path }).then((response) => {
     if (response.success) {
       return response.result;
     } else {
       throw Error("Request to FTX not successful");
     }
   });
+}
+
+async function get(path: string): Promise<any> {
+  return request("GET", path);
 }
 
 async function getAccount() {
@@ -154,9 +161,32 @@ async function getOrderBook(params: FtxOrderBookParams): Promise<OrderBook> {
   return { market, asks, bids, midPrice, relSpread, time };
 }
 
+async function getOpenOrders(
+  market: FtxMarket
+): Promise<
+  {
+    id: number;
+    market: FtxMarket;
+    price: number;
+    side: "buy" | "sell";
+    size: number;
+    filledSize: number;
+    type: string;
+    postOnly: boolean;
+  }[]
+> {
+  return get(`/orders?market=${market}`);
+}
+
+async function cancelOrder(id: number) {
+  return request("DELETE", `/orders/${id}`);
+}
+
 export const ftx = {
   getAccount,
   getCandles,
   getCandleSeries,
   getOrderBook,
+  getOpenOrders,
+  cancelOrder,
 };
