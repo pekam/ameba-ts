@@ -30,7 +30,7 @@ async function request(
   path: string,
   data?: any
 ): Promise<any> {
-  console.log(`${method} ftx.com${path}`);
+  console.log(`${method} ftx.com${path}`, data);
   return api.request({ method, path, data }).then((response) => {
     if (response.success) {
       return response.result;
@@ -200,7 +200,17 @@ async function getOrderStatus(
 }
 
 async function cancelOrder(id: number): Promise<string> {
-  return request("DELETE", `/orders/${id}`);
+  try {
+    return await request("DELETE", `/orders/${id}`);
+  } catch (e) {
+    if (e.message.includes("Order already")) {
+      console.log(
+        "Order was already closed or queued for cancellation, all good."
+      );
+    } else {
+      throw e;
+    }
+  }
 }
 
 async function cancelAllOrders(market: FtxMarket): Promise<string> {
