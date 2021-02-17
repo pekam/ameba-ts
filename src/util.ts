@@ -50,3 +50,11 @@ export function getUrl(
 
 export const getCurrentTimestampInSeconds = () =>
   Math.round(Date.now() * 0.001);
+
+export async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function toFixed(num: number, decimals: number): number {
+  return parseFloat(num.toFixed(decimals));
+}
