@@ -11,10 +11,10 @@ const market = "BTC/USD";
   while (true) {
     console.log(" ----- " + new Date() + " ----- ");
     const series = await getRecentCandles();
-    const ema = getEma(series);
-    const price = m.last(series).close;
-    console.log({ ema, price });
-    if (price > ema) {
+    const ema20 = getEma(series, 20);
+    const ema5 = getEma(series, 5);
+    console.log({ ema20, ema5 });
+    if (ema5 > ema20) {
       await enterAsMarketMaker();
     } else {
       await exitAsMarketMaker();
@@ -24,9 +24,9 @@ const market = "BTC/USD";
   }
 })();
 
-function getEma(series: CandleSeries) {
+function getEma(series: CandleSeries, period: number) {
   return m.last(
-    EMA.calculate({ values: series.slice(-50).map((c) => c.close), period: 20 })
+    EMA.calculate({ values: series.slice(-50).map((c) => c.close), period })
   );
 }
 
