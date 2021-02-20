@@ -10,20 +10,7 @@ const sleepMs = 2000;
  */
 export async function enterAsMarketMaker() {
   console.log("begin entry");
-  let id;
-  while (true) {
-    if (id) {
-      await ftx.cancelOrder(id);
-      console.log("order cancelled");
-    }
-    const much = await howMuchCanBuy();
-    if (much < 0.0001) {
-      break;
-    }
-    id = await addBestBid(much);
-    await sleep(sleepMs);
-  }
-  const didSomething = !!id;
+  const didSomething = await doAsMarketMaker(howMuchCanBuy, addBestBid);
   console.log(didSomething ? "entry finished" : "already entered");
 }
 
@@ -32,21 +19,29 @@ export async function enterAsMarketMaker() {
  */
 export async function exitAsMarketMaker() {
   console.log("begin exit");
+  const didSomething = await doAsMarketMaker(howMuchCanSell, addBestAsk);
+  console.log(didSomething ? "exit finished" : "already exited");
+}
+
+export async function doAsMarketMaker(
+  howMuchCanBuyOrSell: () => Promise<number>,
+  addBestOrderToOrderbook: (size: number) => Promise<number>
+) {
   let id;
   while (true) {
     if (id) {
       await ftx.cancelOrder(id);
       console.log("order cancelled");
     }
-    const much = await howMuchCanSell();
+    const much = await howMuchCanBuyOrSell();
     if (much < 0.0001) {
       break;
     }
-    id = await addBestAsk(much);
+    id = await addBestOrderToOrderbook(much);
     await sleep(sleepMs);
   }
   const didSomething = !!id;
-  console.log(didSomething ? "exit finished" : "already exited");
+  return didSomething;
 }
 
 async function addBestBid(size: number): Promise<number> {
@@ -98,7 +93,7 @@ async function order({
     size,
     side,
     price,
-    postOnly: true,
+    postOnly: true, // the order is cancelled if not market maker
     type: "limit",
   });
   return id;
