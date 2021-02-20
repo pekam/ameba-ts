@@ -1,7 +1,7 @@
 import { properties } from "../properties";
 import { CandleSeries, toCandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
-import { getCurrentTimestampInSeconds } from "../util";
+import { getCurrentTimestampInSeconds, sleep } from "../util";
 
 export const FtxMarkets = [
   "BTC/USD",
@@ -25,19 +25,32 @@ const api = new FtxRest({
   subaccount,
 });
 
+/**
+ * @param errorHandler function that is called if error occurs. It should return
+ * true if the request should be retried, false if not.
+ */
 async function request(
   method: "GET" | "POST" | "DELETE",
   path: string,
-  data?: any
+  data?: any,
+  errorHandler: (e: Error) => boolean = (e) => true
 ): Promise<any> {
-  console.log(`${method} ftx.com${path}`, data);
-  return api.request({ method, path, data }).then((response) => {
-    if (response.success) {
+  let retrySleep = 1000;
+  while (true) {
+    try {
+      console.log(`${method} ftx.com${path}`, data);
+      const response = await api.request({ method, path, data });
       return response.result;
-    } else {
-      throw Error("Request to FTX not successful");
+    } catch (e) {
+      const retry = errorHandler(e);
+      if (!retry) {
+        break;
+      }
+      console.log(`Retrying after ${retrySleep}ms...`);
+      await sleep(retrySleep);
+      retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);
     }
-  });
+  }
 }
 
 async function get(path: string): Promise<any> {
@@ -200,17 +213,17 @@ async function getOrderStatus(
 }
 
 async function cancelOrder(id: number): Promise<string> {
-  try {
-    return await request("DELETE", `/orders/${id}`);
-  } catch (e) {
+  const errorHandler = (e) => {
     if (e.message.includes("Order already")) {
       console.log(
         "Order was already closed or queued for cancellation, all good."
       );
+      return false;
     } else {
-      throw e;
+      return true;
     }
-  }
+  };
+  return request("DELETE", `/orders/${id}`, undefined, errorHandler);
 }
 
 async function cancelAllOrders(market: FtxMarket): Promise<string> {
