@@ -1,17 +1,22 @@
-import { ftx, FtxMarket } from "./ftx";
+import { ftx, FtxAddOrderParams, FtxMarket } from "./ftx";
 import { sleep, toFixed } from "../util";
 
 const market: FtxMarket = "BTC/USD";
 
 const sleepMs = 2000;
 
+export type FtxBotOrder = FtxAddOrderParams & {
+  id: number;
+};
+
 /**
  * Enters the market in the current price as a market maker.
  */
 export async function enterAsMarketMaker() {
   console.log("begin entry");
-  const didSomething = await doAsMarketMaker(howMuchCanBuy, addBestBid);
-  console.log(didSomething ? "entry finished" : "already entered");
+  const order = await doAsMarketMaker(howMuchCanBuy, addBestBid);
+  console.log(order ? "entry finished" : "already entered");
+  return order;
 }
 
 /**
@@ -19,43 +24,43 @@ export async function enterAsMarketMaker() {
  */
 export async function exitAsMarketMaker() {
   console.log("begin exit");
-  const didSomething = await doAsMarketMaker(howMuchCanSell, addBestAsk);
-  console.log(didSomething ? "exit finished" : "already exited");
+  const order = await doAsMarketMaker(howMuchCanSell, addBestAsk);
+  console.log(order ? "exit finished" : "already exited");
+  return order;
 }
 
 export async function doAsMarketMaker(
   howMuchCanBuyOrSell: () => Promise<number>,
-  addBestOrderToOrderbook: (size: number) => Promise<number>
+  addBestOrderToOrderbook: (size: number) => Promise<FtxBotOrder>
 ) {
-  let id;
+  let order: FtxBotOrder;
   while (true) {
-    if (id) {
-      await ftx.cancelOrder(id);
+    if (order) {
+      await ftx.cancelOrder(order.id);
       console.log("order cancelled");
     }
     const much = await howMuchCanBuyOrSell();
     if (much < 0.0001) {
       break;
     }
-    id = await addBestOrderToOrderbook(much);
+    order = await addBestOrderToOrderbook(much);
     await sleep(sleepMs);
   }
-  const didSomething = !!id;
-  return didSomething;
+  return order;
 }
 
-async function addBestBid(size: number): Promise<number> {
+async function addBestBid(size: number): Promise<FtxBotOrder> {
   const orderBook = await ftx.getOrderBook({ market, depth: 1 });
   const bid = orderBook.bids[0].price;
   const price = toFixed(bid + 0.001, 3);
-  return order({ price, size, side: "buy" });
+  return addOrder({ price, size, side: "buy" });
 }
 
-async function addBestAsk(size: number): Promise<number> {
+async function addBestAsk(size: number): Promise<FtxBotOrder> {
   const orderBook = await ftx.getOrderBook({ market, depth: 1 });
   const ask = orderBook.asks[0].price;
   const price = toFixed(ask - 0.001, 3);
-  return order({ price, size, side: "sell" });
+  return addOrder({ price, size, side: "sell" });
 }
 
 async function howMuchCanBuy() {
@@ -79,7 +84,7 @@ async function getState() {
   return { usd, btc, ask, bid };
 }
 
-async function order({
+async function addOrder({
   price,
   size,
   side,
@@ -87,16 +92,17 @@ async function order({
   price: number;
   size: number;
   side: "buy" | "sell";
-}): Promise<number> {
-  const { id } = await ftx.addOrder({
+}): Promise<FtxBotOrder> {
+  const params: FtxAddOrderParams = {
     market,
     size,
     side,
     price,
     postOnly: true, // the order is cancelled if not market maker
     type: "limit",
-  });
-  return id;
+  };
+  const { id } = await ftx.addOrder(params);
+  return { ...params, id };
 }
 
 async function getBalancesAsObject() {

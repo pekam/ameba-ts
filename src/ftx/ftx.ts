@@ -217,7 +217,7 @@ async function cancelAllOrders(market: FtxMarket): Promise<string> {
   return request("DELETE", `/orders`, { market });
 }
 
-interface FtxAddOrderParams {
+export interface FtxAddOrderParams {
   market: FtxMarket;
   side: "buy" | "sell";
   price: number;
