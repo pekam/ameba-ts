@@ -2,6 +2,7 @@ import { CandleSeries } from "../core/candle-series";
 import { Candle, OHLC } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import { candlePatterns } from "./candle-patterns";
+import _ = require("lodash");
 
 /**
  * Supports negative index to get from the end of the array.
@@ -114,6 +115,22 @@ function isDecreasingSeries(values: number[]): boolean {
   return values.every((value, i) => i === 0 || value < values[i - 1]);
 }
 
+function isBetween({
+  value,
+  low,
+  high,
+}: {
+  value: number;
+  low: number;
+  high: number;
+}): boolean {
+  return value > low && value < high;
+}
+
+function takeCandlesAfter(series: CandleSeries, time: number): CandleSeries {
+  return _.takeRightWhile(series, (c) => c.time > time);
+}
+
 /**
  * Collection of utility functions.
  */
@@ -134,6 +151,8 @@ export const m = {
   getRelativeDiff,
   isGrowingSeries,
   isDecreasingSeries,
+  takeCandlesAfter,
+  isBetween,
 
   getSwingHighs,
   getSwingLows,

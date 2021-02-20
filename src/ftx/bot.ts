@@ -16,7 +16,7 @@ const market = "BTC/USD";
  * even if the other conditions would tell to change the position. This avoids
  * going back-and-forth "at the limit" (e.g. MA crossover point), wasting money.
  */
-const safeZone = 0.002;
+const safeZoneMargin = 0.001;
 
 (async function () {
   let lastOrder: FtxBotOrder;
@@ -56,9 +56,7 @@ function shouldBeLong({
     return longCondition;
   }
 
-  const inSafeZone =
-    currentPrice < lastOrder.price * (1 + safeZone) &&
-    currentPrice > lastOrder.price * (1 - safeZone);
+  const inSafeZone = isInSafeZone(series, currentPrice, lastOrder);
 
   const currentlyLong = lastOrder.side === "buy";
 
@@ -68,6 +66,35 @@ function shouldBeLong({
   } else {
     return longCondition;
   }
+}
+
+function isInSafeZone(
+  series: CandleSeries,
+  currentPrice: number,
+  lastOrder: FtxBotOrder
+): boolean {
+  const safeZone = {
+    low: lastOrder.price * (1 - safeZoneMargin),
+    high: lastOrder.price * (1 + safeZoneMargin),
+  };
+
+  const candlesSinceLastOrder = m.takeCandlesAfter(series, lastOrder.time);
+
+  console.log("candles since last order", candlesSinceLastOrder.length);
+
+  if (candlesSinceLastOrder.length > 0) {
+    const sinceLastOrder = m.combine(candlesSinceLastOrder);
+
+    if (
+      sinceLastOrder.high > safeZone.high ||
+      sinceLastOrder.low < safeZone.low
+    ) {
+      console.log("safezone broken since last order");
+      return false;
+    }
+  }
+
+  return m.isBetween({ value: currentPrice, ...safeZone });
 }
 
 function getEma(series: CandleSeries, period: number) {

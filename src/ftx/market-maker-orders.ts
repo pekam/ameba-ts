@@ -1,5 +1,5 @@
 import { ftx, FtxAddOrderParams, FtxMarket } from "./ftx";
-import { sleep, toFixed } from "../util";
+import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 
 const market: FtxMarket = "BTC/USD";
 
@@ -7,6 +7,7 @@ const sleepMs = 2000;
 
 export type FtxBotOrder = FtxAddOrderParams & {
   id: number;
+  time: number;
 };
 
 /**
@@ -102,7 +103,7 @@ async function addOrder({
     type: "limit",
   };
   const { id } = await ftx.addOrder(params);
-  return { ...params, id };
+  return { ...params, id, time: getCurrentTimestampInSeconds() };
 }
 
 async function getBalancesAsObject() {
