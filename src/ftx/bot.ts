@@ -1,6 +1,5 @@
-import { ftx } from "./ftx";
+import { ftx, FtxResolution } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep } from "../util";
-import { EMA } from "technicalindicators";
 import { m } from "../functions/functions";
 import { CandleSeries } from "../core/candle-series";
 import {
@@ -11,19 +10,42 @@ import {
 
 const market = "BTC/USD";
 
+type FtxBotStrat = (params: {
+  series: CandleSeries;
+  lastOrder: FtxBotOrder;
+}) => boolean;
+
 /**
+ * safeZoneMargin:
  * How much the price needs to change from previous order to trigger a new order,
  * even if the other conditions would tell to change the position. This avoids
  * going back-and-forth "at the limit" (e.g. MA crossover point), wasting money.
+ *
+ * candleSeriesLookBack:
+ * How long into the history will candles be loaded for each iteration
+ * of the strategy.
  */
-const safeZoneMargin = 0.001;
-
-(async function () {
+export async function runFtxBot(params: {
+  strat: FtxBotStrat;
+  safeZoneMargin: number;
+  resolution: FtxResolution;
+  candleSeriesLookBack: number;
+}) {
   let lastOrder: FtxBotOrder;
   while (true) {
     console.log(" ----- " + new Date() + " ----- ");
-    const series = await getRecentCandles();
-    if (shouldBeLong({ series, lastOrder })) {
+    const series = await getRecentCandles(
+      params.resolution,
+      params.candleSeriesLookBack
+    );
+    if (
+      shouldBeLong({
+        series,
+        lastOrder,
+        strat: params.strat,
+        safeZoneMargin: params.safeZoneMargin,
+      })
+    ) {
       lastOrder = (await enterAsMarketMaker()) || lastOrder;
     } else {
       lastOrder = (await exitAsMarketMaker()) || lastOrder;
@@ -31,32 +53,37 @@ const safeZoneMargin = 0.001;
     console.log("sleeping for 10s");
     await sleep(10 * 1000);
   }
-})();
+}
 
 function shouldBeLong({
   series,
   lastOrder,
+  strat,
+  safeZoneMargin,
 }: {
   series: CandleSeries;
   lastOrder: FtxBotOrder;
+  strat: FtxBotStrat;
+  safeZoneMargin: number;
 }) {
   const currentPrice = m.last(series).close;
-  const emaShort = getEma(series, 5);
-  const emaLong = getEma(series, 20);
   console.log({
-    emaShort,
-    emaLong,
     currentPrice,
     lastOrder: lastOrder && lastOrder.price,
   });
 
-  const longCondition = emaShort > emaLong;
+  const longCondition = strat({ series, lastOrder });
 
   if (!lastOrder) {
     return longCondition;
   }
 
-  const inSafeZone = isInSafeZone(series, currentPrice, lastOrder);
+  const inSafeZone = isInSafeZone(
+    series,
+    currentPrice,
+    lastOrder,
+    safeZoneMargin
+  );
 
   const currentlyLong = lastOrder.side === "buy";
 
@@ -71,7 +98,8 @@ function shouldBeLong({
 function isInSafeZone(
   series: CandleSeries,
   currentPrice: number,
-  lastOrder: FtxBotOrder
+  lastOrder: FtxBotOrder,
+  safeZoneMargin: number
 ): boolean {
   const safeZone = {
     low: lastOrder.price * (1 - safeZoneMargin),
@@ -97,17 +125,15 @@ function isInSafeZone(
   return m.isBetween({ value: currentPrice, ...safeZone });
 }
 
-function getEma(series: CandleSeries, period: number) {
-  return m.last(
-    EMA.calculate({ values: series.slice(-50).map((c) => c.close), period })
-  );
-}
-
-async function getRecentCandles() {
+async function getRecentCandles(
+  resolution: FtxResolution,
+  candleSeriesLookBack: number
+) {
+  const now = getCurrentTimestampInSeconds();
   return ftx.getCandleSeries({
     market,
-    resolution: "1min",
-    startTime: getCurrentTimestampInSeconds() - 60 * 60 * 6, // 6h
-    endTime: getCurrentTimestampInSeconds(),
+    resolution,
+    startTime: now - candleSeriesLookBack,
+    endTime: now,
   });
 }
