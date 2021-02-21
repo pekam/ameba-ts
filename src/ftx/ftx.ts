@@ -88,12 +88,19 @@ export interface FtxAddOrderParams {
 
 const FtxRest = require("ftx-api-rest");
 
-const { ftx_api_key, ftx_s } = properties;
+const { ftx } = properties;
 
 export function getFtxClient({ subaccount }: { subaccount: string }) {
+  const keys = ftx.find((f) => f.subaccount === subaccount);
+  if (!keys) {
+    throw new Error(
+      `Ftx api keys for subaccount '${subaccount}' not found in properties.json`
+    );
+  }
+
   const api = new FtxRest({
-    key: ftx_api_key,
-    secret: ftx_s.substr(1),
+    key: keys.api_key,
+    secret: keys.s.substr(1),
     subaccount,
   });
 
