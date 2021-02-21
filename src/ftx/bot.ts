@@ -1,12 +1,8 @@
-import { ftx, FtxResolution } from "./ftx";
+import { FtxResolution, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep } from "../util";
 import { m } from "../functions/functions";
 import { CandleSeries } from "../core/candle-series";
-import {
-  enterAsMarketMaker,
-  exitAsMarketMaker,
-  FtxBotOrder,
-} from "./market-maker-orders";
+import { FtxBotOrder, getFtxMarketMaker } from "./market-maker-orders";
 
 const market = "BTC/USD";
 
@@ -25,30 +21,47 @@ type FtxBotStrat = (params: {
  * How long into the history will candles be loaded for each iteration
  * of the strategy.
  */
-export async function runFtxBot(params: {
+export async function runFtxBot({
+  resolution,
+  subaccount,
+  safeZoneMargin,
+  candleSeriesLookBack,
+  strat,
+}: {
+  subaccount: string;
   strat: FtxBotStrat;
   safeZoneMargin: number;
   resolution: FtxResolution;
   candleSeriesLookBack: number;
 }) {
+  const ftx = getFtxClient({ subaccount });
+  const marketMaker = getFtxMarketMaker(ftx);
+
+  async function getRecentCandles() {
+    const now = getCurrentTimestampInSeconds();
+    return ftx.getCandleSeries({
+      market,
+      resolution,
+      startTime: now - candleSeriesLookBack,
+      endTime: now,
+    });
+  }
+
   let lastOrder: FtxBotOrder;
   while (true) {
     console.log(" ----- " + new Date() + " ----- ");
-    const series = await getRecentCandles(
-      params.resolution,
-      params.candleSeriesLookBack
-    );
+    const series = await getRecentCandles();
     if (
       shouldBeLong({
         series,
         lastOrder,
-        strat: params.strat,
-        safeZoneMargin: params.safeZoneMargin,
+        strat,
+        safeZoneMargin,
       })
     ) {
-      lastOrder = (await enterAsMarketMaker()) || lastOrder;
+      lastOrder = (await marketMaker.enter()) || lastOrder;
     } else {
-      lastOrder = (await exitAsMarketMaker()) || lastOrder;
+      lastOrder = (await marketMaker.exit()) || lastOrder;
     }
     console.log("sleeping for 10s");
     await sleep(10 * 1000);
@@ -123,17 +136,4 @@ function isInSafeZone(
   }
 
   return m.isBetween({ value: currentPrice, ...safeZone });
-}
-
-async function getRecentCandles(
-  resolution: FtxResolution,
-  candleSeriesLookBack: number
-) {
-  const now = getCurrentTimestampInSeconds();
-  return ftx.getCandleSeries({
-    market,
-    resolution,
-    startTime: now - candleSeriesLookBack,
-    endTime: now,
-  });
 }

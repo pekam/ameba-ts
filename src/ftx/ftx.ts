@@ -14,63 +14,6 @@ export const FtxMarkets = [
 ] as const;
 export type FtxMarket = typeof FtxMarkets[number];
 
-const FtxRest = require("ftx-api-rest");
-
-const { ftx_api_key, ftx_s } = properties;
-const subaccount = "bot";
-
-const api = new FtxRest({
-  key: ftx_api_key,
-  secret: ftx_s.substr(1),
-  subaccount,
-});
-
-/**
- * @param errorHandler function that is called if error occurs. It should return
- * true if the request should be retried, false if not.
- */
-async function request(
-  method: "GET" | "POST" | "DELETE",
-  path: string,
-  data?: any,
-  errorHandler: (e: Error) => boolean = (e) => true
-): Promise<any> {
-  let retrySleep = 1000;
-  while (true) {
-    try {
-      console.log(`${method} ftx.com${path}`, data);
-      const response = await api.request({ method, path, data });
-      return response.result;
-    } catch (e) {
-      const retry = errorHandler(e);
-      if (!retry) {
-        break;
-      }
-      console.log(`Retrying after ${retrySleep}ms...`);
-      await sleep(retrySleep);
-      retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);
-    }
-  }
-}
-
-async function get(path: string): Promise<any> {
-  return request("GET", path);
-}
-
-async function post(path: string, data: any): Promise<any> {
-  return request("POST", path, data);
-}
-
-async function getAccount() {
-  return get("/account");
-}
-
-async function getBalances(): Promise<
-  { coin: string; free: number; total: number; usdValue: number }[]
-> {
-  return get("/wallet/balances");
-}
-
 const resolutionsInSeconds = [15, 60, 300, 900, 3600, 14400, 86400];
 const resolutionValues = [
   "15sec",
@@ -88,25 +31,6 @@ export interface FtxCandleRequestParams {
   resolution: FtxResolution;
   startTime: number;
   endTime: number;
-}
-
-async function getCandles(
-  params: FtxCandleRequestParams
-): Promise<CandleSeries> {
-  const resInSecs =
-    resolutionsInSeconds[resolutionValues.indexOf(params.resolution)];
-  // optional "limit" parameter omitted
-  return get(
-    `/markets/${params.market}/candles?resolution=${resInSecs}` +
-      `&start_time=${params.startTime}&end_time=${params.endTime}&limit=${5000}`
-  ).then((candles) =>
-    // ftx returns time in milliseconds, which is inconsistent with finnhub
-    candles.map((c) => ({ ...c, time: c.time / 1000 }))
-  );
-}
-
-async function getCandleSeries(params: FtxCandleRequestParams) {
-  return toCandleSeries(await getCandles(params));
 }
 
 export interface OrderBookEntry {
@@ -153,83 +77,6 @@ export interface FtxOrderBookParams {
   depth: number;
 }
 
-async function getOrderBook(params: FtxOrderBookParams): Promise<OrderBook> {
-  const { market, depth } = params;
-  const response = await get(`/markets/${market}/orderbook?depth=${depth}`);
-  const time = getCurrentTimestampInSeconds();
-
-  const convertEntries = (entry) =>
-    entry.reduce((acc, [price, volume]) => {
-      const cumulative =
-        (acc.length ? acc[acc.length - 1].cumulative : 0) + volume;
-
-      const bestPrice = acc.length ? acc[0].price : price;
-      const relDiff = Math.abs((price - bestPrice) / bestPrice);
-
-      const entry: OrderBookEntry = {
-        price,
-        volume,
-        cumulative,
-        relDiff,
-      };
-      acc.push(entry);
-      return acc;
-    }, []);
-
-  const asks = convertEntries(response.asks);
-  const bids = convertEntries(response.bids);
-
-  const midPrice = m.avg([asks[0].price, bids[0].price]);
-  const relSpread = (asks[0].price - bids[0].price) / bids[0].price;
-
-  return { market, asks, bids, midPrice, relSpread, time };
-}
-
-async function getOpenOrders(
-  market: FtxMarket
-): Promise<
-  {
-    id: number;
-    market: FtxMarket;
-    price: number;
-    side: "buy" | "sell";
-    size: number;
-    filledSize: number;
-    type: string;
-    postOnly: boolean;
-  }[]
-> {
-  return get(`/orders?market=${market}`);
-}
-
-async function getOrderStatus(
-  id: number
-): Promise<{
-  status: "new" | "open" | "closed";
-  filledSize: number;
-  remainingSize: number;
-}> {
-  return get(`/orders/${id}`);
-}
-
-async function cancelOrder(id: number): Promise<string> {
-  const errorHandler = (e) => {
-    if (e.message.includes("Order already")) {
-      console.log(
-        "Order was already closed or queued for cancellation, all good."
-      );
-      return false;
-    } else {
-      return true;
-    }
-  };
-  return request("DELETE", `/orders/${id}`, undefined, errorHandler);
-}
-
-async function cancelAllOrders(market: FtxMarket): Promise<string> {
-  return request("DELETE", `/orders`, { market });
-}
-
 export interface FtxAddOrderParams {
   market: FtxMarket;
   side: "buy" | "sell";
@@ -239,19 +86,177 @@ export interface FtxAddOrderParams {
   postOnly: boolean;
 }
 
-async function addOrder(params: FtxAddOrderParams): Promise<{ id: number }> {
-  return post("/orders", params);
+const FtxRest = require("ftx-api-rest");
+
+const { ftx_api_key, ftx_s } = properties;
+
+export function getFtxClient({ subaccount }: { subaccount: string }) {
+  const api = new FtxRest({
+    key: ftx_api_key,
+    secret: ftx_s.substr(1),
+    subaccount,
+  });
+
+  /**
+   * @param errorHandler function that is called if error occurs. It should return
+   * true if the request should be retried, false if not.
+   */
+  async function request(
+    method: "GET" | "POST" | "DELETE",
+    path: string,
+    data?: any,
+    errorHandler: (e: Error) => boolean = (e) => true
+  ): Promise<any> {
+    let retrySleep = 1000;
+    while (true) {
+      try {
+        console.log(`${method} ftx.com${path}`, data);
+        const response = await api.request({ method, path, data });
+        return response.result;
+      } catch (e) {
+        const retry = errorHandler(e);
+        if (!retry) {
+          break;
+        }
+        console.log(`Retrying after ${retrySleep}ms...`);
+        await sleep(retrySleep);
+        retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);
+      }
+    }
+  }
+
+  async function get(path: string): Promise<any> {
+    return request("GET", path);
+  }
+
+  async function post(path: string, data: any): Promise<any> {
+    return request("POST", path, data);
+  }
+
+  async function getAccount() {
+    return get("/account");
+  }
+
+  async function getBalances(): Promise<
+    { coin: string; free: number; total: number; usdValue: number }[]
+  > {
+    return get("/wallet/balances");
+  }
+
+  async function getCandles(
+    params: FtxCandleRequestParams
+  ): Promise<CandleSeries> {
+    const resInSecs =
+      resolutionsInSeconds[resolutionValues.indexOf(params.resolution)];
+    // optional "limit" parameter omitted
+    return get(
+      `/markets/${params.market}/candles?resolution=${resInSecs}` +
+        `&start_time=${params.startTime}&end_time=${
+          params.endTime
+        }&limit=${5000}`
+    ).then((candles) =>
+      // ftx returns time in milliseconds, which is inconsistent with finnhub
+      candles.map((c) => ({ ...c, time: c.time / 1000 }))
+    );
+  }
+
+  async function getCandleSeries(params: FtxCandleRequestParams) {
+    return toCandleSeries(await getCandles(params));
+  }
+
+  async function getOrderBook(params: FtxOrderBookParams): Promise<OrderBook> {
+    const { market, depth } = params;
+    const response = await get(`/markets/${market}/orderbook?depth=${depth}`);
+    const time = getCurrentTimestampInSeconds();
+
+    const convertEntries = (entry) =>
+      entry.reduce((acc, [price, volume]) => {
+        const cumulative =
+          (acc.length ? acc[acc.length - 1].cumulative : 0) + volume;
+
+        const bestPrice = acc.length ? acc[0].price : price;
+        const relDiff = Math.abs((price - bestPrice) / bestPrice);
+
+        const entry: OrderBookEntry = {
+          price,
+          volume,
+          cumulative,
+          relDiff,
+        };
+        acc.push(entry);
+        return acc;
+      }, []);
+
+    const asks = convertEntries(response.asks);
+    const bids = convertEntries(response.bids);
+
+    const midPrice = m.avg([asks[0].price, bids[0].price]);
+    const relSpread = (asks[0].price - bids[0].price) / bids[0].price;
+
+    return { market, asks, bids, midPrice, relSpread, time };
+  }
+
+  async function getOpenOrders(
+    market: FtxMarket
+  ): Promise<
+    {
+      id: number;
+      market: FtxMarket;
+      price: number;
+      side: "buy" | "sell";
+      size: number;
+      filledSize: number;
+      type: string;
+      postOnly: boolean;
+    }[]
+  > {
+    return get(`/orders?market=${market}`);
+  }
+
+  async function getOrderStatus(
+    id: number
+  ): Promise<{
+    status: "new" | "open" | "closed";
+    filledSize: number;
+    remainingSize: number;
+  }> {
+    return get(`/orders/${id}`);
+  }
+
+  async function cancelOrder(id: number): Promise<string> {
+    const errorHandler = (e) => {
+      if (e.message.includes("Order already")) {
+        console.log(
+          "Order was already closed or queued for cancellation, all good."
+        );
+        return false;
+      } else {
+        return true;
+      }
+    };
+    return request("DELETE", `/orders/${id}`, undefined, errorHandler);
+  }
+
+  async function cancelAllOrders(market: FtxMarket): Promise<string> {
+    return request("DELETE", `/orders`, { market });
+  }
+
+  async function addOrder(params: FtxAddOrderParams): Promise<{ id: number }> {
+    return post("/orders", params);
+  }
+
+  return {
+    getAccount,
+    getBalances,
+    getCandles,
+    getCandleSeries,
+    getOrderBook,
+    getOpenOrders,
+    getOrderStatus,
+    cancelOrder,
+    cancelAllOrders,
+    addOrder,
+  };
 }
 
-export const ftx = {
-  getAccount,
-  getBalances,
-  getCandles,
-  getCandleSeries,
-  getOrderBook,
-  getOpenOrders,
-  getOrderStatus,
-  cancelOrder,
-  cancelAllOrders,
-  addOrder,
-};
+export type FtxClient = ReturnType<typeof getFtxClient>;

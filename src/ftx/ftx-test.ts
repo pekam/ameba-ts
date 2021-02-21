@@ -1,10 +1,13 @@
 import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
-import { ftxDb } from "./ftx-db";
 import { SmaPullbackStrategy } from "../strats/sma-pullback-strat";
-import { ftx } from "./ftx";
+import { getFtxClient } from "./ftx";
+import { getFtxDb } from "./ftx-db";
 
 async function run() {
+  const ftx = getFtxClient({ subaccount: undefined });
+  const ftxDb = getFtxDb(ftx);
+
   // const result = await ftx.addOrder({
   //   market: "BTC/USD",
   //   price: 42000,

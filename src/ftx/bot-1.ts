@@ -6,6 +6,7 @@ import { runFtxBot } from "./bot";
 
 (async function () {
   await runFtxBot({
+    subaccount: "bot",
     strat,
     resolution: "1min",
     candleSeriesLookBack: 60 * 60 * 6, // 6h

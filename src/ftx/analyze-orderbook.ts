@@ -1,7 +1,7 @@
-import { ftxDb } from "./ftx-db";
 import { m } from "../functions/functions";
-import { ftx, FtxMarket, OrderBook } from "./ftx";
+import { FtxMarket, getFtxClient, OrderBook } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
+import { getFtxDb } from "./ftx-db";
 
 const threshold = 0.0001;
 
@@ -16,6 +16,9 @@ function score(book: OrderBook): number {
 
 async function run() {
   const market: FtxMarket = "FTT/USD";
+
+  const ftx = getFtxClient({ subaccount: undefined });
+  const ftxDb = getFtxDb(ftx);
 
   const series = await ftx.getCandleSeries({
     market,
