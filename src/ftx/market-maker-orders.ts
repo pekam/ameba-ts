@@ -3,6 +3,12 @@ import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 
 const sleepMs = 2000;
 
+/**
+ * How much the $ value of a buy/sell order must exceed to try to keep ordering.
+ * Trying to buy/sell too small amounts causes errors.
+ */
+const orderThresholdUsd = 10;
+
 export type FtxBotOrder = FtxAddOrderParams & {
   id: number;
   time: number;
@@ -30,7 +36,7 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
   }
 
   async function doAsMarketMaker(
-    howMuchCanBuyOrSell: () => Promise<number>,
+    howMuchCanBuyOrSell: () => Promise<{ value: number; usdValue: number }>,
     addBestOrderToOrderbook: (size: number) => Promise<FtxBotOrder>
   ) {
     let order: FtxBotOrder;
@@ -39,13 +45,13 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
         await ftx.cancelOrder(order.id);
         console.log("order cancelled");
       }
-      const much = await howMuchCanBuyOrSell();
-      if (much <= 0) {
-        // Can't buy/sell more
+      const { value, usdValue } = await howMuchCanBuyOrSell();
+      if (usdValue < orderThresholdUsd) {
+        // Can't buy/sell more.
         break;
       }
       try {
-        order = await addBestOrderToOrderbook(much);
+        order = await addBestOrderToOrderbook(value);
       } catch (e) {
         if (e.message.includes("Size too small")) {
           // Can't buy/sell more
@@ -73,11 +79,12 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
 
   async function howMuchCanBuy() {
     const { usd, bid } = await getState();
-    return usd / bid;
+    return { value: usd / bid, usdValue: usd };
   }
 
   async function howMuchCanSell() {
-    return (await getBalancesAsObject()).coin;
+    const { coin, ask } = await getState();
+    return { value: coin, usdValue: coin * ask };
   }
 
   async function getState() {
