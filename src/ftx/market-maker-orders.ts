@@ -40,10 +40,18 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
         console.log("order cancelled");
       }
       const much = await howMuchCanBuyOrSell();
-      if (much < 0.0001) {
+      if (much <= 0) {
+        // Can't buy/sell more
         break;
       }
-      order = await addBestOrderToOrderbook(much);
+      try {
+        order = await addBestOrderToOrderbook(much);
+      } catch (e) {
+        if (e.message.includes("Size too small")) {
+          // Can't buy/sell more
+          break;
+        } else throw e;
+      }
       await sleep(sleepMs);
     }
     return order;
