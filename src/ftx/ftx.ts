@@ -1,7 +1,7 @@
 import { properties } from "../properties";
 import { CandleSeries, toCandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
-import { getCurrentTimestampInSeconds, sleep } from "../util";
+import { getCurrentTimestampInSeconds } from "../util";
 
 export const FtxMarkets = [
   "BTC/USD",
@@ -106,7 +106,7 @@ export function getFtxClient({ subaccount }: { subaccount: string }) {
 
   /**
    * @param errorHandler function that is called if error occurs. It should return
-   * true if the request should be retried, false if not.
+   * true if the error should be thrown, false if not.
    */
   async function request(
     method: "GET" | "POST" | "DELETE",
@@ -114,20 +114,14 @@ export function getFtxClient({ subaccount }: { subaccount: string }) {
     data?: any,
     errorHandler: (e: Error) => boolean = (e) => true
   ): Promise<any> {
-    let retrySleep = 1000;
-    while (true) {
-      try {
-        console.log(`${method} ftx.com${path}`, data);
-        const response = await api.request({ method, path, data });
-        return response.result;
-      } catch (e) {
-        const retry = errorHandler(e);
-        if (!retry) {
-          break;
-        }
-        console.log(`Retrying after ${retrySleep}ms...`);
-        await sleep(retrySleep);
-        retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);
+    try {
+      console.log(`${method} ftx.com${path}`, data);
+      const response = await api.request({ method, path, data });
+      return response.result;
+    } catch (e) {
+      const shouldThrow = errorHandler(e);
+      if (shouldThrow) {
+        throw e;
       }
     }
   }

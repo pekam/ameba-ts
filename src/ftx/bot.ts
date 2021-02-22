@@ -21,7 +21,27 @@ type FtxBotStrat = (params: {
  * How long into the history will candles be loaded for each iteration
  * of the strategy.
  */
-export async function runFtxBot({
+export async function runFtxBot(params: {
+  subaccount: string;
+  strat: FtxBotStrat;
+  safeZoneMargin: number;
+  resolution: FtxResolution;
+  candleSeriesLookBack: number;
+}) {
+  let retrySleep = 1000;
+  while (true) {
+    try {
+      await run(params);
+      retrySleep = 1000;
+    } catch (e) {
+      console.log(`Restarting after ${retrySleep}ms...`);
+      await sleep(retrySleep);
+      retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);
+    }
+  }
+}
+
+async function run({
   resolution,
   subaccount,
   safeZoneMargin,
