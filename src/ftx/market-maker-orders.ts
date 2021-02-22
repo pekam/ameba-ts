@@ -1,8 +1,6 @@
 import { FtxAddOrderParams, FtxClient, FtxMarket } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 
-const market: FtxMarket = "BTC/USD";
-
 const sleepMs = 2000;
 
 export type FtxBotOrder = FtxAddOrderParams & {
@@ -10,7 +8,7 @@ export type FtxBotOrder = FtxAddOrderParams & {
   time: number;
 };
 
-export function getFtxMarketMaker(ftx: FtxClient) {
+export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
   /**
    * Enters the market in the current price as a market maker.
    */
@@ -71,11 +69,11 @@ export function getFtxMarketMaker(ftx: FtxClient) {
   }
 
   async function howMuchCanSell() {
-    return (await getBalancesAsObject()).btc;
+    return (await getBalancesAsObject()).coin;
   }
 
   async function getState() {
-    const [{ usd, btc }, orderBook] = await Promise.all([
+    const [{ usd, coin }, orderBook] = await Promise.all([
       getBalancesAsObject(),
       ftx.getOrderBook({ market, depth: 1 }),
     ]);
@@ -83,7 +81,7 @@ export function getFtxMarketMaker(ftx: FtxClient) {
     const ask = orderBook.asks[0].price;
     const bid = orderBook.bids[0].price;
 
-    return { usd, btc, ask, bid };
+    return { usd, coin, ask, bid };
   }
 
   async function addOrder({
@@ -110,12 +108,12 @@ export function getFtxMarketMaker(ftx: FtxClient) {
   async function getBalancesAsObject() {
     const balances = await ftx.getBalances();
     const usdBalance = balances.find((b) => b.coin === "USD");
-    const btcBalance = balances.find((b) => b.coin === "BTC");
+    const coinBalance = balances.find((b) => b.coin === market.split("/")[0]);
 
     const usd = usdBalance ? usdBalance.free : 0;
-    const btc = btcBalance ? btcBalance.free : 0;
+    const coin = coinBalance ? coinBalance.free : 0;
 
-    return { usd, btc };
+    return { usd, coin };
   }
 
   return {

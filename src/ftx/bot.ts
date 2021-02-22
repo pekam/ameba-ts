@@ -1,10 +1,8 @@
-import { FtxResolution, getFtxClient } from "./ftx";
+import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep } from "../util";
 import { m } from "../functions/functions";
 import { CandleSeries } from "../core/candle-series";
 import { FtxBotOrder, getFtxMarketMaker } from "./market-maker-orders";
-
-const market = "BTC/USD";
 
 type FtxBotStrat = (params: {
   series: CandleSeries;
@@ -23,6 +21,7 @@ type FtxBotStrat = (params: {
  */
 export async function runFtxBot(params: {
   subaccount: string;
+  market: FtxMarket;
   strat: FtxBotStrat;
   safeZoneMargin: number;
   resolution: FtxResolution;
@@ -44,18 +43,20 @@ export async function runFtxBot(params: {
 async function run({
   resolution,
   subaccount,
+  market,
   safeZoneMargin,
   candleSeriesLookBack,
   strat,
 }: {
   subaccount: string;
+  market: FtxMarket;
   strat: FtxBotStrat;
   safeZoneMargin: number;
   resolution: FtxResolution;
   candleSeriesLookBack: number;
 }) {
   const ftx = getFtxClient({ subaccount });
-  const marketMaker = getFtxMarketMaker(ftx);
+  const marketMaker = getFtxMarketMaker(ftx, market);
 
   async function getRecentCandles() {
     const now = getCurrentTimestampInSeconds();

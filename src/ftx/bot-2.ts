@@ -3,8 +3,8 @@ import { emaStrat } from "./strats";
 
 (async function () {
   await runFtxBot({
-    subaccount: "bot",
-    market: "BTC/USD",
+    subaccount: "bot-2",
+    market: "FTT/USD",
     strat: emaStrat,
     resolution: "1min",
     candleSeriesLookBack: 60 * 60 * 6, // 6h
