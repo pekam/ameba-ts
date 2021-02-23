@@ -30,8 +30,7 @@ export async function runFtxBot(params: {
   let retrySleep = 1000;
   while (true) {
     try {
-      await run(params);
-      retrySleep = 1000;
+      await run(params, () => (retrySleep = 1000));
     } catch (e) {
       console.log(`Restarting after ${retrySleep}ms...`);
       await sleep(retrySleep);
@@ -40,21 +39,24 @@ export async function runFtxBot(params: {
   }
 }
 
-async function run({
-  resolution,
-  subaccount,
-  market,
-  safeZoneMargin,
-  candleSeriesLookBack,
-  strat,
-}: {
-  subaccount: string;
-  market: FtxMarket;
-  strat: FtxBotStrat;
-  safeZoneMargin: number;
-  resolution: FtxResolution;
-  candleSeriesLookBack: number;
-}) {
+async function run(
+  {
+    resolution,
+    subaccount,
+    market,
+    safeZoneMargin,
+    candleSeriesLookBack,
+    strat,
+  }: {
+    subaccount: string;
+    market: FtxMarket;
+    strat: FtxBotStrat;
+    safeZoneMargin: number;
+    resolution: FtxResolution;
+    candleSeriesLookBack: number;
+  },
+  afterSuccessfulIteration: () => void
+) {
   const ftx = getFtxClient({ subaccount });
   const marketMaker = getFtxMarketMaker(ftx, market);
 
@@ -84,6 +86,7 @@ async function run({
     } else {
       lastOrder = (await marketMaker.exit()) || lastOrder;
     }
+    afterSuccessfulIteration();
     console.log("sleeping for 10s");
     await sleep(10 * 1000);
   }
