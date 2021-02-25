@@ -58,7 +58,7 @@ async function run(
   afterSuccessfulIteration: () => void
 ) {
   const ftx = getFtxClient({ subaccount });
-  const marketMaker = getFtxMarketMaker(ftx, market);
+  const marketMaker = getFtxMarketMaker({ subaccount, market });
 
   async function getRecentCandles() {
     const now = getCurrentTimestampInSeconds();

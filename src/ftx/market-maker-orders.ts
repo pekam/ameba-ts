@@ -1,5 +1,6 @@
-import { FtxAddOrderParams, FtxClient, FtxMarket } from "./ftx";
+import { FtxAddOrderParams, FtxMarket } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
+import { getFtxUtil } from "./ftx-util";
 
 const sleepMs = 2000;
 
@@ -14,13 +15,20 @@ export type FtxBotOrder = FtxAddOrderParams & {
   time: number;
 };
 
-export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
+export function getFtxMarketMaker(params: {
+  subaccount: string;
+  market: FtxMarket;
+}) {
+  const { market } = params;
+  const ftxUtil = getFtxUtil(params);
+  const ftx = ftxUtil.ftx;
+
   /**
    * Enters the market in the current price as a market maker.
    */
   async function enter() {
     console.log("begin entry");
-    const order = await doAsMarketMaker(howMuchCanBuy, addBestBid);
+    const order = await doAsMarketMaker(ftxUtil.howMuchCanBuy, addBestBid);
     console.log(order ? "entry finished" : "already entered");
     return order;
   }
@@ -30,7 +38,7 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
    */
   async function exit() {
     console.log("begin exit");
-    const order = await doAsMarketMaker(howMuchCanSell, addBestAsk);
+    const order = await doAsMarketMaker(ftxUtil.howMuchCanSell, addBestAsk);
     console.log(order ? "exit finished" : "already exited");
     return order;
   }
@@ -64,39 +72,15 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
   }
 
   async function addBestBid(size: number): Promise<FtxBotOrder> {
-    const orderBook = await ftx.getOrderBook({ market, depth: 1 });
-    const bid = orderBook.bids[0].price;
+    const { bid } = await ftxUtil.getQuote();
     const price = toFixed(bid + 0.001, 3);
     return addOrder({ price, size, side: "buy" });
   }
 
   async function addBestAsk(size: number): Promise<FtxBotOrder> {
-    const orderBook = await ftx.getOrderBook({ market, depth: 1 });
-    const ask = orderBook.asks[0].price;
+    const { ask } = await ftxUtil.getQuote();
     const price = toFixed(ask - 0.001, 3);
     return addOrder({ price, size, side: "sell" });
-  }
-
-  async function howMuchCanBuy() {
-    const { usd, bid } = await getState();
-    return { value: usd / bid, usdValue: usd };
-  }
-
-  async function howMuchCanSell() {
-    const { coin, ask } = await getState();
-    return { value: coin, usdValue: coin * ask };
-  }
-
-  async function getState() {
-    const [{ usd, coin }, orderBook] = await Promise.all([
-      getBalancesAsObject(),
-      ftx.getOrderBook({ market, depth: 1 }),
-    ]);
-
-    const ask = orderBook.asks[0].price;
-    const bid = orderBook.bids[0].price;
-
-    return { usd, coin, ask, bid };
   }
 
   async function addOrder({
@@ -118,17 +102,6 @@ export function getFtxMarketMaker(ftx: FtxClient, market: FtxMarket) {
     };
     const { id } = await ftx.addOrder(params);
     return { ...params, id, time: getCurrentTimestampInSeconds() };
-  }
-
-  async function getBalancesAsObject() {
-    const balances = await ftx.getBalances();
-    const usdBalance = balances.find((b) => b.coin === "USD");
-    const coinBalance = balances.find((b) => b.coin === market.split("/")[0]);
-
-    const usd = usdBalance ? usdBalance.free : 0;
-    const coin = coinBalance ? coinBalance.free : 0;
-
-    return { usd, coin };
   }
 
   return {
