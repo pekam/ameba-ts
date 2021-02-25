@@ -1,4 +1,12 @@
-import { FtxMarket, getFtxClient } from "./ftx";
+import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
+import { getCurrentTimestampInSeconds } from "../util";
+import { FtxBotOrder } from "./market-maker-orders";
+
+/**
+ * How much the $ value of a buy/sell order must exceed to try to keep ordering.
+ * Trying to buy/sell too small amounts causes errors.
+ */
+const orderThresholdUsd = 10;
 
 export function getFtxUtil({
   subaccount,
@@ -37,12 +45,45 @@ export function getFtxUtil({
 
   async function howMuchCanBuy() {
     const { usd, bid } = await getState();
-    return { value: usd / bid, usdValue: usd };
+    return { value: usd / bid, usdValue: usd, price: bid };
   }
 
   async function howMuchCanSell() {
     const { coin, ask } = await getState();
-    return { value: coin, usdValue: coin * ask };
+    return { value: coin, usdValue: coin * ask, price: ask };
+  }
+
+  async function enterWithMarketOrder() {
+    return doMarketOrder(howMuchCanBuy, "buy");
+  }
+
+  async function exitWithMarketOrder(): Promise<FtxBotOrder> {
+    return doMarketOrder(howMuchCanSell, "sell");
+  }
+
+  async function doMarketOrder(
+    howMuchCanBuyOrSell: () => Promise<{
+      value: number;
+      usdValue: number;
+      price: number;
+    }>,
+    side: "buy" | "sell"
+  ) {
+    const { value, usdValue, price } = await howMuchCanBuyOrSell();
+    if (usdValue < orderThresholdUsd) {
+      // Can't buy/sell more.
+      return;
+    }
+    const params: FtxAddOrderParams = {
+      type: "market",
+      size: value,
+      postOnly: false,
+      market,
+      side,
+      price: 0,
+    };
+    const { id } = await ftx.addOrder(params);
+    return { ...params, id, price, time: getCurrentTimestampInSeconds() };
   }
 
   return {
@@ -52,5 +93,7 @@ export function getFtxUtil({
     getState,
     howMuchCanBuy,
     howMuchCanSell,
+    enterWithMarketOrder,
+    exitWithMarketOrder,
   };
 }

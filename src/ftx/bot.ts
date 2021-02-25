@@ -2,7 +2,7 @@ import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep } from "../util";
 import { m } from "../functions/functions";
 import { CandleSeries } from "../core/candle-series";
-import { FtxBotOrder, getFtxMarketMaker } from "./market-maker-orders";
+import { FtxBotOrder } from "./market-maker-orders";
 
 type FtxBotStrat = (params: {
   series: CandleSeries;
@@ -26,6 +26,8 @@ export async function runFtxBot(params: {
   safeZoneMargin: number;
   resolution: FtxResolution;
   candleSeriesLookBack: number;
+  enter: () => Promise<FtxBotOrder>;
+  exit: () => Promise<FtxBotOrder>;
 }) {
   let retrySleep = 1000;
   while (true) {
@@ -47,6 +49,8 @@ async function run(
     safeZoneMargin,
     candleSeriesLookBack,
     strat,
+    enter,
+    exit,
   }: {
     subaccount: string;
     market: FtxMarket;
@@ -54,11 +58,12 @@ async function run(
     safeZoneMargin: number;
     resolution: FtxResolution;
     candleSeriesLookBack: number;
+    enter: () => Promise<FtxBotOrder>;
+    exit: () => Promise<FtxBotOrder>;
   },
   afterSuccessfulIteration: () => void
 ) {
   const ftx = getFtxClient({ subaccount });
-  const marketMaker = getFtxMarketMaker({ subaccount, market });
 
   async function getRecentCandles() {
     const now = getCurrentTimestampInSeconds();
@@ -82,9 +87,15 @@ async function run(
         safeZoneMargin,
       })
     ) {
-      lastOrder = (await marketMaker.enter()) || lastOrder;
+      console.log("begin entry");
+      const order = await enter();
+      console.log(order ? "entry finished" : "already entered");
+      lastOrder = order || lastOrder;
     } else {
-      lastOrder = (await marketMaker.exit()) || lastOrder;
+      console.log("begin exit");
+      const order = await exit();
+      console.log(order ? "exit finished" : "already exited");
+      lastOrder = order || lastOrder;
     }
     afterSuccessfulIteration();
     console.log("sleeping for 10s");
