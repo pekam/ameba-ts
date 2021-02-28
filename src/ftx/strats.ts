@@ -3,23 +3,27 @@ import { FtxBotOrder } from "./market-maker-orders";
 import { m } from "../functions/functions";
 import { EMA } from "technicalindicators";
 
-export function emaStrat({
-  series,
-  lastOrder,
-}: {
-  series: CandleSeries;
-  lastOrder: FtxBotOrder;
-}) {
-  const emaShort = getEma(series, 5);
-  const emaLong = getEma(series, 20);
-  console.log({
-    emaShort,
-    emaLong,
-  });
+export const emaStrat = getEmaStrat(5, 20);
 
-  const longCondition = emaShort > emaLong;
+export function getEmaStrat(shortEmaPeriod, longEmaPeriod) {
+  return function ({
+    series,
+    lastOrder,
+  }: {
+    series: CandleSeries;
+    lastOrder: FtxBotOrder;
+  }) {
+    const emaShort = getEma(series, shortEmaPeriod);
+    const emaLong = getEma(series, longEmaPeriod);
+    console.log({
+      emaShort,
+      emaLong,
+    });
 
-  return longCondition;
+    const longCondition = emaShort > emaLong;
+
+    return longCondition;
+  };
 }
 
 /**
@@ -71,7 +75,7 @@ function getEma(series: CandleSeries, period: number) {
 
 function getEmas(series: CandleSeries, period: number, limit: number) {
   return EMA.calculate({
-    values: series.slice(-50).map((c) => c.close),
+    values: series.slice(-(period + limit + 5)).map((c) => c.close),
     period,
   }).slice(-limit);
 }

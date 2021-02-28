@@ -1,5 +1,5 @@
 import { runFtxBot } from "./bot";
-import { emaStrat } from "./strats";
+import { getEmaStrat } from "./strats";
 import { getFtxMarketMaker } from "./market-maker-orders";
 import { FtxMarket } from "./ftx";
 
@@ -11,9 +11,9 @@ import { FtxMarket } from "./ftx";
   await runFtxBot({
     subaccount,
     market,
-    strat: emaStrat,
-    resolution: "1min",
-    candleSeriesLookBack: 60 * 60 * 6, // 6h
+    strat: getEmaStrat(5, 100),
+    resolution: "1h",
+    candleSeriesLookBack: 60 * 60 * 120, // 120h
     safeZoneMargin: 0.002,
     enter,
     exit,
