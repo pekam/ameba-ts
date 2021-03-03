@@ -1,21 +1,21 @@
 import { FtxMarket } from "./ftx";
 import { runFtxBot } from "./bot";
-import { tripleEmaStrat } from "./strats";
-import { getFtxUtil } from "./ftx-util";
+import { getFtxMarketMaker } from "./market-maker-orders";
+import { getEmaStrat } from "./strats";
 
 (async function () {
   const subaccount = "bot-4";
-  const market: FtxMarket = "FTT/USD";
-  const ftxUtil = getFtxUtil({ subaccount, market });
+  const market: FtxMarket = "BTC/USD";
+  const { enter, exit } = getFtxMarketMaker({ subaccount, market });
 
   await runFtxBot({
     subaccount,
     market,
-    strat: tripleEmaStrat,
+    strat: getEmaStrat(2, 5),
     resolution: "1min",
     candleSeriesLookBack: 60 * 60 * 6, // 6h
-    safeZoneMargin: 0.002,
-    enter: ftxUtil.enterWithMarketOrder,
-    exit: ftxUtil.exitWithMarketOrder,
+    safeZoneMargin: 0.0005,
+    enter,
+    exit,
   });
 })();

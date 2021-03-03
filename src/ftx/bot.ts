@@ -34,6 +34,7 @@ export async function runFtxBot(params: {
     try {
       await run(params, () => (retrySleep = 1000));
     } catch (e) {
+      console.error(e);
       console.log(`Restarting after ${retrySleep}ms...`);
       await sleep(retrySleep);
       retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);

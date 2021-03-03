@@ -134,7 +134,12 @@ export function getFtxClient({ subaccount }: { subaccount: string }) {
     return request("POST", path, data);
   }
 
-  async function getAccount() {
+  async function getAccount(): Promise<{
+    collateral: number;
+    freeCollateral: number;
+    leverage: number;
+    spotMarginEnabled: boolean;
+  }> {
     return get("/account");
   }
 

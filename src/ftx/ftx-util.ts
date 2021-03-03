@@ -22,8 +22,8 @@ export function getFtxUtil({
     const usdBalance = balances.find((b) => b.coin === "USD");
     const coinBalance = balances.find((b) => b.coin === market.split("/")[0]);
 
-    const usd = usdBalance ? usdBalance.free : 0;
-    const coin = coinBalance ? coinBalance.free : 0;
+    const usd = usdBalance ? usdBalance.total : 0;
+    const coin = coinBalance ? coinBalance.total : 0;
 
     return { usd, coin };
   }
@@ -36,21 +36,65 @@ export function getFtxUtil({
   }
 
   async function getState() {
-    const [balances, quote] = await Promise.all([
+    const [account, balances, quote] = await Promise.all([
+      ftx.getAccount(),
       getBalancesAsObject(),
       getQuote(),
     ]);
-    return { ...balances, ...quote };
+    return { ...account, ...balances, ...quote };
   }
 
   async function howMuchCanBuy() {
-    const { usd, bid } = await getState();
-    return { value: usd / bid, usdValue: usd, price: bid };
+    const {
+      spotMarginEnabled,
+      usd,
+      coin,
+      bid,
+      collateral,
+      leverage,
+    } = await getState();
+
+    if (!spotMarginEnabled) {
+      return { value: usd / bid, usdValue: usd, price: bid };
+    } else {
+      const maxPosition = getMaxPositionOnMargin(collateral, leverage, bid);
+      const diff = maxPosition - coin;
+      const value = Math.max(diff, 0);
+      return { value, usdValue: value * bid, price: bid };
+    }
   }
 
   async function howMuchCanSell() {
-    const { coin, ask } = await getState();
-    return { value: coin, usdValue: coin * ask, price: ask };
+    const {
+      spotMarginEnabled,
+      coin,
+      ask,
+      collateral,
+      leverage,
+    } = await getState();
+
+    if (!spotMarginEnabled) {
+      return { value: coin, usdValue: coin * ask, price: ask };
+    } else {
+      const maxPosition = getMaxPositionOnMargin(collateral, leverage, ask);
+      const diff = maxPosition + coin;
+      const value = Math.max(diff, 0);
+      return { value, usdValue: value * ask, price: ask };
+    }
+  }
+
+  function getMaxPositionOnMargin(
+    collateral: number,
+    leverage: number,
+    price: number
+  ) {
+    /*
+     * Not using leverage at the moment, but the max leverage in FTX settings
+     * needs to be more than 1x so it can go 1x collateral long/short.
+     */
+    const maxPositionUsd = collateral; /* * leverage */
+    const maxPosition = maxPositionUsd / price;
+    return maxPosition;
   }
 
   async function enterWithMarketOrder() {
@@ -97,3 +141,5 @@ export function getFtxUtil({
     exitWithMarketOrder,
   };
 }
+
+export type FtxUtil = ReturnType<typeof getFtxUtil>;

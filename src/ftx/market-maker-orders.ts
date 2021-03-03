@@ -26,15 +26,25 @@ export function getFtxMarketMaker(params: {
   /**
    * Enters the market in the current price as a market maker.
    */
-  async function enter() {
-    return doAsMarketMaker(ftxUtil.howMuchCanBuy, addBestBid);
+  async function enter(
+    howMuch: () => Promise<{
+      value: number;
+      usdValue: number;
+    }> = ftxUtil.howMuchCanBuy
+  ) {
+    return doAsMarketMaker(howMuch, addBestBid);
   }
 
   /**
    * Exits the market in the current price as a market maker.
    */
-  async function exit() {
-    return doAsMarketMaker(ftxUtil.howMuchCanSell, addBestAsk);
+  async function exit(
+    howMuch: () => Promise<{
+      value: number;
+      usdValue: number;
+    }> = ftxUtil.howMuchCanSell
+  ) {
+    return doAsMarketMaker(howMuch, addBestAsk);
   }
 
   async function doAsMarketMaker(
