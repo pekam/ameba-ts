@@ -1,59 +1,82 @@
 import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
-import { SmaPullbackStrategy } from "../strats/sma-pullback-strat";
 import { getFtxClient } from "./ftx";
-import { getFtxDb } from "./ftx-db";
+import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
+import { Order, Strategy, TradeState } from "../core/types";
+import { m } from "../functions/functions";
+import { FtxBotStrat } from "./bot";
+import { getEmaStrat } from "./strats";
 
 async function run() {
-  const ftx = getFtxClient({ subaccount: undefined });
-  const ftxDb = getFtxDb(ftx);
+  const ftx = getFtxClient({ subaccount: "bot-4" });
 
-  // const result = await ftx.addOrder({
-  //   market: "BTC/USD",
-  //   price: 42000,
-  //   side: "buy",
-  //   size: 0.002,
-  //   type: "limit",
-  //   postOnly: true,
-  // });
-  // console.log(result.id);
-  //
-  // console.log(result);
-
-  const openOrders = await ftx.getOpenOrders("BTC/USD");
-  console.log(openOrders);
-
-  const res = await ftx.cancelAllOrders("BTC/USD");
-  console.log(res);
-
-  console.log(await ftx.getOpenOrders("BTC/USD"));
-
-  return;
-
-  setTimeout(async () => {
-    const result = await ftx.cancelOrder(openOrders[0].id);
-    console.log(result);
-  }, 5000);
-
-  return;
-
-  await ftxDb.loadOrderBookToDb({ market: "BTC/USD", depth: 100 });
-  const books = await ftxDb.loadOrderBooksFromDb("BTC/USD");
-  console.log(books);
-
-  return;
-
-  const series = await ftxDb.loadCandleDataFromDb("bar");
+  const series = await ftx.getCandles({
+    market: "SUSHI/USD",
+    resolution: "1min",
+    startTime: timestampFromUTC(2021, 3, 1),
+    endTime: timestampFromUTC(2021, 3, 4),
+  });
 
   const backtestResult = backtestStrategy(
-    () => new SmaPullbackStrategy(),
+    () => getBacktestableStrategy(getEmaStrat(5, 20), true),
     series
   );
+
   console.log({ ...backtestResult, trades: [] });
   const resultWithTransactionCosts = withRelativeTransactionCost(
     backtestResult,
     0.0005
   );
   console.log({ ...resultWithTransactionCosts, trades: [] });
+  console.log(
+    timestampToUTCDateString(series[0].time),
+    timestampToUTCDateString(m.last(series).time)
+  );
 }
 run();
+
+function getBacktestableStrategy(
+  ftxStrat: FtxBotStrat,
+  shortingEnabled: boolean = false
+): Strategy {
+  return {
+    init(tradeState: TradeState): void {},
+    update(
+      state: TradeState
+    ): { entryOrder?: Order; stopLoss?: number; takeProfit?: number } {
+      const series = state.series;
+      const last = m.last(series);
+
+      const shouldBeLong = ftxStrat({ series, lastOrder: undefined });
+
+      if (!state.position) {
+        if (shouldBeLong) {
+          return {
+            entryOrder: {
+              price: last.close * 1.1,
+              type: "limit",
+            },
+          };
+        } else {
+          return {
+            entryOrder: shortingEnabled
+              ? {
+                  sell: true,
+                  price: last.close * 0.9,
+                  type: "limit",
+                }
+              : null,
+          };
+        }
+      }
+
+      if (state.position === "long" && !shouldBeLong) {
+        return { takeProfit: last.close * 0.9 };
+      }
+
+      if (state.position === "short" && shouldBeLong) {
+        return { takeProfit: last.close * 1.1 };
+      }
+    },
+  };
+}

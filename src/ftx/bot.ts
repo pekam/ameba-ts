@@ -4,7 +4,7 @@ import { m } from "../functions/functions";
 import { CandleSeries } from "../core/candle-series";
 import { FtxBotOrder } from "./market-maker-orders";
 
-type FtxBotStrat = (params: {
+export type FtxBotStrat = (params: {
   series: CandleSeries;
   lastOrder: FtxBotOrder;
 }) => boolean;

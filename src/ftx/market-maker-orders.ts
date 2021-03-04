@@ -1,4 +1,4 @@
-import { FtxAddOrderParams, FtxMarket } from "./ftx";
+import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 import { getFtxUtil } from "./ftx-util";
 
@@ -19,9 +19,9 @@ export function getFtxMarketMaker(params: {
   subaccount: string;
   market: FtxMarket;
 }) {
-  const { market } = params;
-  const ftxUtil = getFtxUtil(params);
-  const ftx = ftxUtil.ftx;
+  const { market, subaccount } = params;
+  const ftx = getFtxClient({ subaccount });
+  const ftxUtil = getFtxUtil({ ftx, market });
 
   /**
    * Enters the market in the current price as a market maker.

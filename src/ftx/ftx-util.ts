@@ -1,4 +1,4 @@
-import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
+import { FtxAddOrderParams, FtxClient, FtxMarket } from "./ftx";
 import { getCurrentTimestampInSeconds } from "../util";
 import { FtxBotOrder } from "./market-maker-orders";
 
@@ -9,14 +9,12 @@ import { FtxBotOrder } from "./market-maker-orders";
 const orderThresholdUsd = 10;
 
 export function getFtxUtil({
-  subaccount,
+  ftx,
   market,
 }: {
-  subaccount: string;
+  ftx: FtxClient;
   market: FtxMarket;
 }) {
-  const ftx = getFtxClient({ subaccount });
-
   async function getBalancesAsObject() {
     const balances = await ftx.getBalances();
     const usdBalance = balances.find((b) => b.coin === "USD");
