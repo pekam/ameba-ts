@@ -28,6 +28,7 @@ export async function runFtxBot(params: {
   candleSeriesLookBack: number;
   enter: () => Promise<FtxBotOrder>;
   exit: () => Promise<FtxBotOrder>;
+  loopMs?: number;
 }) {
   let retrySleep = 1000;
   while (true) {
@@ -52,6 +53,7 @@ async function run(
     strat,
     enter,
     exit,
+    loopMs,
   }: {
     subaccount: string;
     market: FtxMarket;
@@ -61,6 +63,7 @@ async function run(
     candleSeriesLookBack: number;
     enter: () => Promise<FtxBotOrder>;
     exit: () => Promise<FtxBotOrder>;
+    loopMs?: number;
   },
   afterSuccessfulIteration: () => void
 ) {
@@ -99,8 +102,10 @@ async function run(
       lastOrder = order || lastOrder;
     }
     afterSuccessfulIteration();
-    console.log("sleeping for 10s");
-    await sleep(10 * 1000);
+
+    const sleepMs = loopMs !== undefined ? loopMs : 10 * 1000;
+    console.log(`sleeping for ${sleepMs / 1000}s`);
+    await sleep(sleepMs);
   }
 }
 
