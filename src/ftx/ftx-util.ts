@@ -1,6 +1,7 @@
 import { FtxAddOrderParams, FtxClient, FtxMarket } from "./ftx";
 import { getCurrentTimestampInSeconds } from "../util";
 import { FtxBotOrder } from "./market-maker-orders";
+import { m } from "../functions/functions";
 
 /**
  * How much the $ value of a buy/sell order must exceed to try to keep ordering.
@@ -128,6 +129,11 @@ export function getFtxUtil({
     return { ...params, id, price, time: getCurrentTimestampInSeconds() };
   }
 
+  async function getTotalUsdValue(): Promise<number> {
+    const allBalances = await ftx.getBalances();
+    return m.sum(allBalances.map((b) => b.usdValue));
+  }
+
   return {
     ftx,
     getBalancesAsObject,
@@ -137,6 +143,7 @@ export function getFtxUtil({
     howMuchCanSell,
     enterWithMarketOrder,
     exitWithMarketOrder,
+    getTotalUsdValue,
   };
 }
 
