@@ -102,9 +102,13 @@ const getCandlesBetween = function (
   return candles.slice(lowIndex + 1, highIndex);
 };
 
-function getRelativeDiff(value1: number, value2: number) {
+function getRelativeDiff(
+  value1: number,
+  value2: number,
+  relativeToHigher = false
+) {
   const [low, high] = sortAscending([value1, value2], (v) => v);
-  return (high - low) / low;
+  return (high - low) / (relativeToHigher ? high : low);
 }
 
 function isGrowingSeries(values: number[]): boolean {
