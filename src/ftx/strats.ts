@@ -74,7 +74,5 @@ function getEma(series: CandleSeries, period: number) {
 }
 
 function getEmas(series: CandleSeries, period: number, limit: number) {
-  return indicators
-    .ema(series.slice(-(period + limit + 5)), period)
-    .values.slice(-limit);
+  return indicators.ema(series, period).values.slice(-limit);
 }
