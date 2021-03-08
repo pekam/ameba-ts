@@ -28,9 +28,9 @@ export class Indicators {
     initialSeries: CandleSeries
   ) {
     const candlesToInclude = initialSeries.slice(0, initialSeries.length - 1);
-    const close = candlesToInclude.map((c) => c.close);
-    const high = candlesToInclude.map((c) => c.high);
-    const low = candlesToInclude.map((c) => c.low);
+    const close = candlesToInclude.map(m.close);
+    const high = candlesToInclude.map(m.high);
+    const low = candlesToInclude.map(m.low);
 
     if (settings.smaPeriod) {
       this.sma = new SMA({ period: this.settings.smaPeriod, values: close });
@@ -68,8 +68,8 @@ export function getDonchianChannel(
   period: number
 ): { upper: number; middle: number; lower: number } {
   const subseries = series.slice(-period);
-  const upper = Math.max(...subseries.map((candle) => candle.high));
-  const lower = Math.min(...subseries.map((candle) => candle.low));
+  const upper = Math.max(...subseries.map(m.high));
+  const lower = Math.min(...subseries.map(m.low));
   const middle = lower + (upper - lower) / 2;
   return { upper, lower, middle };
 }

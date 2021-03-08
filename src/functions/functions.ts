@@ -2,6 +2,7 @@ import { CandleSeries } from "../core/candle-series";
 import { Candle, OHLC } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import { candlePatterns } from "./candle-patterns";
+import { candleUtils } from "./candle-utils";
 import _ = require("lodash");
 
 /**
@@ -161,4 +162,5 @@ export const m = {
   getSwingHighs,
   getSwingLows,
   ...candlePatterns,
+  ...candleUtils,
 };
