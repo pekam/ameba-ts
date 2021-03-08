@@ -1,7 +1,7 @@
 import { CandleSeries } from "../core/candle-series";
 import { FtxBotOrder } from "./market-maker-orders";
 import { m } from "../functions/functions";
-import { EMA } from "technicalindicators";
+import { indicators } from "../functions/indicators";
 
 export const emaStrat = getEmaStrat(5, 20);
 
@@ -74,8 +74,7 @@ function getEma(series: CandleSeries, period: number) {
 }
 
 function getEmas(series: CandleSeries, period: number, limit: number) {
-  return EMA.calculate({
-    values: series.slice(-(period + limit + 5)).map(m.close),
-    period,
-  }).slice(-limit);
+  return indicators
+    .ema(series.slice(-(period + limit + 5)), period)
+    .values.slice(-limit);
 }
