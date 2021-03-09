@@ -86,6 +86,15 @@ export interface FtxAddOrderParams {
   postOnly: boolean;
 }
 
+export interface FtxFill {
+  price: number;
+  size: number;
+  side: "buy" | "sell";
+  market: FtxMarket;
+  fee: number;
+  feeCurrency: string;
+}
+
 const FtxRest = require("ftx-api-rest");
 
 const { ftx } = properties;
@@ -251,6 +260,17 @@ export function getFtxClient({ subaccount }: { subaccount: string }) {
     return post("/orders", params);
   }
 
+  async function getFills(params: {
+    market: FtxMarket;
+    limit?: number;
+  }): Promise<FtxFill[]> {
+    return get(
+      `/fills?market=${params.market}${
+        params.limit ? `&limit=${params.limit}` : ""
+      }`
+    );
+  }
+
   return {
     getAccount,
     getBalances,
@@ -262,6 +282,7 @@ export function getFtxClient({ subaccount }: { subaccount: string }) {
     cancelOrder,
     cancelAllOrders,
     addOrder,
+    getFills,
   };
 }
 
