@@ -1,6 +1,7 @@
 import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 import { getFtxUtil } from "./ftx-util";
+import { getFtxStaker } from "./get-ftx-staker";
 
 const sleepMs = 2000;
 
@@ -30,7 +31,7 @@ export function getFtxMarketMaker(params: {
     howMuch: () => Promise<{
       value: number;
       usdValue: number;
-    }> = ftxUtil.howMuchCanBuy
+    }> = getFtxStaker(ftxUtil).howMuchCanBuy
   ) {
     return doAsMarketMaker(howMuch, addBestBid);
   }
@@ -42,7 +43,7 @@ export function getFtxMarketMaker(params: {
     howMuch: () => Promise<{
       value: number;
       usdValue: number;
-    }> = ftxUtil.howMuchCanSell
+    }> = getFtxStaker(ftxUtil).howMuchCanSell
   ) {
     return doAsMarketMaker(howMuch, addBestAsk);
   }
