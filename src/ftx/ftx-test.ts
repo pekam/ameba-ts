@@ -6,9 +6,22 @@ import { Order, Strategy, TradeState } from "../core/types";
 import { m } from "../functions/functions";
 import { FtxBotStrat } from "./bot";
 import { getEmaStrat } from "./strats";
+import { getFtxUtil } from "./ftx-util";
 
 async function run() {
-  const ftx = getFtxClient({ subaccount: "bot-4" });
+  const ftx = getFtxClient({ subaccount: "bot-2" });
+
+  const util = getFtxUtil({ ftx, market: "FTT/USD" });
+
+  const profits = await util.getRecentTradeProfits();
+
+  console.log(profits);
+  console.log(profits.length);
+
+  console.log(m.avg(profits));
+  console.log(m.sum(profits));
+
+  return;
 
   const series = await ftx.getCandles({
     market: "SUSHI/USD",
