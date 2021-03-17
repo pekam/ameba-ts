@@ -11,7 +11,7 @@ import { FtxMarket } from "./ftx";
   await runFtxBot({
     subaccount,
     market,
-    strat: getEmaStrat(5, 100),
+    strat: getEmaStrat(2, 50),
     resolution: "1h",
     candleSeriesLookBack: 60 * 60 * 120, // 120h
     safeZoneMargin: 0.002,
