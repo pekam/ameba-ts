@@ -52,7 +52,7 @@ export function getFtxMarketMaker(params: {
     howMuchCanBuyOrSell: () => Promise<{ value: number; usdValue: number }>,
     addBestOrderToOrderbook: (size: number) => Promise<FtxBotOrder>
   ) {
-    let order: FtxBotOrder;
+    let order: FtxBotOrder | undefined;
     while (true) {
       if (order) {
         await ftx.cancelOrder(order.id);

@@ -16,8 +16,12 @@ const priceToSupportThreshold = 0.01;
  */
 function scoreByCloseToSupport(series: CandleSeries): number {
   const candles = series.slice(-maxCandlesToInclude);
-  const { bottomCandles, lowest } = findCloseBottoms(candles);
-  if (bottomCandles.length < 2) {
+  const bottomResult = findCloseBottoms(candles);
+  if (!bottomResult) {
+    return 0;
+  }
+  const { bottomCandles, lowest } = bottomResult;
+  if (bottomResult.bottomCandles.length < 2) {
     return 0;
   }
   if (
@@ -33,9 +37,9 @@ function scoreByCloseToSupport(series: CandleSeries): number {
   return relativeIncreaseBetween;
 }
 
-function findCloseBottoms(candles: CandleSeries): BottomsResult {
+function findCloseBottoms(candles: CandleSeries): BottomsResult | null {
   const result = getCloseBottoms(candles);
-  if (result.bottomCandles.length < 2 && result.lowest) {
+  if (result && result.bottomCandles.length < 2 && result.lowest) {
     const lowestLowIndex = m.indexOf(candles, result.lowest);
     const retry = getCloseBottoms(candles.slice(lowestLowIndex + 1));
     return retry;
@@ -43,16 +47,19 @@ function findCloseBottoms(candles: CandleSeries): BottomsResult {
   return result;
 }
 
-function getCloseBottoms(series: CandleSeries): BottomsResult {
+function getCloseBottoms(series: CandleSeries): BottomsResult | null {
   const swingLows = m.getSwingLows(series, distanceToCompareSwingLows);
   const lowestLowCandle = _.minBy(swingLows, (c) => c.low);
+  if (!lowestLowCandle) {
+    return null;
+  }
   const closeBottoms = swingLows.filter((c) => isLowClose(lowestLowCandle, c));
   return { bottomCandles: closeBottoms, lowest: lowestLowCandle };
 }
 
 interface BottomsResult {
   bottomCandles: Candle[];
-  lowest: Candle | null;
+  lowest: Candle;
 }
 
 function isLowClose(c1: Candle, c2: Candle) {

@@ -6,7 +6,7 @@ import { FtxBotOrder } from "./market-maker-orders";
 
 export type FtxBotStrat = (params: {
   series: CandleSeries;
-  lastOrder: FtxBotOrder;
+  lastOrder?: FtxBotOrder;
 }) => boolean;
 
 /**
@@ -26,8 +26,8 @@ export async function runFtxBot(params: {
   safeZoneMargin: number;
   resolution: FtxResolution;
   candleSeriesLookBack: number;
-  enter: () => Promise<FtxBotOrder>;
-  exit: () => Promise<FtxBotOrder>;
+  enter: () => Promise<FtxBotOrder | undefined>;
+  exit: () => Promise<FtxBotOrder | undefined>;
   loopMs?: number;
 }) {
   let retrySleep = 1000;
@@ -61,8 +61,8 @@ async function run(
     safeZoneMargin: number;
     resolution: FtxResolution;
     candleSeriesLookBack: number;
-    enter: () => Promise<FtxBotOrder>;
-    exit: () => Promise<FtxBotOrder>;
+    enter: () => Promise<FtxBotOrder | undefined>;
+    exit: () => Promise<FtxBotOrder | undefined>;
     loopMs?: number;
   },
   afterSuccessfulIteration: () => void
@@ -79,7 +79,7 @@ async function run(
     });
   }
 
-  let lastOrder: FtxBotOrder;
+  let lastOrder: FtxBotOrder | undefined;
   while (true) {
     console.log(" ----- " + new Date() + " ----- ");
     const series = await getRecentCandles();
@@ -116,7 +116,7 @@ function shouldBeLong({
   safeZoneMargin,
 }: {
   series: CandleSeries;
-  lastOrder: FtxBotOrder;
+  lastOrder?: FtxBotOrder;
   strat: FtxBotStrat;
   safeZoneMargin: number;
 }) {

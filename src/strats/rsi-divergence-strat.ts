@@ -6,22 +6,16 @@ import { m } from "../functions/functions";
 export class RsiDivergenceStrategy implements Strategy {
   init(tradeState: TradeState): void {}
 
-  update(
-    state: TradeState
-  ): {
-    entryOrder?: Order;
-    stopLoss?: number;
-    takeProfit?: number;
-  } {
+  update(state: TradeState) {
     const series = state.series;
 
     if (!state.position) {
       if (series.length < 3) {
-        return;
+        return {};
       }
       if (state.entryOrder) {
         // TODO: what if entry doesn't trigger
-        return;
+        return {};
       }
       // Could be optimized to find only the latest divergence
       const rsiDivergences = findRSIDivergences(series, 14);
@@ -36,13 +30,20 @@ export class RsiDivergenceStrategy implements Strategy {
         const limitPrice = lastCandle.high + candleSize;
 
         const { stopLoss } = trailingLowExit(state);
+        const entryOrder: Order = {
+          price: limitPrice,
+          type: "limit",
+          side: "buy",
+        };
         return {
-          entryOrder: { price: limitPrice, type: "limit", side: "buy" },
+          entryOrder,
           stopLoss: stopLoss || lastCandle.low - candleSize,
         };
       }
     } else {
       return trailingLowExit(state);
     }
+
+    return {};
   }
 }

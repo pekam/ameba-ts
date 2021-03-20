@@ -43,7 +43,7 @@ export interface TradeState {
   /**
    * The order that is placed to enter the trade.
    */
-  entryOrder: Order;
+  entryOrder: Order | null;
   /**
    * After the entry order has been fulfilled, this defines
    * if we're in a long position (after a buy order) or a
@@ -51,13 +51,13 @@ export interface TradeState {
    *
    * When we don't have an active position, this is falsy.
    */
-  position: MarketPosition;
+  position: MarketPosition | null;
   /**
    * The price of the stop loss order that should be
    * placed after the entry order has been activated,
    * or that is currently active.
    */
-  stopLoss: number;
+  stopLoss: number | null;
   /**
    * The price of the profit taking order that should be
    * placed after the entry order has been activated, or
@@ -66,7 +66,7 @@ export interface TradeState {
    * This can be left out, eg. when using a trailing
    * stop loss.
    */
-  takeProfit: number;
+  takeProfit: number | null;
   transactions: Transaction[];
 }
 
@@ -99,9 +99,9 @@ export interface Transaction {
  */
 export interface StrategyUpdate {
   (tradeState: TradeState): {
-    entryOrder?: Order;
-    stopLoss?: number;
-    takeProfit?: number;
+    entryOrder?: Order | null;
+    stopLoss?: number | null;
+    takeProfit?: number | null;
   };
 }
 

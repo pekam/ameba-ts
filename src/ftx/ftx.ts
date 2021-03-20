@@ -99,7 +99,11 @@ const FtxRest = require("ftx-api-rest");
 
 const { ftx } = properties;
 
-export function getFtxClient({ subaccount }: { subaccount: string }) {
+export function getFtxClient({
+  subaccount,
+}: {
+  subaccount: string | undefined;
+}) {
   const keys = ftx.find((f) => f.subaccount === subaccount);
   if (!keys) {
     throw new Error(

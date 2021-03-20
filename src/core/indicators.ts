@@ -33,7 +33,7 @@ export class Indicators {
     const low = candlesToInclude.map(m.low);
 
     if (settings.smaPeriod) {
-      this.sma = new SMA({ period: this.settings.smaPeriod, values: close });
+      this.sma = new SMA({ period: settings.smaPeriod, values: close });
     }
     if (settings.rsiPeriod) {
       this.rsi = new RSI({ period: settings.rsiPeriod, values: close });
@@ -55,9 +55,9 @@ export class Indicators {
     return {
       sma: this.sma && this.sma.nextValue(candle.close),
       rsi: this.rsi && this.rsi.nextValue(candle.close),
-      donchianChannel:
-        this.settings.donchianChannelPeriod &&
-        getDonchianChannel(series, this.settings.donchianChannelPeriod),
+      donchianChannel: this.settings.donchianChannelPeriod
+        ? getDonchianChannel(series, this.settings.donchianChannelPeriod)
+        : undefined,
       ...directionalIndicators,
     };
   }

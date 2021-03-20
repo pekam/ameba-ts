@@ -16,7 +16,7 @@ export function toCandleSeries(candles: RawCandle[]): CandleSeries {
     };
     series.push(candle);
     return series;
-  }, []);
+  }, [] as CandleSeries);
 
   return series;
 }
@@ -46,7 +46,7 @@ export class TimeTraveller {
    */
   length: number;
 
-  constructor(series: CandleSeries, from: number, to: number) {
+  constructor(series: CandleSeries, from?: number, to?: number) {
     this.series = series;
 
     if (from) {

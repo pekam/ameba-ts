@@ -39,7 +39,7 @@ export function backtestStrategy(
   const tt = new TimeTraveller(series, from, to);
 
   const initialState: TradeState = {
-    series: null,
+    series: [],
     entryOrder: null,
     position: null,
     stopLoss: null,
@@ -88,10 +88,11 @@ function handleOrdersOnEntryCandle(state: TradeState): TradeState {
     return state;
   }
   return m.applyIf(
-    shouldHandleOrderOnEntryCandle(state, state.takeProfit),
+    !!state.takeProfit &&
+      shouldHandleOrderOnEntryCandle(state, state.takeProfit),
     handleTakeProfit,
     m.applyIf(
-      shouldHandleOrderOnEntryCandle(state, state.stopLoss),
+      !!state.stopLoss && shouldHandleOrderOnEntryCandle(state, state.stopLoss),
       handleStopLoss,
       state
     )
@@ -106,7 +107,8 @@ function shouldHandleOrderOnEntryCandle(
   // are covered after the entry, and vice versa.
   const priceMovedUp: boolean =
     m.last(state.series).close > m.last(state.series).open;
-  const entryPrice = state.entryOrder.price;
+  // entryOrder is definitely non-null right after entering
+  const entryPrice = (state.entryOrder as Order).price;
 
   return (
     (priceMovedUp && orderPrice > entryPrice) ||
@@ -118,7 +120,7 @@ function handleEntryOrder(state: TradeState) {
   if (!state.position && state.entryOrder) {
     const price = isOrderFulfilled(state.entryOrder, m.last(state.series));
     if (price) {
-      const mutations = fulfillEntryOrder(state, price);
+      const mutations = fulfillEntryOrder(state, state.entryOrder, price);
       return { ...state, ...mutations };
     }
   }
@@ -127,7 +129,10 @@ function handleEntryOrder(state: TradeState) {
 
 function handleStopLoss(state: TradeState) {
   if (state.position && state.stopLoss) {
-    const stopLossOrder: Order = createStopLossOrder(state);
+    const stopLossOrder: Order = createStopLossOrder(
+      state.position,
+      state.stopLoss
+    );
     const price = isOrderFulfilled(stopLossOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillExitOrder(stopLossOrder, state, price);
@@ -139,7 +144,10 @@ function handleStopLoss(state: TradeState) {
 
 function handleTakeProfit(state: TradeState) {
   if (state.position && state.takeProfit) {
-    const takeProfitOrder: Order = createTakeProfitOrder(state);
+    const takeProfitOrder: Order = createTakeProfitOrder(
+      state.position,
+      state.takeProfit
+    );
     const price = isOrderFulfilled(takeProfitOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillExitOrder(takeProfitOrder, state, price);
@@ -161,12 +169,12 @@ function applyStrategy(state: TradeState, strat: Strategy) {
 
 /**
  * If the order should become fulfilled with the new candle, returns
- * the price where the transaction took place. Otherwise returns undefined.
+ * the price where the transaction took place. Otherwise returns null.
  *
  * The price ignores slippage except that caused by gaps between previous
  * candle's close and current candle's open.
  */
-function isOrderFulfilled(order: Order, newCandle: Candle): number {
+function isOrderFulfilled(order: Order, newCandle: Candle): number | null {
   const priceBelowOrder = newCandle.low <= order.price;
   if (priceBelowOrder) {
     const buyPriceCrossed = order.side === "buy" && order.type === "limit";
@@ -184,37 +192,42 @@ function isOrderFulfilled(order: Order, newCandle: Candle): number {
       return Math.max(order.price, newCandle.open);
     }
   }
+
+  return null;
 }
 
-function fulfillEntryOrder(state: TradeState, price: number) {
+function fulfillEntryOrder(
+  state: TradeState,
+  entryOrder: Order,
+  price: number
+) {
   const transaction: Transaction = {
-    order: state.entryOrder,
-    side: state.entryOrder.side,
+    order: entryOrder,
+    side: entryOrder.side,
     price,
     time: m.last(state.series).time,
   };
 
   const transactions = state.transactions.concat(transaction);
 
-  const position: MarketPosition =
-    state.entryOrder.side === "buy" ? "long" : "short";
+  const position: MarketPosition = entryOrder.side === "buy" ? "long" : "short";
 
   return { transactions, position };
 }
 
-function createStopLossOrder(state: TradeState): Order {
+function createStopLossOrder(position: MarketPosition, price: number): Order {
   return {
-    price: state.stopLoss,
+    price,
     type: "stop",
-    side: state.position === "long" ? "sell" : "buy",
+    side: position === "long" ? "sell" : "buy",
   };
 }
 
-function createTakeProfitOrder(state: TradeState): Order {
+function createTakeProfitOrder(position: MarketPosition, price: number): Order {
   return {
-    price: state.takeProfit,
+    price,
     type: "limit",
-    side: state.position === "long" ? "sell" : "buy",
+    side: position === "long" ? "sell" : "buy",
   };
 }
 

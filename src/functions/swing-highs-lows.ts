@@ -35,7 +35,7 @@ function filterCandles(
       return acc.concat(current);
     }
     return acc;
-  }, []);
+  }, [] as CandleSeries);
 }
 
 function isLocalMax(
@@ -76,7 +76,7 @@ function compareToNeighbours(
     .map((dist) => dist + 1)
     .reduce((acc, dist) => {
       return acc.concat(series[index - dist], series[index + dist]);
-    }, []);
+    }, [] as CandleSeries);
 
   return neighbours.every(
     (neighbour) => neighbour !== undefined && comparator(candle, neighbour)

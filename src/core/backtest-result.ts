@@ -2,6 +2,7 @@ import { Trade, Transaction } from "./types";
 import { timestampToUTCDateString } from "./date-util";
 import { CandleSeries } from "./candle-series";
 import { m } from "../functions/functions";
+import _ = require("lodash");
 
 export interface BacktestResult {
   trades: Trade[];
@@ -41,7 +42,7 @@ export function combineResults(
   results: BacktestResult[],
   serieses: CandleSeries[]
 ) {
-  const allTrades: Trade[] = [].concat(...results.map((r) => r.trades));
+  const allTrades: Trade[] = _.flatMap(results, (r) => r.trades);
   return tradesToResult(allTrades, getBuyAndHoldProfit(serieses));
 }
 

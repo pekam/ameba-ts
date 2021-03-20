@@ -2,7 +2,7 @@ import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
 import { getFtxClient } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
-import { Order, Strategy, TradeState } from "../core/types";
+import { Strategy, TradeState } from "../core/types";
 import { m } from "../functions/functions";
 import { FtxBotStrat } from "./bot";
 import { getEmaStrat } from "./strats";
@@ -56,9 +56,7 @@ function getBacktestableStrategy(
 ): Strategy {
   return {
     init(tradeState: TradeState): void {},
-    update(
-      state: TradeState
-    ): { entryOrder?: Order; stopLoss?: number; takeProfit?: number } {
+    update(state: TradeState) {
       const series = state.series;
       const last = m.last(series);
 
@@ -93,6 +91,7 @@ function getBacktestableStrategy(
       if (state.position === "short" && shouldBeLong) {
         return { takeProfit: last.close * 1.1 };
       }
+      return {};
     },
   };
 }

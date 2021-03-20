@@ -16,7 +16,7 @@ it("should set stop loss below latest low", () => {
   expectResult(series, 2617.065355);
 });
 
-function expectResult(series: CandleSeries, stopLoss: number) {
+function expectResult(series: CandleSeries, stopLoss: number | undefined) {
   const stateUpdate = trailingLowExit({
     series,
     position: "long",

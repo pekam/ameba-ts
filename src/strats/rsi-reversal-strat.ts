@@ -15,12 +15,13 @@ export class RsiReversalStrategy implements Strategy {
     this.indicators = new Indicators({ rsiPeriod, adxPeriod }, state.series);
   }
 
-  update(
-    state: TradeState
-  ): { entryOrder?: Order; stopLoss?: number; takeProfit?: number } {
+  update(state: TradeState) {
     const series = state.series;
 
-    const { rsi, adx } = this.indicators.update(series);
+    const { rsi, adx } = this.indicators.update(series) as {
+      rsi: number;
+      adx: number;
+    };
 
     if (series.length < Math.max(adxPeriod, rsiPeriod)) {
       return {};
@@ -28,12 +29,13 @@ export class RsiReversalStrategy implements Strategy {
 
     if (!state.position) {
       if (adx < 25 && rsi < 30) {
+        const entryOrder: Order = {
+          price: m.last(series).low,
+          type: "limit",
+          side: "buy",
+        };
         return {
-          entryOrder: {
-            price: m.last(series).low,
-            type: "limit",
-            side: "buy",
-          },
+          entryOrder,
           stopLoss: m.last(series).low - m.getAverageCandleSize(series, 5) / 2,
         };
       } else {
@@ -49,5 +51,6 @@ export class RsiReversalStrategy implements Strategy {
         };
       }
     }
+    return {};
   }
 }

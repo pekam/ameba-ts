@@ -26,7 +26,7 @@ export class DonchianChannelStrategy implements Strategy {
 
     const { sma, donchianChannel } = this.indicators.update(series);
 
-    if (series.length < channelPeriod) {
+    if (series.length < channelPeriod || !donchianChannel) {
       return {};
     }
 
