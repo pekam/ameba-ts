@@ -37,6 +37,7 @@ export class DonchianChannelStrategy implements Strategy {
             donchianChannel.upper +
             m.getAverageCandleSize(series, channelPeriod) / 5,
           type: "stop",
+          side: "buy",
         },
         stopLoss: sma,
       };

@@ -169,8 +169,8 @@ function applyStrategy(state: TradeState, strat: Strategy) {
 function isOrderFulfilled(order: Order, newCandle: Candle): number {
   const priceBelowOrder = newCandle.low <= order.price;
   if (priceBelowOrder) {
-    const buyPriceCrossed = !order.sell && order.type === "limit";
-    const sellPriceCrossed = order.sell && order.type === "stop";
+    const buyPriceCrossed = order.side === "buy" && order.type === "limit";
+    const sellPriceCrossed = order.side === "sell" && order.type === "stop";
     if (buyPriceCrossed || sellPriceCrossed) {
       return Math.min(order.price, newCandle.open);
     }
@@ -178,8 +178,8 @@ function isOrderFulfilled(order: Order, newCandle: Candle): number {
 
   const priceAboveOrder = newCandle.high >= order.price;
   if (priceAboveOrder) {
-    const buyPriceCrossed = !order.sell && order.type === "stop";
-    const sellPriceCrossed = order.sell && order.type === "limit";
+    const buyPriceCrossed = order.side === "buy" && order.type === "stop";
+    const sellPriceCrossed = order.side === "sell" && order.type === "limit";
     if (buyPriceCrossed || sellPriceCrossed) {
       return Math.max(order.price, newCandle.open);
     }
@@ -189,14 +189,15 @@ function isOrderFulfilled(order: Order, newCandle: Candle): number {
 function fulfillEntryOrder(state: TradeState, price: number) {
   const transaction: Transaction = {
     order: state.entryOrder,
-    sell: state.entryOrder.sell,
+    side: state.entryOrder.side,
     price,
     time: m.last(state.series).time,
   };
 
   const transactions = state.transactions.concat(transaction);
 
-  const position: MarketPosition = state.entryOrder.sell ? "short" : "long";
+  const position: MarketPosition =
+    state.entryOrder.side === "buy" ? "long" : "short";
 
   return { transactions, position };
 }
@@ -205,7 +206,7 @@ function createStopLossOrder(state: TradeState): Order {
   return {
     price: state.stopLoss,
     type: "stop",
-    sell: state.position === "long",
+    side: state.position === "long" ? "sell" : "buy",
   };
 }
 
@@ -213,14 +214,14 @@ function createTakeProfitOrder(state: TradeState): Order {
   return {
     price: state.takeProfit,
     type: "limit",
-    sell: state.position === "long",
+    side: state.position === "long" ? "sell" : "buy",
   };
 }
 
 function fulfillExitOrder(order: Order, state: TradeState, price: number) {
   const transaction: Transaction = {
     order,
-    sell: order.sell,
+    side: order.side,
     price,
     time: m.last(state.series).time,
   };

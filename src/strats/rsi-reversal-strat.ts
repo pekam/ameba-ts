@@ -32,6 +32,7 @@ export class RsiReversalStrategy implements Strategy {
           entryOrder: {
             price: m.last(series).low,
             type: "limit",
+            side: "buy",
           },
           stopLoss: m.last(series).low - m.getAverageCandleSize(series, 5) / 2,
         };

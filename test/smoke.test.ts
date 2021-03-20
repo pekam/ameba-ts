@@ -18,6 +18,7 @@ it("should get end balance from backtest", async () => {
           const entryOrder: Order = {
             type: "limit",
             price: newCandle.high,
+            side: "buy",
           };
           return {
             entryOrder,

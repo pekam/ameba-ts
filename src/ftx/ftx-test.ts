@@ -70,13 +70,14 @@ function getBacktestableStrategy(
             entryOrder: {
               price: last.close * 1.1,
               type: "limit",
+              side: "buy",
             },
           };
         } else {
           return {
             entryOrder: shortingEnabled
               ? {
-                  sell: true,
+                  side: "sell",
                   price: last.close * 0.9,
                   type: "limit",
                 }

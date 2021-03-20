@@ -103,7 +103,7 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
       .filter((_, i) => i % 2 === 1)
       .map((exit, i) => {
         const entry = transactions[i * 2];
-        const position = entry.sell ? "short" : "long";
+        const position = entry.side === "buy" ? "long" : "short";
         const profit = getTradeProfit({ entry, exit });
         return {
           entry,

@@ -37,7 +37,7 @@ export class RsiDivergenceStrategy implements Strategy {
 
         const { stopLoss } = trailingLowExit(state);
         return {
-          entryOrder: { price: limitPrice, type: "limit" },
+          entryOrder: { price: limitPrice, type: "limit", side: "buy" },
           stopLoss: stopLoss || lastCandle.low - candleSize,
         };
       }

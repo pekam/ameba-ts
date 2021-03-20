@@ -45,6 +45,7 @@ export class SmaPullbackStrategy implements Strategy {
         entryOrder: {
           price: entry,
           type: "stop",
+          side: "buy",
         },
         stopLoss: m.combine(series.slice(-1)).low,
         takeProfit: entry * 1.03,

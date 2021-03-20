@@ -20,9 +20,8 @@ export interface Candle extends RawCandle {
 export interface Order {
   /**
    * Defines if this is a buy or a sell order.
-   * By default it's a buy order.
    */
-  sell?: boolean;
+  side: "buy" | "sell";
   /**
    * Defines if this a limit order or a stop order.
    */
@@ -75,7 +74,7 @@ export interface Transaction {
   /**
    * Defines if this is a buy or a sell transaction.
    */
-  sell: boolean;
+  side: "buy" | "sell";
   /**
    * The order that was fulfilled to create the transaction.
    */
