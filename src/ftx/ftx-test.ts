@@ -21,6 +21,8 @@ async function run() {
   console.log(m.avg(profits));
   console.log(m.sum(profits));
 
+  console.log(m.getWeightedAverage(profits));
+
   return;
 
   const series = await ftx.getCandles({

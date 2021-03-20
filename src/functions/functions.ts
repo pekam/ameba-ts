@@ -3,6 +3,7 @@ import { Candle, OHLC } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
+import * as weightedMean from "weighted-mean";
 import _ = require("lodash");
 
 /**
@@ -137,6 +138,18 @@ function takeCandlesAfter(series: CandleSeries, time: number): CandleSeries {
 }
 
 /**
+ * The first item has biggest weight and the last item
+ * has the smallest weight.
+ */
+function getWeightedAverage(values: number[]) {
+  const valuesWithWeights = values.map((profit, i) => [
+    profit,
+    values.length - i,
+  ]);
+  return weightedMean(valuesWithWeights);
+}
+
+/**
  * Collection of utility functions.
  */
 export const m = {
@@ -156,8 +169,9 @@ export const m = {
   getRelativeDiff,
   isGrowingSeries,
   isDecreasingSeries,
-  takeCandlesAfter,
   isBetween,
+  takeCandlesAfter,
+  getWeightedAverage,
 
   getSwingHighs,
   getSwingLows,
