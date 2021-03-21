@@ -1,7 +1,7 @@
 import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 import { getFtxUtil } from "./ftx-util";
-import { getFtxStaker } from "./get-ftx-staker";
+import { getFtxStaker } from "./ftx-staker";
 
 const sleepMs = 2000;
 
@@ -19,6 +19,7 @@ export type FtxBotOrder = FtxAddOrderParams & {
 export function getFtxMarketMaker(params: {
   subaccount: string;
   market: FtxMarket;
+  peakAccountValueIfUsingRiskManagement?: number;
 }) {
   const { market, subaccount } = params;
   const ftx = getFtxClient({ subaccount });
@@ -31,7 +32,8 @@ export function getFtxMarketMaker(params: {
     howMuch: () => Promise<{
       value: number;
       usdValue: number;
-    }> = getFtxStaker(ftxUtil).howMuchCanBuy
+    }> = getFtxStaker(ftxUtil, params.peakAccountValueIfUsingRiskManagement)
+      .howMuchCanBuy
   ) {
     return doAsMarketMaker(howMuch, addBestBid);
   }

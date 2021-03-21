@@ -8,7 +8,7 @@ export function getFtxUtil({
   ftx: FtxClient;
   market: FtxMarket;
 }) {
-  async function getBalancesAsObject() {
+  async function getWallet() {
     const balances = await ftx.getBalances();
     const usdBalance = balances.find((b) => b.coin === "USD");
     const coinBalance = balances.find((b) => b.coin === market.split("/")[0]);
@@ -16,7 +16,9 @@ export function getFtxUtil({
     const usd = usdBalance ? usdBalance.total : 0;
     const coin = coinBalance ? coinBalance.total : 0;
 
-    return { usd, coin };
+    const totalUsdValue = usd + (coinBalance ? coinBalance.usdValue : 0);
+
+    return { usd, coin, totalUsdValue };
   }
 
   async function getQuote() {
@@ -27,12 +29,12 @@ export function getFtxUtil({
   }
 
   async function getState() {
-    const [account, balances, quote] = await Promise.all([
+    const [account, wallet, quote] = await Promise.all([
       ftx.getAccount(),
-      getBalancesAsObject(),
+      getWallet(),
       getQuote(),
     ]);
-    return { ...account, ...balances, ...quote };
+    return { ...account, ...wallet, ...quote };
   }
 
   async function getTotalUsdValue(): Promise<number> {
@@ -97,10 +99,9 @@ export function getFtxUtil({
   return {
     ftx,
     market,
-    getBalancesAsObject,
+    getWallet,
     getQuote,
     getState,
-    getTotalUsdValue,
     getRecentTradeProfits,
   };
 }

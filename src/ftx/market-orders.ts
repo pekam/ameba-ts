@@ -1,7 +1,7 @@
 import { FtxAddOrderParams } from "./ftx";
 import { getCurrentTimestampInSeconds } from "../util";
 import { FtxUtil } from "./ftx-util";
-import { getFtxStaker } from "./get-ftx-staker";
+import { getFtxStaker } from "./ftx-staker";
 
 /**
  * How much the $ value of a buy/sell order must exceed to try to keep ordering.
