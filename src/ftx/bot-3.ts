@@ -6,7 +6,11 @@ import { getFtxMarketMaker } from "./market-maker-orders";
 (async function () {
   const subaccount = "bot-3";
   const market: FtxMarket = "FTT/USD";
-  const { enter, exit } = getFtxMarketMaker({ subaccount, market });
+  const { enter, exit } = getFtxMarketMaker({
+    subaccount,
+    market,
+    peakAccountValueIfUsingRiskManagement: 162.16,
+  });
 
   await runFtxBot({
     subaccount,
