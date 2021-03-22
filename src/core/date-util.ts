@@ -1,6 +1,8 @@
 import { DateTime } from "luxon";
 
 /**
+ * Result is in seconds.
+ *
  * @param year
  * @param month 1-12
  * @param date

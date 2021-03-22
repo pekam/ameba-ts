@@ -173,10 +173,12 @@ export function getFtxClient({
         `&start_time=${params.startTime}&end_time=${
           params.endTime
         }&limit=${5000}`
-    ).then((candles) =>
-      // ftx returns time in milliseconds, which is inconsistent with finnhub
-      candles.map((c) => ({ ...c, time: c.time / 1000 }))
-    );
+    )
+      .then((candles) =>
+        // ftx returns time in milliseconds, which is inconsistent with finnhub
+        candles.map((c) => ({ ...c, time: c.time / 1000 }))
+      )
+      .then(toCandleSeries);
   }
 
   async function getCandleSeries(params: FtxCandleRequestParams) {

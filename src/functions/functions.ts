@@ -4,6 +4,7 @@ import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
 import * as weightedMean from "weighted-mean";
+import { timestampFromUTC } from "../core/date-util";
 import _ = require("lodash");
 
 /**
@@ -150,6 +151,17 @@ function getWeightedAverage(values: number[]) {
 }
 
 /**
+ * @param dateString in YYYY-MM-DD format
+ */
+function dateStringToTimestamp(dateString: string) {
+  if (!/^\d{4}\-\d{1,2}\-\d{1,2}$/.test(dateString)) {
+    throw Error("Date string not matching format YYYY-MM-DD");
+  }
+  const [year, month, day] = dateString.split("-").map((s) => parseInt(s));
+  return timestampFromUTC(year, month, day);
+}
+
+/**
  * Collection of utility functions.
  */
 export const m = {
@@ -172,6 +184,7 @@ export const m = {
   isBetween,
   takeCandlesAfter,
   getWeightedAverage,
+  dateStringToTimestamp,
 
   getSwingHighs,
   getSwingLows,

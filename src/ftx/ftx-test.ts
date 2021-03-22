@@ -11,7 +11,29 @@ import { getFtxUtil } from "./ftx-util";
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });
 
-  const util = getFtxUtil({ ftx, market: "FTT/USD" });
+  const util = getFtxUtil({ ftx, market: "BTC/USD" });
+
+  const candles = await util.getMinuteCandles({
+    startDate: "2021-02-01",
+    endDate: "2021-03-05",
+  });
+
+  candles.forEach((c, i, a) => {
+    if (i > 0) {
+      const prev = a[i - 1];
+      const diff = c.time - prev.time;
+      if (diff !== 60) {
+        console.error("diff " + diff + " index " + i);
+        console.log(timestampToUTCDateString(c.time));
+        console.log(timestampToUTCDateString(prev.time));
+      }
+    }
+  });
+  console.log(candles.length / 24 / 60);
+  console.log(candles[0].utcDateString);
+  console.log(m.last(candles).utcDateString);
+
+  return;
 
   const profits = await util.getRecentTradeProfits();
 
