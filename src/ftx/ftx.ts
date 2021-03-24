@@ -1,4 +1,4 @@
-import { properties } from "../properties";
+import { getFtxSubAccountProperties, properties } from "../properties";
 import { CandleSeries, toCandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
 import { getCurrentTimestampInSeconds } from "../util";
@@ -104,12 +104,7 @@ export function getFtxClient({
 }: {
   subaccount: string | undefined;
 }) {
-  const keys = ftx.find((f) => f.subaccount === subaccount);
-  if (!keys) {
-    throw new Error(
-      `Ftx api keys for subaccount '${subaccount}' not found in properties.json`
-    );
-  }
+  const keys = getFtxSubAccountProperties(subaccount);
 
   const api = new FtxRest({
     key: keys.api_key,

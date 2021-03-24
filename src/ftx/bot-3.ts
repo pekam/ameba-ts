@@ -9,7 +9,6 @@ import { getFtxMarketMaker } from "./market-maker-orders";
   const { enter, exit } = getFtxMarketMaker({
     subaccount,
     market,
-    peakAccountValueIfUsingRiskManagement: 166.8,
   });
 
   await runFtxBot({

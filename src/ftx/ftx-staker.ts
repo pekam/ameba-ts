@@ -54,6 +54,7 @@ export const getFtxStaker = (
       );
       console.log({
         totalUsdValue,
+        peak: peakAccountValueIfUsingRiskManagement,
         stakeMultiplier,
         targetPositionUsdValue,
         currentPositionUsdValue,

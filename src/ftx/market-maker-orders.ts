@@ -2,6 +2,7 @@ import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 import { getFtxUtil } from "./ftx-util";
 import { getFtxStaker } from "./ftx-staker";
+import { getFtxSubAccountProperties } from "../properties";
 
 const sleepMs = 2000;
 
@@ -19,11 +20,14 @@ export type FtxBotOrder = FtxAddOrderParams & {
 export function getFtxMarketMaker(params: {
   subaccount: string;
   market: FtxMarket;
-  peakAccountValueIfUsingRiskManagement?: number;
 }) {
   const { market, subaccount } = params;
   const ftx = getFtxClient({ subaccount });
   const ftxUtil = getFtxUtil({ ftx, market });
+
+  const peakAccountValue: number | undefined = getFtxSubAccountProperties(
+    subaccount
+  ).peak;
 
   /**
    * Enters the market in the current price as a market maker.
@@ -32,8 +36,7 @@ export function getFtxMarketMaker(params: {
     howMuch: () => Promise<{
       value: number;
       usdValue: number;
-    }> = getFtxStaker(ftxUtil, params.peakAccountValueIfUsingRiskManagement)
-      .howMuchCanBuy
+    }> = getFtxStaker(ftxUtil, peakAccountValue).howMuchCanBuy
   ) {
     return doAsMarketMaker(howMuch, addBestBid);
   }

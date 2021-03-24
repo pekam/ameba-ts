@@ -11,10 +11,13 @@ you want to use:
   "ftx": [{
     "subaccount": "foo",
     "api_key": "bar",
-    "s": "baz"
+    "s": "baz",
+    "peak": 100
   }]
 }
 ```
+(`peak` is the account's peak value,
+optional property to trigger risk management)
 
 Starting all the services:
 

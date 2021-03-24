@@ -9,7 +9,6 @@ import { getEmaStrat } from "./strats";
   const { enter, exit } = getFtxMarketMaker({
     subaccount,
     market,
-    peakAccountValueIfUsingRiskManagement: 70,
   });
   // const util = getFtxUtil({ ftx: getFtxClient({ subaccount }), market });
   // const marketOrders = getFtxMarketOrders(util);
