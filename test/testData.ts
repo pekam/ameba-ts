@@ -1,10 +1,3 @@
-import { RawCandle } from "../src/core/types";
-import { CandleSeries, toCandleSeries } from "../src/core/candle-series";
-
-export function initTestData(): CandleSeries {
-  return toCandleSeries(rawCandles);
-}
-
 /*
 Daily candles of Amazon stock in June 2020, loaded with params:
 {
@@ -15,7 +8,13 @@ Daily candles of Amazon stock in June 2020, loaded with params:
   to: timestampFromUTC(2020, 7, 1),
 }
  */
-const rawCandles: RawCandle[] = [
+import { CandleSeries } from "../src/core/candle-series";
+
+export function initTestData(): CandleSeries {
+  return testData.slice();
+}
+
+const testData: CandleSeries = [
   {
     open: 2448,
     high: 2476.9299,

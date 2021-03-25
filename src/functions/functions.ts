@@ -37,9 +37,14 @@ function indexOf(candles: CandleSeries, candle: Candle): number {
   }
 }
 
-function previous(candles: CandleSeries, candle: Candle): Candle {
+function previous(candles: CandleSeries, candle: Candle): Candle | undefined {
   const index = indexOf(candles, candle);
   return candles[index - 1];
+}
+
+function relativeChange(candle: Candle, previous?: Candle): number {
+  const oldValue = previous ? previous.close : candle.open;
+  return (candle.close - oldValue) / oldValue;
 }
 
 /**
@@ -169,6 +174,7 @@ export const m = {
   last,
   indexOf,
   previous,
+  relativeChange,
   avg,
   sum,
   range,

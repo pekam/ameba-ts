@@ -7,14 +7,9 @@ export interface OHLC {
   close: number;
 }
 
-export interface RawCandle extends OHLC {
+export interface Candle extends OHLC {
   volume?: number;
   time: number;
-}
-
-export interface Candle extends RawCandle {
-  utcDateString: string;
-  relativeChange: number;
 }
 
 export interface Order {

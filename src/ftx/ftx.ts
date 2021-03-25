@@ -1,5 +1,5 @@
 import { getFtxSubAccountProperties, properties } from "../properties";
-import { CandleSeries, toCandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
 import { getCurrentTimestampInSeconds } from "../util";
 
@@ -168,16 +168,10 @@ export function getFtxClient({
         `&start_time=${params.startTime}&end_time=${
           params.endTime
         }&limit=${5000}`
-    )
-      .then((candles) =>
-        // ftx returns time in milliseconds, which is inconsistent with finnhub
-        candles.map((c) => ({ ...c, time: c.time / 1000 }))
-      )
-      .then(toCandleSeries);
-  }
-
-  async function getCandleSeries(params: FtxCandleRequestParams) {
-    return toCandleSeries(await getCandles(params));
+    ).then((candles) =>
+      // ftx returns time in milliseconds, which is inconsistent with finnhub
+      candles.map((c) => ({ ...c, time: c.time / 1000 }))
+    );
   }
 
   async function getOrderBook(params: FtxOrderBookParams): Promise<OrderBook> {
@@ -276,7 +270,6 @@ export function getFtxClient({
     getAccount,
     getBalances,
     getCandles,
-    getCandleSeries,
     getOrderBook,
     getOpenOrders,
     getOrderStatus,

@@ -71,7 +71,7 @@ async function run(
 
   async function getRecentCandles() {
     const now = getCurrentTimestampInSeconds();
-    return ftx.getCandleSeries({
+    return ftx.getCandles({
       market,
       resolution,
       startTime: now - candleSeriesLookBack,

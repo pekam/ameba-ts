@@ -2,7 +2,7 @@ import { CompanyProfile, getStocksByMarketCap } from "./load-company-profiles";
 import { loadCandles, Resolution } from "./load-candle-data";
 import { db } from "./mongo";
 import { timestampFromUTC } from "../core/date-util";
-import { CandleSeries, toCandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/candle-series";
 
 const collection = "data-sets";
 
@@ -39,7 +39,7 @@ export async function getDataSet(id: string): Promise<DataSet> {
     company.getCandleSeries = async () => {
       const candles = (await db.get(getCandleCollection(id), company.symbol))
         .candles;
-      return toCandleSeries(candles);
+      return candles;
     };
     company.withCandleSeries = async () => ({
       ...company,

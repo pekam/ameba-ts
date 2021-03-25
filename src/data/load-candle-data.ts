@@ -1,6 +1,6 @@
 import { timestampToUTCDateString } from "../core/date-util";
 import { fetchFromFinnhub } from "./finnhub";
-import { RawCandle } from "../core/types";
+import { Candle } from "../core/types";
 import { m } from "../functions/functions";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
@@ -26,7 +26,7 @@ interface FinnhubCandleResponse {
 /**
  * Fetches the candle stick price data of a stock or a currency.
  */
-export function loadCandles(options: CandleRequest): Promise<RawCandle[]> {
+export function loadCandles(options: CandleRequest): Promise<Candle[]> {
   console.log("\nFetching data with params:", {
     ...options,
     from: timestampToUTCDateString(options.from),
@@ -56,7 +56,7 @@ export function loadCandles(options: CandleRequest): Promise<RawCandle[]> {
       );
     }
 
-    const candles: RawCandle[] = data.o.map((_, index) => {
+    const candles: Candle[] = data.o.map((_, index) => {
       return {
         open: data.o[index],
         high: data.h[index],

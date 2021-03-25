@@ -30,8 +30,8 @@ async function run() {
     }
   });
   console.log(candles.length / 24 / 60);
-  console.log(candles[0].utcDateString);
-  console.log(m.last(candles).utcDateString);
+  console.log(timestampToUTCDateString(candles[0].time));
+  console.log(timestampToUTCDateString(m.last(candles).time));
 
   return;
 

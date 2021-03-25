@@ -6,8 +6,7 @@ import {
   OrderBook,
 } from "./ftx";
 import { db } from "../data/mongo";
-import { RawCandle } from "../core/types";
-import { CandleSeries, toCandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/candle-series";
 
 const collectionId = "ftx";
 
@@ -21,8 +20,7 @@ export function getFtxDb(ftx: FtxClient) {
   }
 
   async function loadCandleDataFromDb(id: string): Promise<CandleSeries> {
-    const candles: RawCandle[] = (await db.get(collectionId, id)).candles;
-    return toCandleSeries(candles);
+    return (await db.get(collectionId, id)).candles;
   }
 
   const getOrderBookDocId = (market) => "orderbooks-" + market;

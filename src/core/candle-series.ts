@@ -1,25 +1,6 @@
-import { Candle, RawCandle } from "./types";
-import { timestampToUTCDateString } from "./date-util";
-import { m } from "../functions/functions";
+import { Candle } from "./types";
 
 export type CandleSeries = Array<Candle>;
-
-export function toCandleSeries(candles: RawCandle[]): CandleSeries {
-  const series = candles.reduce((series, rawCandle, index) => {
-    const previous = m.last(series);
-    const oldValue = previous ? previous.close : rawCandle.open;
-
-    const candle: Candle = {
-      ...rawCandle,
-      utcDateString: timestampToUTCDateString(rawCandle.time),
-      relativeChange: (rawCandle.close - oldValue) / oldValue,
-    };
-    series.push(candle);
-    return series;
-  }, [] as CandleSeries);
-
-  return series;
-}
 
 /**
  * Allows iterating over a CandleSeries, by expanding a

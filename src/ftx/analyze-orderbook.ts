@@ -20,14 +20,14 @@ async function run() {
   const ftx = getFtxClient({ subaccount: undefined });
   const ftxDb = getFtxDb(ftx);
 
-  const series = await ftx.getCandleSeries({
+  const series = await ftx.getCandles({
     market,
     resolution: "1min",
     startTime: timestampFromUTC(2021, 2, 1),
     endTime: timestampFromUTC(2021, 2, 6),
   });
   console.log(series.length);
-  console.log(series[0].utcDateString);
+  console.log(timestampToUTCDateString(series[0].time));
 
   const books = await ftxDb.loadOrderBooksFromDb(market);
   const result = m.sortDescending(books, score).filter((book) => {
@@ -36,7 +36,7 @@ async function run() {
     if (!c) {
       return false;
     }
-    return c.relativeChange > 0.001;
+    return m.relativeChange(c, series[i - 1]) > 0.001;
     // const sma = m.last(
     //   SMA.calculate({
     //     values: series.slice(0, i + 1).map((asdf) => asdf.close),

@@ -1,15 +1,13 @@
-import { RawCandle } from "../src/core/types";
-import { CandleSeries, toCandleSeries } from "../src/core/candle-series";
-import { initTestData } from "./testData";
+import { CandleSeries } from "../src/core/candle-series";
 import { Indicators } from "../src/core/indicators";
+import { initTestData } from "./testData";
 
 it("should calculate SMA", () => {
-  const rawCandles: RawCandle[] = Array.from(Array(5).keys()).map(
+  const series: CandleSeries = Array.from(Array(5).keys()).map(
     (index: number) => {
       return { close: index + 1, high: 0, low: 0, open: 0, time: 0, volume: 0 };
     }
   );
-  const series = toCandleSeries(rawCandles);
 
   const indicators = new Indicators(
     { smaPeriod: 3 },
