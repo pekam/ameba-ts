@@ -1,22 +1,12 @@
-import {
-  FtxCandleRequestParams,
-  FtxClient,
-  FtxMarket,
-  FtxOrderBookParams,
-  OrderBook,
-} from "./ftx";
+import { FtxClient, FtxMarket, FtxOrderBookParams, OrderBook } from "./ftx";
 import { db } from "../data/mongo";
 import { CandleSeries } from "../core/types";
 
 const collectionId = "ftx";
 
 export function getFtxDb(ftx: FtxClient) {
-  async function loadCandleDataToDb(
-    id: string,
-    params: FtxCandleRequestParams
-  ) {
-    const candles = await ftx.getCandles(params);
-    await db.set(collectionId, id, { params, candles });
+  async function saveCandleDataToDb(id: string, candles: CandleSeries) {
+    await db.set(collectionId, id, { candles });
   }
 
   async function loadCandleDataFromDb(id: string): Promise<CandleSeries> {
@@ -41,7 +31,7 @@ export function getFtxDb(ftx: FtxClient) {
   }
 
   return {
-    loadCandleDataToDb,
+    saveCandleDataToDb,
     loadCandleDataFromDb,
     loadOrderBookToDb,
     loadOrderBooksFromDb,
