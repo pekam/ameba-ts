@@ -7,7 +7,7 @@ import {
   TradeState,
   Transaction,
 } from "./types";
-import { TimeTraveller } from "./candle-series";
+import { TimeTraveller } from "./time-traveller";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { startProgressBar } from "../util";
 import { m } from "../functions/functions";
