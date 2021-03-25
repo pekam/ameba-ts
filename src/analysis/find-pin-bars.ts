@@ -1,6 +1,6 @@
-import { CandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
 import { rankAndReport } from "./rank-and-report";
+import { CandleSeries } from "../core/types";
 
 const scoreByBullishPinBar = (series: CandleSeries) => {
   const candle = m.last(series);

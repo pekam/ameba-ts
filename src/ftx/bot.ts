@@ -1,8 +1,8 @@
 import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep } from "../util";
 import { m } from "../functions/functions";
-import { CandleSeries } from "../core/candle-series";
 import { FtxBotOrder } from "./market-maker-orders";
+import { CandleSeries } from "../core/types";
 
 export type FtxBotStrat = (params: {
   series: CandleSeries;

@@ -1,5 +1,4 @@
-import { Strategy } from "./types";
-import { CandleSeries } from "./candle-series";
+import { CandleSeries, Strategy } from "./types";
 import { backtestStrategy } from "./backtest";
 import { combineResults } from "./backtest-result";
 import { startProgressBar } from "../util";

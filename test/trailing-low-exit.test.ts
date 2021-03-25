@@ -1,6 +1,6 @@
 import { initTestData } from "./testData";
-import { CandleSeries } from "../src/core/candle-series";
 import { trailingLowExit } from "../src/strats/trailing-low-exit";
+import { CandleSeries } from "../src/core/types";
 
 it("should set stop loss below latest low", () => {
   const series: CandleSeries = initTestData();

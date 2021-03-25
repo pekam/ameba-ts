@@ -8,7 +8,7 @@ Daily candles of Amazon stock in June 2020, loaded with params:
   to: timestampFromUTC(2020, 7, 1),
 }
  */
-import { CandleSeries } from "../src/core/candle-series";
+import { CandleSeries } from "../src/core/types";
 
 export function initTestData(): CandleSeries {
   return testData.slice();

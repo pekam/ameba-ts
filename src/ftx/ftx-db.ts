@@ -6,7 +6,7 @@ import {
   OrderBook,
 } from "./ftx";
 import { db } from "../data/mongo";
-import { CandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/types";
 
 const collectionId = "ftx";
 

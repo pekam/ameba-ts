@@ -1,6 +1,5 @@
-import { Trade, Transaction } from "./types";
+import { CandleSeries, Trade, Transaction } from "./types";
 import { timestampToUTCDateString } from "./date-util";
-import { CandleSeries } from "./candle-series";
 import { m } from "../functions/functions";
 import _ = require("lodash");
 

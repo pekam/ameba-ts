@@ -1,6 +1,6 @@
-import { CandleSeries } from "../src/core/candle-series";
 import { Indicators } from "../src/core/indicators";
 import { initTestData } from "./testData";
+import { CandleSeries } from "../src/core/types";
 
 it("should calculate SMA", () => {
   const series: CandleSeries = Array.from(Array(5).keys()).map(

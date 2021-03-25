@@ -1,5 +1,3 @@
-import { CandleSeries } from "./candle-series";
-
 export interface OHLC {
   open: number;
   high: number;
@@ -11,6 +9,8 @@ export interface Candle extends OHLC {
   volume?: number;
   time: number;
 }
+
+export type CandleSeries = Array<Candle>;
 
 export interface Order {
   /**

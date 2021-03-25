@@ -1,7 +1,6 @@
 import { loadCandles } from "../src/data/load-candle-data";
-import { Order, Strategy, TradeState } from "../src/core/types";
+import { CandleSeries, Order, Strategy, TradeState } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
-import { CandleSeries } from "../src/core/candle-series";
 import { timestampFromUTC } from "../src/core/date-util";
 import { BacktestResult } from "../src/core/backtest-result";
 import { m } from "../src/functions/functions";

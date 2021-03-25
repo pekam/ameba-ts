@@ -1,6 +1,6 @@
-import { CandleSeries } from "../core/candle-series";
 import { rankAndReport } from "./rank-and-report";
 import { getDonchianChannel } from "../core/indicators";
+import { CandleSeries } from "../core/types";
 
 const donchianChannelPeriod = 20;
 const numOfPeriods = 10;

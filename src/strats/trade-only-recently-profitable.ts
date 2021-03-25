@@ -1,5 +1,4 @@
-import { Strategy, TradeState } from "../core/types";
-import { CandleSeries } from "../core/candle-series";
+import { CandleSeries, Strategy, TradeState } from "../core/types";
 import { backtestStrategy } from "../core/backtest";
 
 /**

@@ -1,6 +1,6 @@
 import { FtxClient, FtxMarket } from "./ftx";
 import { m } from "../functions/functions";
-import { CandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/types";
 import _ = require("lodash");
 
 export function getFtxUtil({

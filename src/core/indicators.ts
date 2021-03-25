@@ -1,6 +1,6 @@
 import { ADX, RSI, SMA } from "technicalindicators";
-import { CandleSeries } from "./candle-series";
 import { m } from "../functions/functions";
+import { CandleSeries } from "./types";
 
 export interface IndicatorSettings {
   readonly smaPeriod?: number;

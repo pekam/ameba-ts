@@ -1,5 +1,5 @@
-import { CandleSeries } from "../core/candle-series";
 import { rankAndReport } from "./rank-and-report";
+import { CandleSeries } from "../core/types";
 
 /**
  * Scores the candle series by the number of consecutive candles

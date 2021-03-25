@@ -1,12 +1,13 @@
 import {
   Candle,
+  CandleSeries,
   MarketPosition,
   Order,
   Strategy,
   TradeState,
   Transaction,
 } from "./types";
-import { CandleSeries, TimeTraveller } from "./candle-series";
+import { TimeTraveller } from "./candle-series";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { startProgressBar } from "../util";
 import { m } from "../functions/functions";

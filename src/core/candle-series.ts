@@ -1,6 +1,4 @@
-import { Candle } from "./types";
-
-export type CandleSeries = Array<Candle>;
+import { CandleSeries } from "./types";
 
 /**
  * Allows iterating over a CandleSeries, by expanding a

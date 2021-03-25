@@ -1,5 +1,5 @@
-import { CandleSeries } from "../core/candle-series";
 import { m } from "./functions";
+import { CandleSeries } from "../core/types";
 
 export const candlePatterns = {
   isInsideBar: function (series: CandleSeries) {

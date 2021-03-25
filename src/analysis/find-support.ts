@@ -1,7 +1,6 @@
-import { CandleSeries } from "../core/candle-series";
 import { rankAndReport } from "./rank-and-report";
 import { m } from "../functions/functions";
-import { Candle } from "../core/types";
+import { Candle, CandleSeries } from "../core/types";
 import * as _ from "lodash";
 
 const maxCandlesToInclude = 100;

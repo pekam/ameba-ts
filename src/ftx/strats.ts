@@ -1,7 +1,7 @@
-import { CandleSeries } from "../core/candle-series";
 import { FtxBotOrder } from "./market-maker-orders";
 import { m } from "../functions/functions";
 import { indicators } from "../functions/indicators";
+import { CandleSeries } from "../core/types";
 
 export const emaStrat = getEmaStrat(5, 20);
 

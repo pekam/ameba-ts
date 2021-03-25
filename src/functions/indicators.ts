@@ -1,7 +1,6 @@
-import { CandleSeries } from "../core/candle-series";
 import { m } from "./functions";
 import { EMA, SMA } from "technicalindicators";
-import { Candle } from "../core/types";
+import { Candle, CandleSeries } from "../core/types";
 
 export interface IndicatorResult {
   values: number[];

@@ -2,7 +2,7 @@ import { CompanyProfile, getStocksByMarketCap } from "./load-company-profiles";
 import { loadCandles, Resolution } from "./load-candle-data";
 import { db } from "./mongo";
 import { timestampFromUTC } from "../core/date-util";
-import { CandleSeries } from "../core/candle-series";
+import { CandleSeries } from "../core/types";
 
 const collection = "data-sets";
 

@@ -1,7 +1,7 @@
 import { getFtxSubAccountProperties, properties } from "../properties";
-import { CandleSeries } from "../core/candle-series";
 import { m } from "../functions/functions";
 import { getCurrentTimestampInSeconds } from "../util";
+import { CandleSeries } from "../core/types";
 
 export const FtxMarkets = [
   "BTC/USD",
