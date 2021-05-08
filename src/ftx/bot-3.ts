@@ -5,7 +5,7 @@ import { getFtxMarketMaker } from "./market-maker-orders";
 
 (async function () {
   const subaccount = "bot-3";
-  const market: FtxMarket = "DOGE/USD";
+  const market: FtxMarket = "FTT/USD";
   const { enter, exit } = getFtxMarketMaker({
     subaccount,
     market,
