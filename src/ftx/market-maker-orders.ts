@@ -12,8 +12,11 @@ const sleepMs = 2000;
  */
 const orderThresholdUsd = 10;
 
-export type FtxBotOrder = FtxAddOrderParams & {
+export type FtxBotOrder = {
   id: number;
+  side: "buy" | "sell";
+  price: number;
+  size: number;
   time: number;
 };
 
