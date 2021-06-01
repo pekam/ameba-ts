@@ -6,6 +6,11 @@ import _ = require("lodash");
 export interface BacktestResult {
   trades: Trade[];
   /**
+   * Transaction cost used to calculate this result.
+   * E.g. 0.001 for 0.1% transaction cost per each buy and sell transaction.
+   */
+  relativeTransactionCost: number;
+  /**
    * All the trade profits multiplied together
    */
   profit: number;
@@ -29,7 +34,7 @@ export function convertToBacktestResult(
   series: CandleSeries
 ): BacktestResult {
   const trades: Trade[] = convertToTrades(transactions);
-  return tradesToResult(trades, getBuyAndHoldProfit([series]));
+  return tradesToResult(trades, getBuyAndHoldProfit([series]), 0);
 }
 
 /**
@@ -41,13 +46,26 @@ export function combineResults(
   results: BacktestResult[],
   serieses: CandleSeries[]
 ) {
+  const relativeTransactionCost = results[0].relativeTransactionCost;
+  if (
+    results.some((r) => r.relativeTransactionCost !== relativeTransactionCost)
+  ) {
+    throw new Error(
+      "The backtest results to combine have inconsistent transaction costs."
+    );
+  }
   const allTrades: Trade[] = _.flatMap(results, (r) => r.trades);
-  return tradesToResult(allTrades, getBuyAndHoldProfit(serieses));
+  return tradesToResult(
+    allTrades,
+    getBuyAndHoldProfit(serieses),
+    relativeTransactionCost
+  );
 }
 
 function tradesToResult(
   trades: Trade[],
-  buyAndHoldProfit: number
+  buyAndHoldProfit: number,
+  relativeTransactionCost: number
 ): BacktestResult {
   const profits: number[] = trades.map((trade) => trade.profit);
 
@@ -74,6 +92,7 @@ function tradesToResult(
     averageProfit: m.avg(profits),
     maxProfits,
     buyAndHoldProfit,
+    relativeTransactionCost,
   };
 }
 
@@ -92,7 +111,7 @@ export function withRelativeTransactionCost(
     ...trade,
     profit: getTradeProfit(trade, relativeCost),
   }));
-  return tradesToResult(updatedTrades, result.buyAndHoldProfit);
+  return tradesToResult(updatedTrades, result.buyAndHoldProfit, relativeCost);
 }
 
 function convertToTrades(transactions: Transaction[]): Trade[] {
