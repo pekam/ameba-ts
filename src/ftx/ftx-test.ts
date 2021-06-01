@@ -2,23 +2,44 @@ import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
 import { getFtxClient } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
-import { Strategy, TradeState } from "../core/types";
+import { CandleSeries, Strategy, TradeState } from "../core/types";
 import { m } from "../functions/functions";
 import { FtxBotStrat } from "./bot";
-import { getEmaStrat } from "./strats";
+import { emaStrat, getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
+import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });
 
-  const util = getFtxUtil({ ftx, market: "BTC/USD" });
+  const util = getFtxUtil({ ftx, market: "FTT/USD" });
 
-  const candles = await util.getMinuteCandles({
-    startDate: "2021-02-01",
-    endDate: "2021-03-05",
+  const save = writeDataToFile;
+  const load = readDataFromFile;
+
+  const candles: CandleSeries = load("ftt.json");
+
+  const result = backtestStrategy(
+    () => getBacktestableStrategy(emaStrat),
+    candles
+  );
+
+  console.log(result.stats);
+  console.log(withRelativeTransactionCost(result, 0.0007).stats);
+
+  save(
+    [result.stats, withRelativeTransactionCost(result, 0.0007).stats],
+    "res1"
+  );
+
+  return;
+
+  const candleSeries = await util.getMinuteCandles({
+    startDate: "2021-02-20",
+    endDate: "2021-06-01",
   });
 
-  candles.forEach((c, i, a) => {
+  candleSeries.forEach((c, i, a) => {
     if (i > 0) {
       const prev = a[i - 1];
       const diff = c.time - prev.time;
@@ -29,9 +50,11 @@ async function run() {
       }
     }
   });
-  console.log(candles.length / 24 / 60);
-  console.log(timestampToUTCDateString(candles[0].time));
-  console.log(timestampToUTCDateString(m.last(candles).time));
+  console.log(candleSeries.length / 24 / 60);
+  console.log(timestampToUTCDateString(candleSeries[0].time));
+  console.log(timestampToUTCDateString(m.last(candleSeries).time));
+
+  save(candleSeries, "ftt.json");
 
   return;
 
@@ -59,12 +82,12 @@ async function run() {
     series
   );
 
-  console.log({ ...backtestResult, trades: [] });
+  console.log(backtestResult.stats);
   const resultWithTransactionCosts = withRelativeTransactionCost(
     backtestResult,
     0.0005
   );
-  console.log({ ...resultWithTransactionCosts, trades: [] });
+  console.log(resultWithTransactionCosts.stats);
   console.log(
     timestampToUTCDateString(series[0].time),
     timestampToUTCDateString(m.last(series).time)

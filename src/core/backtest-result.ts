@@ -3,8 +3,7 @@ import { timestampToUTCDateString } from "./date-util";
 import { m } from "../functions/functions";
 import _ = require("lodash");
 
-export interface BacktestResult {
-  trades: Trade[];
+export interface BacktestStatistics {
   /**
    * Transaction cost used to calculate this result.
    * E.g. 0.001 for 0.1% transaction cost per each buy and sell transaction.
@@ -29,6 +28,11 @@ export interface BacktestResult {
   buyAndHoldProfit: number;
 }
 
+export interface BacktestResult {
+  trades: Trade[];
+  stats: BacktestStatistics;
+}
+
 export function convertToBacktestResult(
   transactions: Transaction[],
   series: CandleSeries
@@ -46,9 +50,11 @@ export function combineResults(
   results: BacktestResult[],
   serieses: CandleSeries[]
 ) {
-  const relativeTransactionCost = results[0].relativeTransactionCost;
+  const relativeTransactionCost = results[0].stats.relativeTransactionCost;
   if (
-    results.some((r) => r.relativeTransactionCost !== relativeTransactionCost)
+    results.some(
+      (r) => r.stats.relativeTransactionCost !== relativeTransactionCost
+    )
   ) {
     throw new Error(
       "The backtest results to combine have inconsistent transaction costs."
@@ -84,15 +90,18 @@ function tradesToResult(
 
   return {
     trades,
-    result,
-    profit: result - 1,
-    profitWithConstantStake,
-    tradeCount: trades.length,
-    successRate: profits.filter((profit) => profit > 0).length / trades.length,
-    averageProfit: m.avg(profits),
-    maxProfits,
-    buyAndHoldProfit,
-    relativeTransactionCost,
+    stats: {
+      result,
+      profit: result - 1,
+      profitWithConstantStake,
+      tradeCount: trades.length,
+      successRate:
+        profits.filter((profit) => profit > 0).length / trades.length,
+      averageProfit: m.avg(profits),
+      maxProfits,
+      buyAndHoldProfit,
+      relativeTransactionCost,
+    },
   };
 }
 
@@ -111,7 +120,11 @@ export function withRelativeTransactionCost(
     ...trade,
     profit: getTradeProfit(trade, relativeCost),
   }));
-  return tradesToResult(updatedTrades, result.buyAndHoldProfit, relativeCost);
+  return tradesToResult(
+    updatedTrades,
+    result.stats.buyAndHoldProfit,
+    relativeCost
+  );
 }
 
 function convertToTrades(transactions: Transaction[]): Trade[] {

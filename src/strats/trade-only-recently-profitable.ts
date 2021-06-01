@@ -66,7 +66,7 @@ export class TradeOnlyRecentlyProfitable implements Strategy {
         this.stratProvider,
         series.slice(-this.backtestCandleCount)
       );
-      this.enabled = backtestResult.result > this.resultThreshold;
+      this.enabled = backtestResult.stats.result > this.resultThreshold;
     }
   }
 }
