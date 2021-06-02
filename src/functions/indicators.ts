@@ -1,5 +1,5 @@
 import { m } from "./functions";
-import { EMA, SMA } from "technicalindicators";
+import { ATR, EMA, SMA } from "technicalindicators";
 import { Candle, CandleSeries } from "../core/types";
 
 export interface IndicatorResult {
@@ -19,6 +19,16 @@ function ema(series: CandleSeries, period: number): IndicatorResult {
   return toResult(series, emas);
 }
 
+function atr(series: CandleSeries, period: number): IndicatorResult {
+  const atrs = ATR.calculate({
+    low: series.map(m.low),
+    high: series.map(m.high),
+    close: series.map(m.close),
+    period,
+  });
+  return toResult(series, atrs);
+}
+
 function toResult(
   series: CandleSeries,
   indicatorValues: number[]
@@ -36,4 +46,5 @@ function toResult(
 export const indicators = {
   sma,
   ema,
+  atr,
 };
