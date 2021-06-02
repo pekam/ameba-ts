@@ -10,6 +10,7 @@ import { CandleSeries } from "./types";
  */
 export class TimeTraveller {
   private readonly series: CandleSeries;
+  private subseries: CandleSeries = [];
   /**
    * Index of the candle that will be the last one included
    * in the next call of next() function.
@@ -66,7 +67,11 @@ export class TimeTraveller {
     if (!this.hasNext()) {
       throw new Error("TimeTraveller index out of bounds.");
     }
-    return this.series.slice(0, ++this.nextIndex);
+    // Need to mutate a single array instead of using slice(), because slice()
+    // has O(N) performance which is a real issue when backtesting big datasets.
+    this.subseries.push(this.series[this.nextIndex]);
+    this.nextIndex++;
+    return this.subseries;
   }
 
   /**
