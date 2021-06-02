@@ -10,7 +10,7 @@ import { CandleSeries } from "./types";
  */
 export class TimeTraveller {
   private readonly series: CandleSeries;
-  private subseries: CandleSeries = [];
+  private subseries: CandleSeries;
   /**
    * Index of the candle that will be the last one included
    * in the next call of next() function.
@@ -35,6 +35,7 @@ export class TimeTraveller {
       // Default to 1 instead of 0 so that indicators can be initialized
       this.nextIndex = 1;
     }
+    this.subseries = series.slice(0, this.nextIndex);
 
     if (to) {
       this.endIndex = series.findIndex((candle) => candle.time === to);
