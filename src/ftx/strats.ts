@@ -15,10 +15,10 @@ export function getEmaStrat(shortEmaPeriod, longEmaPeriod) {
   }) {
     const emaShort = getEma(series, shortEmaPeriod);
     const emaLong = getEma(series, longEmaPeriod);
-    console.log({
-      emaShort,
-      emaLong,
-    });
+    // console.log({
+    //   emaShort,
+    //   emaLong,
+    // });
 
     const longCondition = emaShort > emaLong;
 
@@ -74,5 +74,5 @@ function getEma(series: CandleSeries, period: number) {
 }
 
 function getEmas(series: CandleSeries, period: number, limit: number) {
-  return indicators.ema(series, period).values.slice(-limit);
+  return indicators.ema(series.slice(-200), period).values.slice(-limit);
 }
