@@ -11,7 +11,10 @@ import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
     dataSet.companies.slice(0, 30).map((comp) => comp.withCandleSeries())
   );
   const result = backtestMultiple(
-    () => new TradeOnlyRecentlyProfitable(() => new DonchianChannelStrategy()),
+    () =>
+      new TradeOnlyRecentlyProfitable(
+        () => new DonchianChannelStrategy(30, 20)
+      ),
     companiesWithCandles.map((c) => c.candles)
   );
   console.log(result);
