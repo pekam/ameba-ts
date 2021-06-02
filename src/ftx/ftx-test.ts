@@ -2,12 +2,13 @@ import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
 import { getFtxClient } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
-import { CandleSeries, Strategy, TradeState } from "../core/types";
+import { Candle, CandleSeries, Strategy, TradeState } from "../core/types";
 import { m } from "../functions/functions";
 import { FtxBotStrat } from "./bot";
 import { emaStrat, getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
+import { FtxBotOrder } from "./market-maker-orders";
 
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });
@@ -95,20 +96,36 @@ async function run() {
 }
 run();
 
+/**
+ * NOTE: Be careful if the the strat uses lastOrder, as it is not perfectly mocked.
+ */
 function getBacktestableStrategy(
   ftxStrat: FtxBotStrat,
   shortingEnabled: boolean = false
 ): Strategy {
+  let lastOrder: FtxBotOrder | undefined = undefined;
+
+  const updateLastOrder = (lastCandle: Candle, side: "buy" | "sell") => {
+    lastOrder = {
+      price: lastCandle.close,
+      side,
+      time: lastCandle.time,
+      id: 0,
+      size: 1,
+    };
+  };
+
   return {
     init(tradeState: TradeState): void {},
     update(state: TradeState) {
       const series = state.series;
       const last = m.last(series);
 
-      const shouldBeLong = ftxStrat({ series, lastOrder: undefined });
+      const shouldBeLong = ftxStrat({ series, lastOrder });
 
       if (!state.position) {
         if (shouldBeLong) {
+          updateLastOrder(last, "buy");
           return {
             entryOrder: {
               price: last.close * 1.1,
@@ -117,6 +134,7 @@ function getBacktestableStrategy(
             },
           };
         } else {
+          updateLastOrder(last, "sell");
           return {
             entryOrder: shortingEnabled
               ? {
@@ -130,10 +148,12 @@ function getBacktestableStrategy(
       }
 
       if (state.position === "long" && !shouldBeLong) {
+        updateLastOrder(last, "sell");
         return { takeProfit: last.close * 0.9 };
       }
 
       if (state.position === "short" && shouldBeLong) {
+        updateLastOrder(last, "buy");
         return { takeProfit: last.close * 1.1 };
       }
       return {};
