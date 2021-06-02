@@ -5,10 +5,12 @@ import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
 import { Candle, CandleSeries, Strategy, TradeState } from "../core/types";
 import { m } from "../functions/functions";
 import { FtxBotStrat } from "./bot";
-import { emaStrat, getEmaStrat } from "./strats";
+import { getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { FtxBotOrder } from "./market-maker-orders";
+import { DonchianChannelStrategy } from "../strats/donchian-channel-strat";
+import _ = require("lodash");
 
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });
@@ -20,18 +22,30 @@ async function run() {
 
   const candles: CandleSeries = load("ftt.json");
 
-  const result = backtestStrategy(
-    () => getBacktestableStrategy(emaStrat),
-    candles
-  );
-
-  console.log(result.stats);
-  console.log(withRelativeTransactionCost(result, 0.0007).stats);
-
-  save(
-    [result.stats, withRelativeTransactionCost(result, 0.0007).stats],
-    "res1"
-  );
+  const randomOptimize = () => {
+    const results = m.sortAscending(
+      m.range(20).map(() => {
+        const channelPeriod = _.random(100, 1000);
+        const smaPeriod = _.random(20, 100);
+        const result = backtestStrategy(
+          () => new DonchianChannelStrategy(channelPeriod, smaPeriod),
+          candles
+        );
+        const withCosts = withRelativeTransactionCost(result, 0.0007);
+        return {
+          ...withCosts.stats,
+          channelPeriod,
+          smaPeriod,
+        };
+      }),
+      (r) => r.averageProfit
+    );
+    console.log(results);
+    /*
+     * channelPeriod: 567
+     * smaPeriod: 93
+     */
+  };
 
   return;
 
