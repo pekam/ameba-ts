@@ -15,7 +15,7 @@ export function writeDataToFile(data: any, fileName: string) {
   }
   fs.writeFileSync(
     path.join(cacheDirPath, fileName),
-    JSON.stringify(data),
+    JSON.stringify(data, null, 2),
     "utf8"
   );
 }
