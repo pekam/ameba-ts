@@ -5,7 +5,7 @@ import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
 import { Candle, CandleSeries, Strategy, TradeState } from "../core/types";
 import { m } from "../functions/functions";
 import { FtxBotStrat } from "./bot";
-import { getEmaStrat } from "./strats";
+import { emaStrat, getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { FtxBotOrder } from "./market-maker-orders";
@@ -21,6 +21,21 @@ async function run() {
   const load = readDataFromFile;
 
   const candles: CandleSeries = load("ftt.json");
+
+  const lastMonthCandles = candles.filter(
+    (c) => c.time > m.dateStringToTimestamp("2021-05-01")
+  );
+
+  const res = await backtestStrategy(
+    () => getBacktestableStrategy(emaStrat),
+    lastMonthCandles
+  );
+  const withTransCost = withRelativeTransactionCost(res, 0.0007);
+  save(
+    { res: res.stats, withTransCost: withTransCost.stats },
+    "resLastMonth.json"
+  );
+  return;
 
   const randomOptimize = () => {
     const results = m.sortAscending(
