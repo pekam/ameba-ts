@@ -1,8 +1,8 @@
 import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
 import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
 import { getFtxUtil } from "./ftx-util";
-import { getFtxStaker } from "./ftx-staker";
-import { getFtxSubAccountProperties } from "../properties";
+import { FtxStaker } from "./ftx-staker";
+import { CandleSeries } from "../core/types";
 
 const sleepMs = 2000;
 
@@ -23,36 +23,33 @@ export type FtxBotOrder = {
 export function getFtxMarketMaker(params: {
   subaccount: string;
   market: FtxMarket;
+  staker: FtxStaker;
 }) {
-  const { market, subaccount } = params;
+  const { market, subaccount, staker } = params;
   const ftx = getFtxClient({ subaccount });
   const ftxUtil = getFtxUtil({ ftx, market });
-
-  const peakAccountValue: number | undefined = getFtxSubAccountProperties(
-    subaccount
-  ).peak;
 
   /**
    * Enters the market in the current price as a market maker.
    */
-  async function enter(
-    howMuch: () => Promise<{
+  async function enter(series: CandleSeries) {
+    const howMuch: (
+      series
+    ) => Promise<{
       value: number;
       usdValue: number;
-    }> = getFtxStaker(ftxUtil, peakAccountValue).howMuchCanBuy
-  ) {
-    return doAsMarketMaker(howMuch, addBestBid);
+    }> = staker.howMuchCanBuy;
+    return doAsMarketMaker(() => howMuch(series), addBestBid);
   }
 
   /**
    * Exits the market in the current price as a market maker.
    */
-  async function exit(
-    howMuch: () => Promise<{
+  async function exit() {
+    const howMuch: () => Promise<{
       value: number;
       usdValue: number;
-    }> = getFtxStaker(ftxUtil).howMuchCanSell
-  ) {
+    }> = staker.howMuchCanSell;
     return doAsMarketMaker(howMuch, addBestAsk);
   }
 

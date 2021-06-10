@@ -2,6 +2,7 @@ import { FtxMarket } from "./ftx";
 import { runFtxBot } from "./bot";
 import { getFtxMarketMaker } from "./market-maker-orders";
 import { getEmaStrat } from "./strats";
+import { getFtxStaker } from "./ftx-staker";
 
 (async function () {
   const subaccount = "bot-4";
@@ -9,6 +10,11 @@ import { getEmaStrat } from "./strats";
   const { enter, exit } = getFtxMarketMaker({
     subaccount,
     market,
+    staker: getFtxStaker({
+      subaccount,
+      market,
+      stakeByPeakAccountValue: false,
+    }),
   });
   // const util = getFtxUtil({ ftx: getFtxClient({ subaccount }), market });
   // const marketOrders = getFtxMarketOrders(util);

@@ -1,7 +1,8 @@
 import { FtxBotOrder } from "./market-maker-orders";
 import { m } from "../functions/functions";
 import { indicators } from "../functions/indicators";
-import { CandleSeries } from "../core/types";
+import { Candle, CandleSeries, Strategy, TradeState } from "../core/types";
+import { FtxBotStrat } from "./bot";
 
 export const emaStrat = getEmaStrat(5, 20);
 
@@ -51,11 +52,11 @@ export function tripleEmaStrat({
     .range(emaShort.length)
     .some((i) => emaShort[i] > emaLong[i] !== longCondition);
 
-  console.log({
-    longCondition,
-    tinyLongCondition,
-    recentlyCrossed,
-  });
+  // console.log({
+  //   longCondition,
+  //   tinyLongCondition,
+  //   recentlyCrossed,
+  // });
 
   if (recentlyCrossed) {
     return tinyLongCondition;
@@ -75,4 +76,69 @@ function getEma(series: CandleSeries, period: number) {
 
 function getEmas(series: CandleSeries, period: number, limit: number) {
   return indicators.ema(series.slice(-200), period).values.slice(-limit);
+}
+
+/**
+ * NOTE: Be careful if the the strat uses lastOrder, as it is not perfectly mocked.
+ */
+export function getBacktestableStrategy(
+  ftxStrat: FtxBotStrat,
+  shortingEnabled: boolean = false
+): Strategy {
+  let lastOrder: FtxBotOrder | undefined = undefined;
+
+  const updateLastOrder = (lastCandle: Candle, side: "buy" | "sell") => {
+    lastOrder = {
+      price: lastCandle.close,
+      side,
+      time: lastCandle.time,
+      id: 0,
+      size: 1,
+    };
+  };
+
+  return {
+    init(tradeState: TradeState): void {},
+    update(state: TradeState) {
+      const series = state.series;
+      const last = m.last(series);
+
+      const shouldBeLong = ftxStrat({ series, lastOrder });
+
+      if (!state.position) {
+        if (shouldBeLong) {
+          updateLastOrder(last, "buy");
+          return {
+            entryOrder: {
+              price: last.close * 1.1,
+              type: "limit",
+              side: "buy",
+            },
+          };
+        } else {
+          updateLastOrder(last, "sell");
+          return {
+            entryOrder: shortingEnabled
+              ? {
+                  side: "sell",
+                  price: last.close * 0.9,
+                  type: "limit",
+                }
+              : null,
+          };
+        }
+      }
+
+      if (state.position === "long" && !shouldBeLong) {
+        updateLastOrder(last, "sell");
+        return { takeProfit: last.close * 0.9 };
+      }
+
+      if (state.position === "short" && shouldBeLong) {
+        updateLastOrder(last, "buy");
+        return { takeProfit: last.close * 1.1 };
+      }
+      return {};
+    },
+  };
 }

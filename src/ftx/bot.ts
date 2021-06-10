@@ -26,7 +26,7 @@ export async function runFtxBot(params: {
   safeZoneMargin: number;
   resolution: FtxResolution;
   candleSeriesLookBack: number;
-  enter: () => Promise<FtxBotOrder | undefined>;
+  enter: (series: CandleSeries) => Promise<FtxBotOrder | undefined>;
   exit: () => Promise<FtxBotOrder | undefined>;
   loopMs?: number;
 }) {
@@ -61,7 +61,7 @@ async function run(
     safeZoneMargin: number;
     resolution: FtxResolution;
     candleSeriesLookBack: number;
-    enter: () => Promise<FtxBotOrder | undefined>;
+    enter: (series: CandleSeries) => Promise<FtxBotOrder | undefined>;
     exit: () => Promise<FtxBotOrder | undefined>;
     loopMs?: number;
   },
@@ -92,7 +92,7 @@ async function run(
       })
     ) {
       console.log("begin entry");
-      const order = await enter();
+      const order = await enter(series);
       console.log(order ? "entry finished" : "already entered");
       lastOrder = order || lastOrder;
     } else {

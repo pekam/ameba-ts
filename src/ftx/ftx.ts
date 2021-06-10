@@ -277,6 +277,7 @@ export function getFtxClient({
     cancelAllOrders,
     addOrder,
     getFills,
+    subaccount,
   };
 }
 

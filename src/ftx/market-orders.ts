@@ -1,7 +1,7 @@
 import { FtxAddOrderParams } from "./ftx";
 import { getCurrentTimestampInSeconds } from "../util";
 import { FtxUtil } from "./ftx-util";
-import { getFtxStaker } from "./ftx-staker";
+import { FtxStaker } from "./ftx-staker";
 
 /**
  * How much the $ value of a buy/sell order must exceed to try to keep ordering.
@@ -9,9 +9,7 @@ import { getFtxStaker } from "./ftx-staker";
  */
 const orderThresholdUsd = 10;
 
-export const getFtxMarketOrders = (ftxUtil: FtxUtil) => {
-  const staker = getFtxStaker(ftxUtil);
-
+export const getFtxMarketOrders = (ftxUtil: FtxUtil, staker: FtxStaker) => {
   async function doMarketOrder(
     howMuchCanBuyOrSell: () => Promise<{
       value: number;
@@ -39,7 +37,7 @@ export const getFtxMarketOrders = (ftxUtil: FtxUtil) => {
 
   return {
     enterWithMarketOrder: () => {
-      return doMarketOrder(staker.howMuchCanBuy, "buy");
+      return doMarketOrder(() => staker.howMuchCanBuy([]), "buy");
     },
     exitWithMarketOrder: () => {
       return doMarketOrder(staker.howMuchCanSell, "sell");
