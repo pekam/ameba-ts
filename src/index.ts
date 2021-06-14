@@ -1,6 +1,6 @@
 import { getDataSet } from "./data/load-data-set";
 import { backtestMultiple } from "./core/backtest-multiple";
-import { DonchianChannelStrategy } from "./strats/donchian-channel-strat";
+import { DonchianBreakoutStrategy } from "./strats/donchian-breakout-strat";
 import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profitable";
 
 // index.ts contains random testing stuff that changes all the time
@@ -13,7 +13,7 @@ import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   const result = backtestMultiple(
     () =>
       new TradeOnlyRecentlyProfitable(
-        () => new DonchianChannelStrategy(30, 20)
+        () => new DonchianBreakoutStrategy(30, 20)
       ),
     companiesWithCandles.map((c) => c.candles)
   );

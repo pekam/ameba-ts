@@ -7,7 +7,7 @@ import { m } from "../functions/functions";
  *
  * Sell when crossing SMA.
  */
-export class DonchianChannelStrategy implements Strategy {
+export class DonchianBreakoutStrategy implements Strategy {
   private indicators: Indicators;
 
   constructor(private channelPeriod: number, private smaPeriod: number) {}

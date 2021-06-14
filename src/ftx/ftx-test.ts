@@ -7,7 +7,7 @@ import { getBacktestableStrategy, getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { CandleSeries } from "../core/types";
-import { DonchianChannelStrategy } from "../strats/donchian-channel-strat";
+import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
 import { DonchianReversionStrategy } from "../strats/donchian-reversion-strat";
 import _ = require("lodash");
 
@@ -42,7 +42,7 @@ async function run() {
         const channelPeriod = _.random(100, 1000);
         const smaPeriod = _.random(20, 100);
         const result = backtestStrategy(
-          () => new DonchianChannelStrategy(channelPeriod, smaPeriod),
+          () => new DonchianBreakoutStrategy(channelPeriod, smaPeriod),
           candles
         );
         const withCosts = withRelativeTransactionCost(result, 0.0007);
