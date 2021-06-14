@@ -2,36 +2,37 @@ import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
 import { getFtxClient } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
-import { CandleSeries } from "../core/types";
 import { m } from "../functions/functions";
-import { emaStrat, getBacktestableStrategy, getEmaStrat } from "./strats";
+import { getBacktestableStrategy, getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
+import { CandleSeries } from "../core/types";
 import { DonchianChannelStrategy } from "../strats/donchian-channel-strat";
+import { DonchianReversionStrategy } from "../strats/donchian-reversion-strat";
 import _ = require("lodash");
 
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });
 
-  const util = getFtxUtil({ ftx, market: "FTT/USD" });
+  const util = getFtxUtil({ ftx, market: "BTC/USD" });
 
   const save = writeDataToFile;
   const load = readDataFromFile;
 
-  const candles: CandleSeries = load("ftt.json");
+  const candles: CandleSeries = load("btc.json");
 
-  const lastMonthCandles = candles.filter(
-    (c) => c.time > m.dateStringToTimestamp("2021-05-01")
-  );
+  // const lastMonthCandles = candles.filter(
+  //   (c) => c.time > m.dateStringToTimestamp("2021-05-01")
+  // );
 
   const res = await backtestStrategy(
-    () => getBacktestableStrategy(emaStrat),
-    lastMonthCandles
+    () => new DonchianReversionStrategy(100),
+    candles
   );
   const withTransCost = withRelativeTransactionCost(res, 0.0007);
   save(
     { res: res.stats, withTransCost: withTransCost.stats },
-    "resLastMonth.json"
+    "btc-reverse-both-res.json"
   );
   return;
 
@@ -82,7 +83,7 @@ async function run() {
   console.log(timestampToUTCDateString(candleSeries[0].time));
   console.log(timestampToUTCDateString(m.last(candleSeries).time));
 
-  save(candleSeries, "ftt.json");
+  save(candleSeries, "btc.json");
 
   return;
 
