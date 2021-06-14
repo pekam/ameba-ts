@@ -67,6 +67,13 @@ function getBacktestStaker(strat: FtxBotStrat) {
         multiplier = 1;
       }
 
+      const profitableProportion =
+        profits.filter((p) => p > 0).length / profits.length;
+      console.log({ profitableProportion });
+      if (profitableProportion < 0.2) {
+        multiplier = 0;
+      }
+
       console.log("backtest completed");
       console.log({ weightedAvg, trades: result.trades.length, multiplier });
       lastTimeBacktested = getCurrentTimestampInSeconds();
