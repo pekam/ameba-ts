@@ -160,12 +160,15 @@ function getBuyAndHoldProfit(serieses: CandleSeries[]): number {
   );
 }
 
-function getTradeProfit({ entry, exit }, relativeTransactionCost = 0) {
+function getTradeProfit(
+  { entry, exit }: { entry: Transaction; exit: Transaction },
+  relativeTransactionCost = 0
+) {
   const transactionCosts =
     relativeTransactionCost * entry.price +
     relativeTransactionCost * exit.price;
 
-  if (entry.sell) {
+  if (entry.side === "sell") {
     return (entry.price - exit.price - transactionCosts) / entry.price;
   } else {
     return (exit.price - entry.price - transactionCosts) / entry.price;
