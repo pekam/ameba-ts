@@ -94,6 +94,25 @@ const combine = function (candles: CandleSeries): OHLC {
   };
 };
 
+/**
+ * Expects candles to be subsequent and in order.
+ */
+const combineCandles = function (candles: CandleSeries): Candle {
+  const volume =
+    candles[0].volume !== undefined
+      ? sum(candles.map((c) => c.volume || 0))
+      : undefined;
+  const time = candles[0].time;
+  return { ...combine(candles), volume, time };
+};
+
+const combineMinuteToHourlyCandles = function (
+  candles: CandleSeries
+): CandleSeries {
+  const grouped = _.groupBy(candles, (c) => Math.floor(c.time / 3600));
+  return Object.values(grouped).map((value) => combineCandles(value));
+};
+
 const getCandlesBetween = function (
   candles: CandleSeries,
   candle1: Candle,
@@ -182,6 +201,8 @@ export const m = {
   applyIf,
   getAverageCandleSize,
   combine,
+  combineCandles,
+  combineMinuteToHourlyCandles,
   getCandlesBetween,
   getRelativeDiff,
   isGrowingSeries,
