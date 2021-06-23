@@ -1,12 +1,17 @@
-import { ADX, RSI, SMA } from "technicalindicators";
+import { ADX, MACD, RSI, SMA } from "technicalindicators";
 import { m } from "../functions/functions";
-import { CandleSeries } from "./types";
+import { Candle, CandleSeries } from "./types";
 
 export interface IndicatorSettings {
   readonly smaPeriod?: number;
   readonly rsiPeriod?: number;
   readonly donchianChannelPeriod?: number;
   readonly adxPeriod?: number;
+  readonly macdSettings?: {
+    fastPeriod: number;
+    slowPeriod: number;
+    signalPeriod: number;
+  };
 }
 
 export interface IndicatorValues {
@@ -16,12 +21,25 @@ export interface IndicatorValues {
   adx?: number;
   mdi?: number;
   pdi?: number;
+  macd?: MacdResult;
+}
+
+export interface MacdResult {
+  macd: number;
+  signal: number;
+  histogram: number;
 }
 
 export class Indicators {
   private readonly sma: SMA;
   private readonly rsi: RSI;
   private readonly adx: ADX;
+  private readonly macd: MACD;
+
+  private readonly candleToIndicators: WeakMap<
+    Candle,
+    IndicatorValues
+  > = new WeakMap();
 
   constructor(
     public readonly settings: IndicatorSettings,
@@ -41,6 +59,14 @@ export class Indicators {
     if (settings.adxPeriod) {
       this.adx = new ADX({ close, high, low, period: settings.adxPeriod });
     }
+    if (settings.macdSettings) {
+      this.macd = new MACD({
+        ...settings.macdSettings,
+        SimpleMAOscillator: false,
+        SimpleMASignal: false,
+        values: close,
+      });
+    }
   }
 
   update(series: CandleSeries): IndicatorValues {
@@ -52,14 +78,40 @@ export class Indicators {
         this.adx.nextValue({ ...candle })
       : {};
 
-    return {
+    const macd = (() => {
+      const result = this.macd && this.macd.nextValue(candle.close);
+      if (
+        result === undefined ||
+        result.MACD === undefined ||
+        result.signal === undefined ||
+        result.histogram === undefined
+      ) {
+        return undefined;
+      }
+      return {
+        histogram: result.histogram,
+        signal: result.signal,
+        macd: result.MACD,
+      };
+    })();
+
+    const indicatorValues = {
       sma: this.sma && this.sma.nextValue(candle.close),
       rsi: this.rsi && this.rsi.nextValue(candle.close),
       donchianChannel: this.settings.donchianChannelPeriod
         ? getDonchianChannel(series, this.settings.donchianChannelPeriod)
         : undefined,
       ...directionalIndicators,
+      macd,
     };
+
+    this.candleToIndicators.set(candle, indicatorValues);
+
+    return indicatorValues;
+  }
+
+  get(candle: Candle): IndicatorValues | undefined {
+    return this.candleToIndicators.get(candle);
   }
 }
 
