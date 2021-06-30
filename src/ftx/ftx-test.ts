@@ -8,7 +8,7 @@ import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { CandleSeries } from "../core/types";
 import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
-import { DonchianReversionStrategy } from "../strats/donchian-reversion-strat";
+import { MacdStrat } from "../strats/macd-strat";
 import _ = require("lodash");
 
 async function run() {
@@ -21,19 +21,32 @@ async function run() {
 
   const candles: CandleSeries = load("btc.json");
 
-  // const lastMonthCandles = candles.filter(
-  //   (c) => c.time > m.dateStringToTimestamp("2021-05-01")
+  // console.log(
+  //   m
+  //     .combineMinuteToHourlyCandles(candles.slice(-240))
+  //     .map((c) => ({ ...c, t: timestampToUTCDateString(c.time) }))
   // );
+  // return;
+
+  const recentCandles = candles.filter(
+    (c) => c.time > m.dateStringToTimestamp("2021-05-01")
+  );
 
   const res = await backtestStrategy(
-    () => new DonchianReversionStrategy(100),
-    candles
+    () =>
+      new MacdStrat({
+        relativeTakeProfit: 0.015,
+        relativeStopLoss: 0.01,
+        onlyDirection: "short",
+      }),
+    recentCandles
   );
   const withTransCost = withRelativeTransactionCost(res, 0.0007);
   save(
     { res: res.stats, withTransCost: withTransCost.stats },
-    "btc-reverse-both-res.json"
+    "btc-macd-since-may-only-short.json"
   );
+
   return;
 
   const randomOptimize = () => {
