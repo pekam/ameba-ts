@@ -154,8 +154,10 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
 function getBuyAndHoldProfit(serieses: CandleSeries[]): number {
   // Note: the period used in backtesting might not include the entire series
   return m.avg(
-    serieses.map(
-      (series) => (m.last(series).close - series[0].open) / series[0].open
+    serieses.map((series) =>
+      series.length
+        ? (m.last(series).close - series[0].open) / series[0].open
+        : 0
     )
   );
 }
