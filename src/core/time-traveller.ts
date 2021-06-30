@@ -1,4 +1,5 @@
 import { CandleSeries } from "./types";
+import { timestampToUTCDateString } from "./date-util";
 
 /**
  * Allows iterating over a CandleSeries, by expanding a
@@ -30,7 +31,7 @@ export class TimeTraveller {
     this.series = series;
 
     if (from) {
-      this.nextIndex = series.findIndex((candle) => candle.time === from);
+      this.nextIndex = series.findIndex((candle) => candle.time >= from);
     } else {
       // Default to 1 instead of 0 so that indicators can be initialized
       this.nextIndex = 1;
@@ -47,14 +48,18 @@ export class TimeTraveller {
       throw new Error(
         "Failed to create TimeTraveller. " +
           "Could not find a candle with startTime " +
-          from
+          from +
+          " " +
+          timestampToUTCDateString(from!)
       );
     }
     if (this.endIndex < 0) {
       throw new Error(
         "Failed to create TimeTraveller. " +
           "Could not find a candle with endTime " +
-          to
+          to +
+          " " +
+          timestampToUTCDateString(to!)
       );
     }
     this.length = this.endIndex - this.nextIndex;
