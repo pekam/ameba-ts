@@ -2,7 +2,6 @@ import { Candle, CandleSeries, OHLC } from "../core/types";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
-import * as weightedMean from "weighted-mean";
 import { timestampFromUTC } from "../core/date-util";
 import _ = require("lodash");
 
@@ -68,7 +67,7 @@ function sortDescending<T>(items: T[], sortBy: (item: T) => number): T[] {
  * Applies the function to the value if the condition is true, otherwise
  * returns the value.
  */
-const applyIf = <T>(condition: boolean, func: (T) => T, value: T): T => {
+const applyIf = <T>(condition: boolean, func: (input: T) => T, value: T): T => {
   if (condition) {
     return func(value);
   } else {
@@ -166,6 +165,16 @@ function takeCandlesAfter(series: CandleSeries, time: number): CandleSeries {
  * has the smallest weight.
  */
 function getWeightedAverage(values: number[]) {
+  // Function copied from weighted-mean npm module which doesn't have ts types
+  function weightedMean(weightedValues: number[][]) {
+    const totalWeight = weightedValues.reduce(function (sum, weightedValue) {
+      return sum + weightedValue[1];
+    }, 0);
+    return weightedValues.reduce(function (mean, weightedValue) {
+      return mean + (weightedValue[0] * weightedValue[1]) / totalWeight;
+    }, 0);
+  }
+
   const valuesWithWeights = values.map((profit, i) => [
     profit,
     values.length - i,

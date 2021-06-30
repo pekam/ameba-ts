@@ -1,6 +1,6 @@
 import { CompanyWithAsyncCandles, getDataSet } from "../data/load-data-set";
 import { getUrl } from "../util";
-import { Candle } from "../core/types";
+import { Candle, CandleSeries } from "../core/types";
 import { m } from "../functions/functions";
 import _ = require("lodash");
 
@@ -23,7 +23,7 @@ import _ = require("lodash");
  */
 export async function rankAndReport(
   dataSetId: string,
-  scoringFunction: (CandleSeries) => number,
+  scoringFunction: (series: CandleSeries) => number,
   reportCount: number = 5,
   repeatFromEnd: number = 1
 ) {

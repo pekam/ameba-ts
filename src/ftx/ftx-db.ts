@@ -13,7 +13,7 @@ export function getFtxDb(ftx: FtxClient) {
     return (await db.get(collectionId, id)).candles;
   }
 
-  const getOrderBookDocId = (market) => "orderbooks-" + market;
+  const getOrderBookDocId = (market: FtxMarket) => "orderbooks-" + market;
 
   async function loadOrderBookToDb(params: FtxOrderBookParams) {
     const book = await ftx.getOrderBook(params);

@@ -8,9 +8,9 @@ import { backtestStrategy } from "../core/backtest";
 export class TradeOnlyRecentlyProfitable implements Strategy {
   private readonly stratProvider: () => Strategy;
   private readonly strat: Strategy;
-  private readonly backtestInterval;
-  private readonly backtestCandleCount;
-  private readonly resultThreshold;
+  private readonly backtestInterval: number;
+  private readonly backtestCandleCount: number;
+  private readonly resultThreshold: number;
 
   private enabled = false;
 

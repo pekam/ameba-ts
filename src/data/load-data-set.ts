@@ -33,7 +33,7 @@ export interface CompanyWithCandles extends CompanyProfile {
  * Loads the data set with the given id from the database.
  */
 export async function getDataSet(id: string): Promise<DataSet> {
-  const dataSet = await db.get(collection, id);
+  const dataSet: DataSet = await db.get(collection, id);
 
   dataSet.companies.forEach((company) => {
     company.getCandleSeries = async () => {
@@ -80,11 +80,13 @@ async function loadDataSet(
 
   const candleCollection = getCandleCollection(id);
 
-  const loadedSymbols = (await db.get(collection, id)).companies.map(
-    (c) => c.symbol
-  );
+  const loadedSymbols = ((await db.get(
+    collection,
+    id
+  )) as DataSet).companies.map((c) => c.symbol);
 
-  const isLoaded = (company) => loadedSymbols.includes(company.symbol);
+  const isLoaded = (company: CompanyProfile) =>
+    loadedSymbols.includes(company.symbol);
 
   const promises = companies
     .filter((c) => !isLoaded(c))

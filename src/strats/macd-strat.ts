@@ -13,8 +13,8 @@ export class MacdStrat implements Strategy {
 
   constructor(
     private settings: {
-      relativeTakeProfit;
-      relativeStopLoss;
+      relativeTakeProfit: number;
+      relativeStopLoss: number;
       onlyDirection?: MarketPosition;
     }
   ) {}

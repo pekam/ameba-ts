@@ -168,7 +168,7 @@ export function getFtxClient({
         `&start_time=${params.startTime}&end_time=${
           params.endTime
         }&limit=${5000}`
-    ).then((candles) =>
+    ).then((candles: CandleSeries) =>
       // ftx returns time in milliseconds, which is inconsistent with finnhub
       candles.map((c) => ({ ...c, time: c.time / 1000 }))
     );
@@ -176,10 +176,12 @@ export function getFtxClient({
 
   async function getOrderBook(params: FtxOrderBookParams): Promise<OrderBook> {
     const { market, depth } = params;
-    const response = await get(`/markets/${market}/orderbook?depth=${depth}`);
+    const response = (await get(
+      `/markets/${market}/orderbook?depth=${depth}`
+    )) as { asks: number[][]; bids: number[][] };
     const time = getCurrentTimestampInSeconds();
 
-    const convertEntries = (entry) =>
+    const convertEntries = (entry: number[][]) =>
       entry.reduce((acc, [price, volume]) => {
         const cumulative =
           (acc.length ? acc[acc.length - 1].cumulative : 0) + volume;
@@ -195,7 +197,7 @@ export function getFtxClient({
         };
         acc.push(entry);
         return acc;
-      }, []);
+      }, [] as OrderBookEntry[]);
 
     const asks = convertEntries(response.asks);
     const bids = convertEntries(response.bids);
@@ -234,7 +236,7 @@ export function getFtxClient({
   }
 
   async function cancelOrder(id: number): Promise<string> {
-    const errorHandler = (e) => {
+    const errorHandler = (e: Error) => {
       if (e.message.includes("Order already")) {
         console.log(
           "Order was already closed or queued for cancellation, all good."

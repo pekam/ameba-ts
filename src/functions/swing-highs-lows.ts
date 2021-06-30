@@ -40,7 +40,7 @@ function filterCandles(
 function isLocalMax(
   series: Candle[],
   candle: Candle,
-  distanceToCompare
+  distanceToCompare: number
 ): boolean {
   return compareToNeighbours(
     series,
@@ -53,7 +53,7 @@ function isLocalMax(
 function isLocalMin(
   series: Candle[],
   candle: Candle,
-  distanceToCompare
+  distanceToCompare: number
 ): boolean {
   return compareToNeighbours(
     series,
@@ -67,7 +67,7 @@ function compareToNeighbours(
   series: Candle[],
   candle: Candle,
   comparator: (current: Candle, neighbour: Candle) => boolean,
-  distanceToCompare
+  distanceToCompare: number
 ): boolean {
   const index = m.indexOf(series, candle);
   const neighbours = m

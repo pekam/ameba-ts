@@ -1,3 +1,4 @@
+//@ts-ignore cli-progress type defs are broken
 import { Presets, SingleBar } from "cli-progress";
 import { Candle } from "./core/types";
 

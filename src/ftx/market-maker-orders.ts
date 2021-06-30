@@ -34,7 +34,7 @@ export function getFtxMarketMaker(params: {
    */
   async function enter(series: CandleSeries) {
     const howMuch: (
-      series
+      series: CandleSeries
     ) => Promise<{
       value: number;
       usdValue: number;

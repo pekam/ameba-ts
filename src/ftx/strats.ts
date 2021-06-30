@@ -6,7 +6,7 @@ import { FtxBotStrat } from "./bot";
 
 export const emaStrat = getEmaStrat(5, 20);
 
-export function getEmaStrat(shortEmaPeriod, longEmaPeriod) {
+export function getEmaStrat(shortEmaPeriod: number, longEmaPeriod: number) {
   return function ({
     series,
     lastOrder,
