@@ -3,23 +3,25 @@ import { withRelativeTransactionCost } from "../core/backtest-result";
 import { getFtxClient } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
 import { m } from "../functions/functions";
-import { getBacktestableStrategy, getEmaStrat } from "./strats";
+import { emaStrat, getBacktestableStrategy, getEmaStrat } from "./strats";
 import { getFtxUtil } from "./ftx-util";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { CandleSeries } from "../core/types";
 import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
 import { MacdStrat } from "../strats/macd-strat";
+import { AutoOptimizer } from "../strats/auto-optimizer";
+import { PERIODS } from "../util";
 import _ = require("lodash");
 
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });
 
-  const util = getFtxUtil({ ftx, market: "BTC/USD" });
+  const util = getFtxUtil({ ftx, market: "ETH/USD" });
 
   const save = writeDataToFile;
   const load = readDataFromFile;
 
-  const candles: CandleSeries = load("btc.json");
+  const candles: CandleSeries = load("eth.json");
 
   // console.log(
   //   m
@@ -32,19 +34,39 @@ async function run() {
     (c) => c.time > m.dateStringToTimestamp("2021-05-01")
   );
 
-  const res = await backtestStrategy(
+  const stratPool = [
     () =>
       new MacdStrat({
         relativeTakeProfit: 0.015,
         relativeStopLoss: 0.01,
         onlyDirection: "short",
       }),
-    recentCandles
-  );
+    () =>
+      new MacdStrat({
+        relativeTakeProfit: 0.015,
+        relativeStopLoss: 0.01,
+        onlyDirection: "long",
+      }),
+    () =>
+      new MacdStrat({
+        relativeTakeProfit: 0.015,
+        relativeStopLoss: 0.01,
+      }),
+    () => getBacktestableStrategy(emaStrat, false),
+  ];
+
+  const stratProvider = () =>
+    new AutoOptimizer({
+      stratPool,
+      optimizeInterval: PERIODS.day * 2,
+      optimizePeriod: PERIODS.day * 2,
+    });
+
+  const res = await backtestStrategy(stratProvider, candles);
   const withTransCost = withRelativeTransactionCost(res, 0.0007);
   save(
     { res: res.stats, withTransCost: withTransCost.stats },
-    "btc-macd-since-may-only-short.json"
+    "eth-macd-auto-optimized.json"
   );
 
   return;
