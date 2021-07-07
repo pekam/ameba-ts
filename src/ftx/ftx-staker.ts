@@ -63,16 +63,22 @@ function getBacktestStaker(strat: FtxBotStrat) {
         multiplier = 0.6;
       } else if (weightedAvg < 0) {
         multiplier = 0.8;
-      } else {
+      } else if (weightedAvg < 0.0005) {
         multiplier = 1;
+      } else if (weightedAvg < 0.001) {
+        multiplier = 1.25;
+      } else if (weightedAvg < 0.0015) {
+        multiplier = 1.5;
+      } else {
+        multiplier = 1.75;
       }
 
-      const profitableProportion =
-        profits.filter((p) => p > 0).length / profits.length;
-      console.log({ profitableProportion });
-      if (profitableProportion < 0.2) {
-        multiplier = 0;
-      }
+      // const profitableProportion =
+      //   profits.filter((p) => p > 0).length / profits.length;
+      // console.log({ profitableProportion });
+      // if (profitableProportion < 0.2) {
+      //   multiplier = 0;
+      // }
 
       console.log("backtest completed");
       console.log({ weightedAvg, trades: result.trades.length, multiplier });

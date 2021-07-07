@@ -17,6 +17,7 @@ import { getFtxStaker } from "./ftx-staker";
       subaccount,
       market,
       stakeByPeakAccountValue: true,
+      stratIfStakingByBacktest: strat,
     }),
   });
 
