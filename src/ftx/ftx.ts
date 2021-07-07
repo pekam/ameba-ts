@@ -4,12 +4,19 @@ import { getCurrentTimestampInSeconds } from "../util";
 import { CandleSeries } from "../core/types";
 
 export const FtxMarkets = [
+  "AAVE/USD",
+  "BNB/USD",
   "BTC/USD",
+  "DOGE/USD",
   "ETH/USD",
   "FTT/USD",
-  "SUSHI/USD",
-  "DOGE/USD",
   "LINK/USD",
+  "LTC/USD",
+  "RUNE/USD",
+  "SOL/USD",
+  "SRM/USD",
+  "SUSHI/USD",
+  "UNI/USD",
   "XRP/USD",
 ] as const;
 export type FtxMarket = typeof FtxMarkets[number];
