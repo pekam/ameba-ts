@@ -3,6 +3,7 @@ import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
 import { timestampFromUTC } from "../core/date-util";
+import { PERIODS } from "../util";
 import _ = require("lodash");
 
 /**
@@ -105,11 +106,20 @@ const combineCandles = function (candles: CandleSeries): Candle {
   return { ...combine(candles), volume, time };
 };
 
+const combineMinuteCandles = function (
+  candles: CandleSeries,
+  periodAsSeconds: number
+): CandleSeries {
+  const grouped = _.groupBy(candles, (c) =>
+    Math.floor(c.time / periodAsSeconds)
+  );
+  return Object.values(grouped).map((value) => combineCandles(value));
+};
+
 const combineMinuteToHourlyCandles = function (
   candles: CandleSeries
 ): CandleSeries {
-  const grouped = _.groupBy(candles, (c) => Math.floor(c.time / 3600));
-  return Object.values(grouped).map((value) => combineCandles(value));
+  return combineMinuteCandles(candles, PERIODS.hour);
 };
 
 const getCandlesBetween = function (
@@ -211,6 +221,7 @@ export const m = {
   getAverageCandleSize,
   combine,
   combineCandles,
+  combineMinuteCandles,
   combineMinuteToHourlyCandles,
   getCandlesBetween,
   getRelativeDiff,
