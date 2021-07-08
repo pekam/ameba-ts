@@ -98,9 +98,10 @@ async function run() {
 
   return;
 
-  const candleSeries = await util.getMinuteCandles({
+  const candleSeries = await util.getCandles({
     startDate: "2021-02-20",
     endDate: "2021-06-01",
+    resolution: "1min",
   });
 
   candleSeries.forEach((c, i, a) => {

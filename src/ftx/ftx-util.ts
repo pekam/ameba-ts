@@ -1,4 +1,9 @@
-import { FtxClient, FtxMarket } from "./ftx";
+import {
+  FtxClient,
+  FtxMarket,
+  FtxResolution,
+  ftxResolutionToPeriod,
+} from "./ftx";
 import { m } from "../functions/functions";
 import { CandleSeries } from "../core/types";
 import _ = require("lodash");
@@ -103,29 +108,36 @@ export function getFtxUtil({
    *
    * Takes start and end as strings in format YYYY-MM-DD.
    */
-  async function getMinuteCandles({
+  async function getCandles({
     startDate,
     endDate,
+    resolution,
   }: {
     startDate: string;
     endDate: string;
+    resolution: FtxResolution;
   }): Promise<CandleSeries> {
     const startTime = m.dateStringToTimestamp(startDate);
     const endTime = m.dateStringToTimestamp(endDate);
 
-    const maxSeconds = 60 * 60 * 24 * 3;
+    const maxSecondsPerRequest = ftxResolutionToPeriod[resolution] * 5000;
 
     const results = await Promise.all(
-      m.range(Math.ceil((endTime - startTime) / maxSeconds)).map((i) => {
-        const start = startTime + i * maxSeconds;
-        const end = Math.min(startTime + (i + 1) * maxSeconds, endTime);
-        return ftx.getCandles({
-          startTime: start,
-          endTime: end,
-          resolution: "1min",
-          market,
-        });
-      })
+      m
+        .range(Math.ceil((endTime - startTime) / maxSecondsPerRequest))
+        .map((i) => {
+          const start = startTime + i * maxSecondsPerRequest;
+          const end = Math.min(
+            startTime + (i + 1) * maxSecondsPerRequest,
+            endTime
+          );
+          return ftx.getCandles({
+            startTime: start,
+            endTime: end,
+            resolution,
+            market,
+          });
+        })
     );
     return _.flatten(results).filter((candle, i, array) => {
       // Filter duplicates
@@ -141,7 +153,7 @@ export function getFtxUtil({
     getQuote,
     getState,
     getRecentTradeProfits,
-    getMinuteCandles,
+    getCandles,
   };
 }
 
