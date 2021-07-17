@@ -1,9 +1,9 @@
+import { timestampFromUTC } from "../core/date-util";
 import { Candle, CandleSeries, OHLC } from "../core/types";
-import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
+import { PERIODS } from "../util";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
-import { timestampFromUTC } from "../core/date-util";
-import { PERIODS } from "../util";
+import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
 import _ = require("lodash");
 
 /**
@@ -137,6 +137,13 @@ const getCandlesBetween = function (
   return candles.slice(lowIndex + 1, highIndex);
 };
 
+function filterConsecutiveDuplicates(series: CandleSeries): CandleSeries {
+  return series.filter((candle, i, array) => {
+    const prev = array[i - 1];
+    return !prev || prev.time !== candle.time;
+  });
+}
+
 function getRelativeDiff(
   value1: number,
   value2: number,
@@ -224,6 +231,7 @@ export const m = {
   combineMinuteCandles,
   combineMinuteToHourlyCandles,
   getCandlesBetween,
+  filterConsecutiveDuplicates,
   getRelativeDiff,
   isGrowingSeries,
   isDecreasingSeries,

@@ -146,11 +146,7 @@ export function getFtxUtil({
           });
         })
     );
-    return _.flatten(results).filter((candle, i, array) => {
-      // Filter duplicates
-      const prev = array[i - 1];
-      return !prev || prev.time !== candle.time;
-    });
+    return m.filterConsecutiveDuplicates(_.flatten(results));
   }
 
   return {
