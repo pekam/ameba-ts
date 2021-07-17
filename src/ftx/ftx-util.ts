@@ -1,11 +1,11 @@
+import { CandleSeries } from "../core/types";
+import { m } from "../functions/functions";
 import {
   FtxClient,
   FtxMarket,
   FtxResolution,
   ftxResolutionToPeriod,
 } from "./ftx";
-import { m } from "../functions/functions";
-import { CandleSeries } from "../core/types";
 import _ = require("lodash");
 
 export function getFtxUtil({
@@ -106,19 +106,26 @@ export function getFtxUtil({
   /**
    * Splits the time into multiple requests because ftx returns max 5000 candles at once.
    *
-   * Takes start and end as strings in format YYYY-MM-DD.
+   * Takes start and end as strings in format YYYY-MM-DD or as timestamps.
    */
   async function getCandles({
     startDate,
     endDate,
     resolution,
   }: {
-    startDate: string;
-    endDate: string;
+    startDate: string | number;
+    endDate: string | number;
     resolution: FtxResolution;
   }): Promise<CandleSeries> {
-    const startTime = m.dateStringToTimestamp(startDate);
-    const endTime = m.dateStringToTimestamp(endDate);
+    const [startTime, endTime]: number[] = [startDate, endDate].map(
+      (date: string | number) => {
+        if (typeof date === "number") {
+          return date;
+        } else {
+          return m.dateStringToTimestamp(date);
+        }
+      }
+    );
 
     const maxSecondsPerRequest = ftxResolutionToPeriod[resolution] * 5000;
 
