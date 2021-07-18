@@ -203,11 +203,35 @@ function getWeightedAverage(values: number[]) {
  * @param dateString in YYYY-MM-DD format
  */
 function dateStringToTimestamp(dateString: string) {
+  const { year, month, day } = dateStringToObject(dateString);
+  return timestampFromUTC(year, month, day);
+}
+
+/**
+ * @return in YYYY-MM-DD format
+ */
+function objectToDateString(obj: {
+  year: number;
+  month: number;
+  day: number;
+}): string {
+  const { year, month, day } = obj;
+  function to2Digits(num: number) {
+    if (num < 10) return "0" + num;
+    return "" + num;
+  }
+  return year + "-" + to2Digits(month) + "-" + to2Digits(day);
+}
+
+/**
+ * @param dateString in YYYY-MM-DD format
+ */
+function dateStringToObject(dateString: string) {
   if (!/^\d{4}\-\d{1,2}\-\d{1,2}$/.test(dateString)) {
     throw Error("Date string not matching format YYYY-MM-DD");
   }
   const [year, month, day] = dateString.split("-").map((s) => parseInt(s));
-  return timestampFromUTC(year, month, day);
+  return { year, month, day };
 }
 
 /**
@@ -239,6 +263,8 @@ export const m = {
   takeCandlesAfter,
   getWeightedAverage,
   dateStringToTimestamp,
+  objectToDateString,
+  dateStringToObject,
 
   getSwingHighs,
   getSwingLows,
