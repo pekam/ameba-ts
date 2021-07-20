@@ -1,5 +1,4 @@
 import { DateTime, DateTimeOptions } from "luxon";
-import { timestampFromUTC } from "../core/date-util";
 import { Candle, CandleSeries, OHLC } from "../core/types";
 import { PERIODS } from "../util";
 import { candlePatterns } from "./candle-patterns";
@@ -201,14 +200,6 @@ function getWeightedAverage(values: number[]) {
 }
 
 /**
- * @param dateString in YYYY-MM-DD format
- */
-function dateStringToTimestamp(dateString: string) {
-  const { year, month, day } = dateStringToObject(dateString);
-  return timestampFromUTC(year, month, day);
-}
-
-/**
  * @returns in YYYY-MM-DD format
  */
 function objectToDateString(obj: {
@@ -235,13 +226,20 @@ function dateStringToObject(dateString: string) {
   return { year, month, day };
 }
 
+type MomentType =
+  | string
+  | number
+  | { year: number; month: number; day: number };
+
+function toTimestamp(input: MomentType): number {
+  return toDateTime(input).toSeconds();
+}
+
 /**
  * @param input either ISO date string, timestamp as seconds or object with year & month & day
  * @returns date time in utc time zone
  */
-function toDateTime(
-  input: string | number | { year: number; month: number; day: number }
-): DateTime {
+function toDateTime(input: MomentType): DateTime {
   const options: DateTimeOptions = { zone: "utc" };
   if (typeof input === "string") {
     return DateTime.fromISO(input, options);
@@ -280,9 +278,9 @@ export const m = {
   isBetween,
   takeCandlesAfter,
   getWeightedAverage,
-  dateStringToTimestamp,
   objectToDateString,
   dateStringToObject,
+  toTimestamp,
   toDateTime,
 
   getSwingHighs,

@@ -1,16 +1,16 @@
 import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
-import { getFtxClient } from "./ftx";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
-import { m } from "../functions/functions";
-import { emaStrat, getBacktestableStrategy, getEmaStrat } from "./strats";
-import { getFtxUtil } from "./ftx-util";
-import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { CandleSeries } from "../core/types";
+import { readDataFromFile, writeDataToFile } from "../data/data-caching";
+import { m } from "../functions/functions";
+import { AutoOptimizer } from "../strats/auto-optimizer";
 import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
 import { MacdStrat } from "../strats/macd-strat";
-import { AutoOptimizer } from "../strats/auto-optimizer";
 import { PERIODS } from "../util";
+import { getFtxClient } from "./ftx";
+import { getFtxUtil } from "./ftx-util";
+import { emaStrat, getBacktestableStrategy, getEmaStrat } from "./strats";
 import _ = require("lodash");
 
 async function run() {
@@ -31,7 +31,7 @@ async function run() {
   // return;
 
   const recentCandles = candles.filter(
-    (c) => c.time > m.dateStringToTimestamp("2021-05-01")
+    (c) => c.time > m.toTimestamp("2021-05-01")
   );
 
   const stratPool = [

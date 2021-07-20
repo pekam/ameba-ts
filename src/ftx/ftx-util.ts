@@ -122,7 +122,7 @@ export function getFtxUtil({
         if (typeof date === "number") {
           return date;
         } else {
-          return m.dateStringToTimestamp(date);
+          return m.toTimestamp(date);
         }
       }
     );
