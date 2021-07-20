@@ -1,5 +1,5 @@
 import { flatten } from "lodash";
-import { timestampFromUTC } from "../core/date-util";
+import { DateTime } from "luxon";
 import { CandleSeries } from "../core/types";
 import { db } from "../data/mongo";
 import { m } from "../functions/functions";
@@ -13,8 +13,9 @@ import { FtxUtil } from "./ftx-util";
 
 const collectionId = "ftx-candles";
 
-function getDocumentId(market: FtxMarket, date: MyDate) {
-  return market + "-" + date.monthYearString;
+function getDocumentId(market: FtxMarket, date: DateTime) {
+  const monthYearString = date.toISO().substring(0, 7);
+  return market + "-" + monthYearString;
 }
 
 /**
@@ -24,13 +25,13 @@ function getDocumentId(market: FtxMarket, date: MyDate) {
 async function getCandles(args: {
   ftxUtil: FtxUtil;
   resolution: FtxResolution;
-  startDate: string;
-  endDate: string;
+  startDate: string | number;
+  endDate: string | number;
 }): Promise<CandleSeries> {
-  const startDate = stringToMyDate(args.startDate);
-  const endDate = stringToMyDate(args.endDate);
+  const startDate = m.toDateTime(args.startDate);
+  const endDate = m.toDateTime(args.endDate);
 
-  if (startDate.timestamp >= endDate.timestamp) {
+  if (startDate.toMillis() >= endDate.toMillis()) {
     throw Error("startDate should be before endDate");
   }
 
@@ -42,7 +43,7 @@ async function getCandles(args: {
     )
   ).filter((c, i, series) => {
     // Filter time period
-    if (c.time < startDate.timestamp || c.time >= endDate.timestamp) {
+    if (c.time < startDate.toSeconds() || c.time >= endDate.toSeconds()) {
       return false;
     }
     // Filter duplicates just in case
@@ -63,11 +64,11 @@ async function getCandles(args: {
  */
 async function loadMonthMinuteCandles(
   ftxUtil: FtxUtil,
-  date: MyDate
+  date: DateTime
 ): Promise<CandleSeries> {
   const documentId = getDocumentId(ftxUtil.market, date);
 
-  if (getCurrentTimestampInSeconds() < date.timestamp) {
+  if (getCurrentTimestampInSeconds() < date.toSeconds()) {
     console.log("Month in the future, skipping: " + documentId);
     return [];
   }
@@ -88,7 +89,7 @@ async function loadMonthMinuteCandles(
 
   const minuteCandles: CandleSeries = await (async () => {
     const endDate = Math.min(
-      toNextMonth(date).timestamp,
+      toNextMonth(date).toSeconds(),
       getCurrentTimestampInSeconds() + 100
     );
     if (data) {
@@ -107,7 +108,7 @@ async function loadMonthMinuteCandles(
       // Get the entire chunk
       console.log("Loading candle chunk: " + documentId);
       return await ftxUtil.getCandles({
-        startDate: date.timestamp,
+        startDate: date.toSeconds(),
         endDate,
         resolution: "1min",
       });
@@ -132,54 +133,30 @@ async function loadMonthMinuteCandles(
   return newData.candles;
 }
 
-function getMonthsToLoad(startDate: MyDate, endDate: MyDate): MyDate[] {
+function getMonthsToLoad(startDate: DateTime, endDate: DateTime): DateTime[] {
   const months = [toFirstDayOfMonth(startDate)];
-  while (m.last(months).monthYearString !== endDate.monthYearString) {
+  while (!isSameMonth(m.last(months), endDate)) {
     months.push(toNextMonth(m.last(months)));
   }
   return months;
 }
 
-function stringToMyDate(dateString: string): MyDate {
-  const obj = m.dateStringToObject(dateString);
-  return objectToMyDate(obj);
-}
-
-function objectToMyDate(obj: {
-  year: number;
-  month: number;
-  day: number;
-}): MyDate {
-  const dateString = m.objectToDateString(obj);
-  return {
-    dateString,
-    monthYearString: dateString.substr(0, dateString.lastIndexOf("-")),
-    timestamp: timestampFromUTC(obj.year, obj.month, obj.day),
-    ...obj,
-  };
-}
-
-function toNextMonth(date: MyDate): MyDate {
+function toNextMonth(date: DateTime): DateTime {
   const nextYear = date.month === 12;
 
   const month = nextYear ? 1 : date.month + 1;
   const year = nextYear ? date.year + 1 : date.year;
   const day = 1;
 
-  return objectToMyDate({ year, month, day });
+  return m.toDateTime({ year, month, day });
 }
 
-function toFirstDayOfMonth(date: MyDate): MyDate {
-  return objectToMyDate({ year: date.year, month: date.month, day: 1 });
+function toFirstDayOfMonth(date: DateTime): DateTime {
+  return m.toDateTime({ year: date.year, month: date.month, day: 1 });
 }
 
-interface MyDate {
-  dateString: string;
-  monthYearString: string;
-  timestamp: number;
-  year: number;
-  month: number;
-  day: number;
+function isSameMonth(date1: DateTime, date2: DateTime): boolean {
+  return date1.year === date2.year && date1.month === date2.month;
 }
 
 interface DbEntry {

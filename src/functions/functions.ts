@@ -1,3 +1,4 @@
+import { DateTime, DateTimeOptions } from "luxon";
 import { timestampFromUTC } from "../core/date-util";
 import { Candle, CandleSeries, OHLC } from "../core/types";
 import { PERIODS } from "../util";
@@ -208,7 +209,7 @@ function dateStringToTimestamp(dateString: string) {
 }
 
 /**
- * @return in YYYY-MM-DD format
+ * @returns in YYYY-MM-DD format
  */
 function objectToDateString(obj: {
   year: number;
@@ -232,6 +233,23 @@ function dateStringToObject(dateString: string) {
   }
   const [year, month, day] = dateString.split("-").map((s) => parseInt(s));
   return { year, month, day };
+}
+
+/**
+ * @param input either ISO date string, timestamp as seconds or object with year & month & day
+ * @returns date time in utc time zone
+ */
+function toDateTime(
+  input: string | number | { year: number; month: number; day: number }
+): DateTime {
+  const options: DateTimeOptions = { zone: "utc" };
+  if (typeof input === "string") {
+    return DateTime.fromISO(input, options);
+  } else if (typeof input === "number") {
+    return DateTime.fromSeconds(input, options);
+  } else {
+    return DateTime.utc(input.year, input.month, input.day);
+  }
 }
 
 /**
@@ -265,6 +283,7 @@ export const m = {
   dateStringToTimestamp,
   objectToDateString,
   dateStringToObject,
+  toDateTime,
 
   getSwingHighs,
   getSwingLows,
