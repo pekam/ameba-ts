@@ -1,7 +1,7 @@
-import { getFtxSubAccountProperties, properties } from "../properties";
-import { m } from "../functions/functions";
-import { getCurrentTimestampInSeconds, PERIODS } from "../util";
 import { CandleSeries } from "../core/types";
+import { m } from "../functions/functions";
+import { getFtxSubAccountProperties, properties } from "../properties";
+import { getCurrentTimestampInSeconds, PERIODS } from "../util";
 
 export const FtxMarkets = [
   "AAVE/USD",
@@ -21,7 +21,6 @@ export const FtxMarkets = [
 ] as const;
 export type FtxMarket = typeof FtxMarkets[number];
 
-const resolutionsInSeconds = [15, 60, 300, 900, 3600, 14400, 86400];
 const resolutionValues = [
   "15sec",
   "1min",
@@ -179,8 +178,7 @@ export function getFtxClient({
   async function getCandles(
     params: FtxCandleRequestParams
   ): Promise<CandleSeries> {
-    const resInSecs =
-      resolutionsInSeconds[resolutionValues.indexOf(params.resolution)];
+    const resInSecs = ftxResolutionToPeriod[params.resolution];
     // optional "limit" parameter omitted
     return get(
       `/markets/${params.market}/candles?resolution=${resInSecs}` +
