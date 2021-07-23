@@ -26,7 +26,7 @@ function DataSetChart({
   const [company, setCompany] = useState<CompanyWithCandles | null>(null);
 
   useEffect(() => {
-    fetch(`api/${dataSetId}/${symbol}`)
+    fetch(`api/dataSet/${dataSetId}/${symbol}`)
       .then((res) => res.json())
       .then((data: CompanyWithCandles) => {
         setCompany(data);
