@@ -3,9 +3,15 @@ import { DateTime } from "luxon";
 import { CandleSeries } from "../core/types";
 import { db } from "../data/mongo";
 import { m } from "../functions/functions";
+import { properties } from "../properties";
 import { getCurrentTimestampInSeconds, PERIODS } from "../util";
-import { FtxMarket, FtxResolution, ftxResolutionToPeriod } from "./ftx";
-import { FtxUtil } from "./ftx-util";
+import {
+  FtxMarket,
+  FtxResolution,
+  ftxResolutionToPeriod,
+  getFtxClient,
+} from "./ftx";
+import { FtxUtil, getFtxUtil } from "./ftx-util";
 
 /*
  * Candles are loaded from FTX and cached in 1 month chunks in mongodb, on demand.
@@ -23,7 +29,7 @@ function getDocumentId(market: FtxMarket, date: DateTime) {
  * it first loads the required candles from FTX to mongodb.
  */
 async function getCandles(args: {
-  ftxUtil: FtxUtil;
+  market: FtxMarket;
   resolution: FtxResolution;
   startDate: string | number;
   endDate: string | number;
@@ -35,11 +41,16 @@ async function getCandles(args: {
     throw Error("startDate should be before endDate");
   }
 
+  const ftxUtil = getFtxUtil({
+    ftx: getFtxClient({ subaccount: properties.ftx_data_subaccount }),
+    market: args.market,
+  });
+
   const months = getMonthsToLoad(startDate, endDate);
 
   const minuteCandles: CandleSeries = flatten(
     await Promise.all(
-      months.map((date) => loadMonthMinuteCandles(args.ftxUtil, date))
+      months.map((date) => loadMonthMinuteCandles(ftxUtil, date))
     )
   ).filter((c, i, series) => {
     // Filter time period

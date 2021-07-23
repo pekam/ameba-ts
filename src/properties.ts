@@ -4,6 +4,7 @@ import * as path from "path";
 export const properties: {
   finnhub_api_key: string;
   ftx: { subaccount: string; api_key: string; s: string; peak?: number }[];
+  ftx_data_subaccount: string;
 } = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "properties.json"), "utf8")
 );

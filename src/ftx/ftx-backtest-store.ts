@@ -5,7 +5,6 @@ import { db } from "../data/mongo";
 import { m } from "../functions/functions";
 import { FtxMarket, FtxResolution, ftxResolutionToPeriod } from "./ftx";
 import { ftxDataStore } from "./ftx-data-store";
-import { FtxUtil } from "./ftx-util";
 
 interface FtxBacktestResult {
   result: BacktestResult;
@@ -32,20 +31,20 @@ async function loadBacktestResult(
 }
 
 async function backtestAndSave(args: {
-  ftxUtil: FtxUtil;
   stratProvider: () => Strategy;
+  market: FtxMarket;
   resolution: FtxResolution;
   from: string;
   to: string;
   candlesBefore?: number;
 }): Promise<FtxBacktestResult & { id: number }> {
-  const { ftxUtil, stratProvider, resolution, from, to } = args;
+  const { market, stratProvider, resolution, from, to } = args;
   const candlesBefore = args.candlesBefore || 50;
 
   const fromTimestamp = m.toTimestamp(from);
 
   const series = await ftxDataStore.getCandles({
-    ftxUtil,
+    market,
     startDate:
       fromTimestamp - ftxResolutionToPeriod[resolution] * candlesBefore,
     endDate: to,
@@ -56,7 +55,7 @@ async function backtestAndSave(args: {
 
   return await saveBacktestResult({
     result,
-    market: ftxUtil.market,
+    market,
     resolution,
   });
 }

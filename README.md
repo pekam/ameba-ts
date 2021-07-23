@@ -8,16 +8,21 @@ you want to use:
 ```json
 {
   "finnhub_api_key": "your_key_here",
-  "ftx": [{
-    "subaccount": "foo",
-    "api_key": "bar",
-    "s": "baz",
-    "peak": 100
-  }]
+  "ftx": [
+    {
+      "subaccount": "foo",
+      "api_key": "bar",
+      "s": "baz",
+      "peak": 100
+    }
+  ],
+  "ftx_data_subaccount": "foo"
 }
 ```
-(`peak` is the account's peak value,
-optional property to trigger risk management)
+
+- `peak` is the account's peak value, an optional property to trigger risk management.
+- `ftx_data_subaccount` specifies the name of a subaccount that can be used for fetching data.
+  It can be used by some services without the caller explicitly defining the subaccount to use.
 
 Starting all the services:
 
