@@ -1,3 +1,7 @@
+import { m } from "../functions/functions";
+import { startProgressBar } from "../util";
+import { BacktestResult, convertToBacktestResult } from "./backtest-result";
+import { TimeTraveller } from "./time-traveller";
 import {
   Candle,
   CandleSeries,
@@ -7,10 +11,6 @@ import {
   TradeState,
   Transaction,
 } from "./types";
-import { TimeTraveller } from "./time-traveller";
-import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { startProgressBar } from "../util";
-import { m } from "../functions/functions";
 
 /**
  * Tests how the given strategy would have performed with
@@ -33,6 +33,10 @@ export function backtestStrategy(
   from?: number,
   to?: number
 ): BacktestResult {
+  if (!series.length) {
+    throw Error("Can't backtest with empty series");
+  }
+
   // Strategies are stateful, which is why a new instance is needed
   // for each backtest.
   const strat: Strategy = stratProvider();
@@ -64,7 +68,7 @@ export function backtestStrategy(
   }
   progressBar.stop();
 
-  return convertToBacktestResult(state.transactions, series);
+  return convertToBacktestResult(state.transactions, series, tt.range);
 }
 
 function nextState(state: TradeState, strat: Strategy): TradeState {

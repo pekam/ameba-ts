@@ -1,12 +1,13 @@
-import { loadCandles } from "../src/data/load-candle-data";
-import { CandleSeries, Order, Strategy, TradeState } from "../src/core/types";
 import { backtestStrategy } from "../src/core/backtest";
-import { timestampFromUTC } from "../src/core/date-util";
 import { BacktestResult } from "../src/core/backtest-result";
+import { timestampFromUTC } from "../src/core/date-util";
+import { CandleSeries, Order, Strategy, TradeState } from "../src/core/types";
+import { loadCandles } from "../src/data/load-candle-data";
 import { m } from "../src/functions/functions";
+import { PERIODS } from "../src/util";
 
 it("should get end balance from backtest", async () => {
-  expect.assertions(1);
+  expect.assertions(3);
 
   const strat: Strategy = {
     init(state: TradeState): void {},
@@ -45,13 +46,21 @@ it("should get end balance from backtest", async () => {
     to: timestampFromUTC(2020, 3, 5),
   });
 
+  const backtestRange = {
+    from: timestampFromUTC(2020, 3, 4, 5),
+    to: timestampFromUTC(2020, 3, 4, 6),
+  };
+
   const result: BacktestResult = backtestStrategy(
     () => strat,
     series,
     true,
-    timestampFromUTC(2020, 3, 4, 5),
-    timestampFromUTC(2020, 3, 4, 6)
+    backtestRange.from,
+    backtestRange.to
   );
 
   expect(result.stats.result).toBe(0.9997060970954589);
+
+  expect(result.stats.range.from).toBe(backtestRange.from);
+  expect(result.stats.range.to).toBe(backtestRange.to - PERIODS.minute);
 });

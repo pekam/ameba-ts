@@ -1,6 +1,6 @@
-import { CandleSeries, Trade, Transaction } from "./types";
-import { timestampToUTCDateString } from "./date-util";
 import { m } from "../functions/functions";
+import { timestampToUTCDateString } from "./date-util";
+import { CandleSeries, Range, Trade, Transaction } from "./types";
 import _ = require("lodash");
 
 export interface BacktestStatistics {
@@ -26,6 +26,11 @@ export interface BacktestStatistics {
    * How much was the relative value change during the series
    */
   buyAndHoldProfit: number;
+  /**
+   * Timestamps of the first and last candle included in the backtest
+   * (both inclusive)
+   */
+  range: Range;
 }
 
 export interface BacktestResult {
@@ -35,10 +40,11 @@ export interface BacktestResult {
 
 export function convertToBacktestResult(
   transactions: Transaction[],
-  series: CandleSeries
+  series: CandleSeries,
+  range: Range
 ): BacktestResult {
   const trades: Trade[] = convertToTrades(transactions);
-  return tradesToResult(trades, getBuyAndHoldProfit([series]), 0);
+  return tradesToResult(trades, getBuyAndHoldProfit([series], range), 0, range);
 }
 
 /**
@@ -60,18 +66,31 @@ export function combineResults(
       "The backtest results to combine have inconsistent transaction costs."
     );
   }
+  const range = results[0].stats.range;
+  if (
+    results.some(
+      (r) => r.stats.range.from !== range.from || r.stats.range.to !== range.to
+    )
+  ) {
+    throw new Error(
+      "The backtest results to combine have inconsistent ranges."
+    );
+  }
+
   const allTrades: Trade[] = _.flatMap(results, (r) => r.trades);
   return tradesToResult(
     allTrades,
-    getBuyAndHoldProfit(serieses),
-    relativeTransactionCost
+    getBuyAndHoldProfit(serieses, range),
+    relativeTransactionCost,
+    range
   );
 }
 
 function tradesToResult(
   trades: Trade[],
   buyAndHoldProfit: number,
-  relativeTransactionCost: number
+  relativeTransactionCost: number,
+  range: Range
 ): BacktestResult {
   const profits: number[] = trades.map((trade) => trade.profit);
 
@@ -101,6 +120,7 @@ function tradesToResult(
       maxProfits,
       buyAndHoldProfit,
       relativeTransactionCost,
+      range,
     },
   };
 }
@@ -123,7 +143,8 @@ export function withRelativeTransactionCost(
   return tradesToResult(
     updatedTrades,
     result.stats.buyAndHoldProfit,
-    relativeCost
+    relativeCost,
+    result.stats.range
   );
 }
 
@@ -151,14 +172,24 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
   );
 }
 
-function getBuyAndHoldProfit(serieses: CandleSeries[]): number {
-  // Note: the period used in backtesting might not include the entire series
+function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
   return m.avg(
-    serieses.map((series) =>
-      series.length
-        ? (m.last(series).close - series[0].open) / series[0].open
-        : 0
-    )
+    serieses.map((series) => {
+      if (!series.length) {
+        return 0;
+      }
+      const startCandle = series.find((c) => c.time === range.from);
+      if (!startCandle) {
+        throw Error("Candle with range start time not found");
+      }
+      const endCandle = series.find((c) => c.time === range.to);
+      if (!endCandle) {
+        throw Error("Candle with range end time not found");
+      }
+      const startPrice = startCandle.open;
+      const endPrice = endCandle.close;
+      return (endPrice - startPrice) / startPrice;
+    })
   );
 }
 

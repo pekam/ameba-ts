@@ -128,3 +128,8 @@ export interface Trade {
    */
   profit: number;
 }
+
+export interface Range {
+  readonly from: number;
+  readonly to: number;
+}

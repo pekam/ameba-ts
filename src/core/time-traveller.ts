@@ -1,5 +1,5 @@
-import { CandleSeries } from "./types";
 import { timestampToUTCDateString } from "./date-util";
+import { CandleSeries, Range } from "./types";
 
 /**
  * Allows iterating over a CandleSeries, by expanding a
@@ -18,24 +18,34 @@ export class TimeTraveller {
    */
   private nextIndex: number;
   /**
+   * Index of the last candle of the subseries used in the first
+   * backtest iteration.
+   */
+  private readonly startIndex: number;
+  /**
    * Index of the first candle not included, based on the
    * given endTime (if provided).
    */
-  private endIndex: number;
+  private readonly endIndex: number;
   /**
    * The number of candles in the full time period.
    */
-  length: number;
+  readonly length: number;
+  /**
+   * Timestamps of the first and last candle (both inclusive).
+   */
+  readonly range: Range;
 
   constructor(series: CandleSeries, from?: number, to?: number) {
     this.series = series;
 
     if (from) {
-      this.nextIndex = series.findIndex((candle) => candle.time >= from);
+      this.startIndex = series.findIndex((candle) => candle.time >= from);
     } else {
       // Default to 1 instead of 0 so that indicators can be initialized
-      this.nextIndex = 1;
+      this.startIndex = 1;
     }
+    this.nextIndex = this.startIndex;
     this.subseries = series.slice(0, this.nextIndex);
 
     if (to) {
@@ -62,7 +72,11 @@ export class TimeTraveller {
           timestampToUTCDateString(to!)
       );
     }
-    this.length = this.endIndex - this.nextIndex;
+    this.length = this.endIndex - this.startIndex;
+    this.range = {
+      from: this.series[this.startIndex].time,
+      to: this.series[this.endIndex - 1].time,
+    };
   }
 
   /**
