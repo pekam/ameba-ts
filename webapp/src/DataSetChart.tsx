@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
 import { createChart } from "lightweight-charts";
+import React, { useEffect, useState } from "react";
 import { CompanyWithCandles } from "../../src/data/load-data-set";
-import "./Chart.css";
+import "./DataSetChart.css";
 
 /**
  * @param dataSet the name of the data set from which to load the candles
@@ -11,22 +11,22 @@ import "./Chart.css";
  * unless its prefixed with "b", in which case the marker will be
  * below the candle, e.g. "AAPL_b123000000".
  */
-function Chart({
-  dataSet,
+function DataSetChart({
+  dataSetId,
   symbolAndCandleTimes,
 }: {
-  dataSet: string;
+  dataSetId: string;
   symbolAndCandleTimes: string;
 }) {
   const chartInput = symbolAndCandleTimes.split("_");
   const symbol = chartInput[0];
   const candleTimes = chartInput.slice(1);
 
-  const chartId = `${dataSet}-${symbol}`;
+  const chartId = `${dataSetId}-${symbol}`;
   const [company, setCompany] = useState<CompanyWithCandles | null>(null);
 
   useEffect(() => {
-    fetch(`api/${dataSet}/${symbol}`)
+    fetch(`api/${dataSetId}/${symbol}`)
       .then((res) => res.json())
       .then((data: CompanyWithCandles) => {
         setCompany(data);
@@ -59,7 +59,7 @@ function Chart({
   }, []);
 
   return (
-    <div className="Chart">
+    <div className="DataSetChart">
       <div id={chartId}></div>
       {company ? (
         <ul>
@@ -73,4 +73,4 @@ function Chart({
   );
 }
 
-export default Chart;
+export default DataSetChart;

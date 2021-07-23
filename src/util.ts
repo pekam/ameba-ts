@@ -19,7 +19,7 @@ export const startProgressBar = (length: number, enabled = true) => {
 };
 
 /**
- * Returns a URL for viewing charts.
+ * Returns a URL for viewing charts from a data set.
  *
  * @param dataSetId the name of the data set from which to load the candle data
  * @param chartData for each chart, contains info of the symbol whose candles to
@@ -46,7 +46,7 @@ export function getUrl(
       return symbol + markersAboveString + markersBelowString;
     }
   );
-  return `http://localhost:3000/?dataSet=${dataSetId}&symbols=${chartParams}`;
+  return `http://localhost:3000/dataSet?dataSetId=${dataSetId}&symbols=${chartParams}`;
 }
 
 export const getCurrentTimestampInSeconds = () =>

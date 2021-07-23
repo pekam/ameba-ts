@@ -1,28 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
 import "./App.css";
-import Chart from "./Chart";
+import DataSet from "./DataSet";
 
 function App() {
-  const [dataSet, setDataSet] = useState<string | null>(null);
-  const [symbols, setSymbols] = useState<string[]>([]);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dataSet = urlParams.get("dataSet");
-    const symbols = urlParams.get("symbols");
-    if (dataSet && symbols) {
-      setDataSet(dataSet);
-      setSymbols(symbols.split(","));
-    }
-  }, []);
-
   return (
-    <div className="App">
-      {dataSet &&
-        symbols.map((s) => (
-          <Chart dataSet={dataSet} symbolAndCandleTimes={s} key={s} />
-        ))}
-    </div>
+    <BrowserRouter>
+      <Switch>
+        <Route path="/dataSet">
+          <DataSet />
+        </Route>
+      </Switch>
+    </BrowserRouter>
   );
 }
 
