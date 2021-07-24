@@ -1,17 +1,26 @@
-import { createChart, CrosshairMode, LineStyle } from "lightweight-charts";
+import {
+  createChart,
+  CrosshairMode,
+  IChartApi,
+  LineStyle,
+} from "lightweight-charts";
 import React, { useEffect } from "react";
-import { CandleSeries } from "../../src/core/types";
+import { CandleSeries, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
+
+let chart: IChartApi | undefined;
 
 function BacktestChart({
   series: candles,
   ftxBacktestResult,
+  selectedTrade,
 }: {
   series: CandleSeries;
   ftxBacktestResult: FtxBacktestResult;
+  selectedTrade: Trade | null;
 }) {
   useEffect(() => {
-    const chart = createChart("backtestChart", {
+    chart = createChart("backtestChart", {
       width: document.body.clientWidth,
       height: window.innerHeight / 2,
       timeScale: {
@@ -48,7 +57,7 @@ function BacktestChart({
 
     ftxBacktestResult.result.trades.forEach((trade) => {
       const color = trade.profit > 0 ? "lightgreen" : "pink";
-      const area = chart.addAreaSeries({
+      const area = chart!.addAreaSeries({
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
@@ -66,9 +75,34 @@ function BacktestChart({
         }))
       );
     });
-  });
+  }, []);
+
+  useEffect(() => {
+    const candlePeriod = ftxResolutionToPeriod[ftxBacktestResult.resolution];
+    const margin = candlePeriod * 20;
+    if (selectedTrade && chart) {
+      chart.timeScale().setVisibleRange({
+        // @ts-ignore
+        from: selectedTrade.entry.time - margin,
+        // @ts-ignore
+        to: selectedTrade.exit.time + margin,
+      });
+    }
+  }, [selectedTrade]);
 
   return <div id="backtestChart"></div>;
 }
+
+// TODO This is duplicated from ftx.ts!
+// Figure out how to share the backend code here.
+const ftxResolutionToPeriod: any = {
+  "15sec": 1 * 15,
+  "1min": 60,
+  "5min": 60 * 5,
+  "15min": 60 * 15,
+  "1h": 3600,
+  "4h": 3600 * 4,
+  "1d": 3600 * 24,
+};
 
 export default BacktestChart;

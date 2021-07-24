@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CandleSeries } from "../../src/core/types";
+import { CandleSeries, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
 import "./Backtest.css";
 import BacktestChart from "./BacktestChart";
@@ -14,6 +14,8 @@ function Backtest() {
     series: CandleSeries;
     ftxBacktestResult: FtxBacktestResult;
   } | null>(null);
+
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
 
   useEffect(() => {
     (async function () {
@@ -37,9 +39,13 @@ function Backtest() {
       <BacktestChart
         series={data.series}
         ftxBacktestResult={data.ftxBacktestResult}
+        selectedTrade={selectedTrade}
       ></BacktestChart>
       <div className="BacktestBottomPanel">
-        <BacktestTradeTable ftxBacktestResult={data.ftxBacktestResult} />
+        <BacktestTradeTable
+          ftxBacktestResult={data.ftxBacktestResult}
+          setSelectedTrade={setSelectedTrade}
+        />
         <BacktestStats
           backtestId={backtestId}
           ftxBacktestResult={data.ftxBacktestResult}

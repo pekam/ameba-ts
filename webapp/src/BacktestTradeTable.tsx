@@ -1,12 +1,15 @@
 import React from "react";
 import { ReactTabulator } from "react-tabulator";
 import "react-tabulator/css/tabulator.min.css";
+import { Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
 
 function BacktestTradeTable({
   ftxBacktestResult,
+  setSelectedTrade,
 }: {
   ftxBacktestResult: FtxBacktestResult;
+  setSelectedTrade: (trade: Trade) => void;
 }) {
   function formatTime(cell: any): string {
     const timestamp: number = cell.getValue();
@@ -47,6 +50,7 @@ function BacktestTradeTable({
   const trades = ftxBacktestResult.result.trades;
 
   const data = trades.map((trade) => ({
+    trade,
     position: trade.position,
     profit: trade.profit,
     entryTime: trade.entry.time,
@@ -60,6 +64,10 @@ function BacktestTradeTable({
       data={data}
       columns={columns}
       tooltips={true}
+      rowClick={(e, row) => {
+        const trade = row._row.data.trade;
+        setSelectedTrade(trade);
+      }}
     />
   );
 }
