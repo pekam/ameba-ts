@@ -16,22 +16,24 @@ function BacktestStats({
   ];
 
   return (
-    <ReactJson
-      src={{
-        backtestId,
-        market: ftxBacktestResult.market,
-        resolution: ftxBacktestResult.resolution,
-        ...ftxBacktestResult.result.stats,
-        range: {
-          from: convertTimestamp(range.from),
-          to: convertTimestamp(range.to),
-        },
-      }}
-      displayDataTypes={false}
-      displayObjectSize={false}
-      name={null}
-      enableClipboard={false}
-    ></ReactJson>
+    <span className="BacktestStats">
+      <ReactJson
+        src={{
+          backtestId,
+          market: ftxBacktestResult.market,
+          resolution: ftxBacktestResult.resolution,
+          ...ftxBacktestResult.result.stats,
+          range: {
+            from: convertTimestamp(range.from),
+            to: convertTimestamp(range.to),
+          },
+        }}
+        displayDataTypes={false}
+        displayObjectSize={false}
+        name={null}
+        enableClipboard={false}
+      ></ReactJson>
+    </span>
   );
 }
 

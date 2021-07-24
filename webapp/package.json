@@ -16,6 +16,7 @@
     "react-json-view": "^1.21.3",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
+    "react-tabulator": "^0.15.0",
     "typescript": "^3.7.5"
   },
   "scripts": {
