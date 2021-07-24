@@ -24,13 +24,25 @@ app.get("/api/dataSet/:dataSetId/:symbol", async (req, res) => {
 });
 
 app.get("/api/backtest/:backtestId", async (req, res) => {
-  const backtestId = parseInt(req.params.backtestId);
+  function onError(errorMessage: string) {
+    console.log(errorMessage);
+    res.send({ errorMessage });
+  }
+
+  const backtestId: number = parseInt(req.params.backtestId);
+
+  if (isNaN(backtestId)) {
+    onError(
+      `Failed to parse backtest id ${req.params.backtestId}, not a number.`
+    );
+    return;
+  }
+
   const ftxBacktestResult = await ftxBacktestStore.loadBacktestResult(
     backtestId
   );
   if (!ftxBacktestResult) {
-    console.log(`Backtest result with id ${backtestId} not found.`);
-    res.send({ ok: false });
+    onError(`Backtest result with id ${backtestId} not found.`);
     return;
   }
   const { result, market, resolution } = ftxBacktestResult;

@@ -6,7 +6,7 @@ import { m } from "../functions/functions";
 import { FtxMarket, FtxResolution, ftxResolutionToPeriod } from "./ftx";
 import { ftxDataStore } from "./ftx-data-store";
 
-interface FtxBacktestResult {
+export interface FtxBacktestResult {
   result: BacktestResult;
   market: FtxMarket;
   resolution: FtxResolution;
