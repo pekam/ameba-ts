@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { CandleSeries } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
 import BacktestChart from "./BacktestChart";
+import BacktestStats from "./BacktestStats";
 
 function Backtest() {
   const backtestId = useParams<{ backtestId: string }>().backtestId;
@@ -31,11 +32,14 @@ function Backtest() {
   }
   return (
     <div>
-      Backtest id: {backtestId}
       <BacktestChart
         series={data.series}
         ftxBacktestResult={data.ftxBacktestResult}
       ></BacktestChart>
+      <BacktestStats
+        backtestId={backtestId}
+        ftxBacktestResult={data.ftxBacktestResult}
+      />
     </div>
   );
 }
