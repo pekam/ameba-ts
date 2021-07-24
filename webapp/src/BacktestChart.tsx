@@ -14,14 +14,17 @@ function BacktestChart({
     const chart = createChart("backtestChart", {
       width: document.body.clientWidth,
       height: window.innerHeight / 2,
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      crosshair: { mode: CrosshairMode.Normal },
     });
 
     const series = chart.addCandlestickSeries();
     // @ts-ignore
     series.setData(candles);
-
     series.applyOptions({ priceLineVisible: false, lastValueVisible: false });
-    chart.applyOptions({ crosshair: { mode: CrosshairMode.Normal } });
   });
 
   return <div id="backtestChart"></div>;
