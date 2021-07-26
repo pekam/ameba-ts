@@ -1,8 +1,8 @@
 import { CandleSeries } from "../core/types";
-import { m } from "../functions/functions";
-import { indicators } from "../functions/indicators";
+import { m } from "../shared/functions";
+import { indicators } from "../shared/indicators";
+import { getRiskBasedOnDrawdown } from "../shared/risk-management";
 import { FtxBotOrder } from "./market-maker-orders";
-import { getRiskBasedOnDrawdown } from "../functions/risk-management";
 
 /**
  * Example of a strategy function that would return a multiplier for current

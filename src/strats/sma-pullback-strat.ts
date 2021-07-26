@@ -1,5 +1,5 @@
 import { Order, Strategy, TradeState } from "../core/types";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 
 const smaPeriod = 30;
 const lookback = 10;

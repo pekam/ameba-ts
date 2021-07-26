@@ -1,8 +1,8 @@
-import { FtxBotOrder } from "./market-maker-orders";
-import { m } from "../functions/functions";
-import { indicators } from "../functions/indicators";
 import { Candle, CandleSeries, Strategy, TradeState } from "../core/types";
+import { m } from "../shared/functions";
+import { indicators } from "../shared/indicators";
 import { FtxBotStrat } from "./bot";
+import { FtxBotOrder } from "./market-maker-orders";
 
 export const emaStrat = getEmaStrat(5, 20);
 

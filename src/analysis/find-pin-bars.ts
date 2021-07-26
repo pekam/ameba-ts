@@ -1,6 +1,6 @@
-import { m } from "../functions/functions";
-import { rankAndReport } from "./rank-and-report";
 import { CandleSeries } from "../core/types";
+import { m } from "../shared/functions";
+import { rankAndReport } from "./rank-and-report";
 
 const scoreByBullishPinBar = (series: CandleSeries) => {
   const candle = m.last(series);

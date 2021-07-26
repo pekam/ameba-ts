@@ -1,12 +1,8 @@
+import _ from "lodash";
 import { CandleSeries } from "../core/types";
-import { m } from "../functions/functions";
-import {
-  FtxClient,
-  FtxMarket,
-  FtxResolution,
-  ftxResolutionToPeriod,
-} from "./ftx";
-import _ = require("lodash");
+import { m } from "../shared/functions";
+import { ftxResolutionToPeriod } from "../shared/periods";
+import { FtxClient, FtxMarket, FtxResolution } from "./ftx";
 
 export function getFtxUtil({
   ftx,

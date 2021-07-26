@@ -1,7 +1,7 @@
-import { readCachedSymbols } from "./load-symbols";
+import { m } from "../shared/functions";
 import { fetchFromFinnhub } from "./finnhub";
+import { readCachedSymbols } from "./load-symbols";
 import { db } from "./mongo";
-import { m } from "../functions/functions";
 
 const collection = "company-profiles";
 

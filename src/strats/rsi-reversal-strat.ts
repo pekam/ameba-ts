@@ -1,6 +1,6 @@
-import { Order, Strategy, TradeState } from "../core/types";
 import { Indicators } from "../core/indicators";
-import { m } from "../functions/functions";
+import { Order, Strategy, TradeState } from "../core/types";
+import { m } from "../shared/functions";
 
 const rsiPeriod = 10;
 const adxPeriod = 20;

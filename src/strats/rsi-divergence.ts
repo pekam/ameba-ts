@@ -1,6 +1,6 @@
 import { RSI } from "technicalindicators";
 import { Candle, CandleSeries } from "../core/types";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 
 /**
  * Returns the candles where there is a positive RSI divergence.

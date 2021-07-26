@@ -1,5 +1,5 @@
 import { StrategyUpdate } from "../core/types";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 
 export const trailingStopLoss: StrategyUpdate = (state) => {
   return {

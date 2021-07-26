@@ -1,14 +1,14 @@
-import { getFtxUtil } from "./ftx-util";
-import { getRiskBasedOnDrawdown } from "../functions/risk-management";
-import { CandleSeries } from "../core/types";
-import { getCurrentTimestampInSeconds } from "../util";
-import { m } from "../functions/functions";
-import { getFtxSubAccountProperties } from "../properties";
-import { FtxBotStrat } from "./bot";
-import { withRelativeTransactionCost } from "../core/backtest-result";
 import { backtestStrategy } from "../core/backtest";
-import { getBacktestableStrategy } from "./strats";
+import { withRelativeTransactionCost } from "../core/backtest-result";
+import { CandleSeries } from "../core/types";
+import { getFtxSubAccountProperties } from "../properties";
+import { m } from "../shared/functions";
+import { getRiskBasedOnDrawdown } from "../shared/risk-management";
+import { getCurrentTimestampInSeconds } from "../util";
+import { FtxBotStrat } from "./bot";
 import { FtxMarket, getFtxClient } from "./ftx";
+import { getFtxUtil } from "./ftx-util";
+import { getBacktestableStrategy } from "./strats";
 
 function getStakeMultiplier(
   accountValue: number,

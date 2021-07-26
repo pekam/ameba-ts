@@ -1,7 +1,7 @@
-import { rankAndReport } from "./rank-and-report";
-import { m } from "../functions/functions";
-import { Candle, CandleSeries } from "../core/types";
 import * as _ from "lodash";
+import { Candle, CandleSeries } from "../core/types";
+import { m } from "../shared/functions";
+import { rankAndReport } from "./rank-and-report";
 
 const maxCandlesToInclude = 100;
 const distanceToCompareSwingLows = 2;

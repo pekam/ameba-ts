@@ -1,8 +1,8 @@
-import { Strategy, StrategyUpdate, TradeState } from "../core/types";
+import _ from "lodash";
 import { backtestStrategy } from "../core/backtest";
-import { m } from "../functions/functions";
 import { withRelativeTransactionCost } from "../core/backtest-result";
-import _ = require("lodash");
+import { Strategy, StrategyUpdate, TradeState } from "../core/types";
+import { m } from "../shared/functions";
 
 const relativeTransactionCost = 0.0007;
 

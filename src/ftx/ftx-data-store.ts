@@ -2,15 +2,11 @@ import { flatten } from "lodash";
 import { DateTime } from "luxon";
 import { CandleSeries } from "../core/types";
 import { db } from "../data/mongo";
-import { m } from "../functions/functions";
 import { properties } from "../properties";
-import { getCurrentTimestampInSeconds, PERIODS } from "../util";
-import {
-  FtxMarket,
-  FtxResolution,
-  ftxResolutionToPeriod,
-  getFtxClient,
-} from "./ftx";
+import { m } from "../shared/functions";
+import { ftxResolutionToPeriod, PERIODS } from "../shared/periods";
+import { getCurrentTimestampInSeconds } from "../util";
+import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { FtxUtil, getFtxUtil } from "./ftx-util";
 
 /*

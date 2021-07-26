@@ -1,8 +1,8 @@
-import { CompanyWithAsyncCandles, getDataSet } from "../data/load-data-set";
-import { getUrl } from "../util";
+import _ from "lodash";
 import { Candle, CandleSeries } from "../core/types";
-import { m } from "../functions/functions";
-import _ = require("lodash");
+import { CompanyWithAsyncCandles, getDataSet } from "../data/load-data-set";
+import { m } from "../shared/functions";
+import { getUrl } from "../util";
 
 /**
  * Loads the data set from the database, runs the scoring function

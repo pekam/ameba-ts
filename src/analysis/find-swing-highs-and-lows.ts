@@ -1,6 +1,6 @@
 import { getDataSet } from "../data/load-data-set";
+import { m } from "../shared/functions";
 import { getUrl } from "../util";
-import { m } from "../functions/functions";
 
 // const dataSetId = "bigday19";
 const dataSetId = "makkara";

@@ -7,6 +7,7 @@ import {
 import React, { useEffect } from "react";
 import { CandleSeries, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
+import { ftxResolutionToPeriod } from "../../src/shared/periods";
 
 let chart: IChartApi | undefined;
 
@@ -92,17 +93,5 @@ function BacktestChart({
 
   return <div id="backtestChart"></div>;
 }
-
-// TODO This is duplicated from ftx.ts!
-// Figure out how to share the backend code here.
-const ftxResolutionToPeriod: any = {
-  "15sec": 1 * 15,
-  "1min": 60,
-  "5min": 60 * 5,
-  "15min": 60 * 15,
-  "1h": 3600,
-  "4h": 3600 * 4,
-  "1d": 3600 * 24,
-};
 
 export default BacktestChart;

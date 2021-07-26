@@ -1,6 +1,6 @@
-import { initTestData } from "./testData";
-import { m } from "../src/functions/functions";
 import { CandleSeries } from "../src/core/types";
+import { m } from "../src/shared/functions";
+import { initTestData } from "./testData";
 
 it("should find highs (local maximums)", () => {
   const series: CandleSeries = initTestData();

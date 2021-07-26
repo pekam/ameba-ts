@@ -1,3 +1,4 @@
+import { Indicators } from "../core/indicators";
 import {
   MarketPosition,
   Order,
@@ -5,8 +6,7 @@ import {
   StrategyUpdate,
   TradeState,
 } from "../core/types";
-import { Indicators } from "../core/indicators";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 
 export class MacdStrat implements Strategy {
   private indicators: Indicators;

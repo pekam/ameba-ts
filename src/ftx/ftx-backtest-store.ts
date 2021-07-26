@@ -2,8 +2,9 @@ import { backtestStrategy } from "../core/backtest";
 import { BacktestResult } from "../core/backtest-result";
 import { Strategy } from "../core/types";
 import { db } from "../data/mongo";
-import { m } from "../functions/functions";
-import { FtxMarket, FtxResolution, ftxResolutionToPeriod } from "./ftx";
+import { m } from "../shared/functions";
+import { ftxResolutionToPeriod } from "../shared/periods";
+import { FtxMarket, FtxResolution } from "./ftx";
 import { ftxDataStore } from "./ftx-data-store";
 
 export interface FtxBacktestResult {

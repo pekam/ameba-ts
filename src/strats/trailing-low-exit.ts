@@ -1,5 +1,5 @@
 import { StrategyUpdate } from "../core/types";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 
 /**
  * Updates stop loss to be always slightly below the latest low (local min).

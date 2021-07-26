@@ -1,6 +1,6 @@
-import { rankAndReport } from "./rank-and-report";
 import { Candle, CandleSeries } from "../core/types";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
+import { rankAndReport } from "./rank-and-report";
 
 const getLowestHighBetween = (c: Candle, c2: Candle, series: CandleSeries) => {
   const between = m.getCandlesBetween(series, c, c2);

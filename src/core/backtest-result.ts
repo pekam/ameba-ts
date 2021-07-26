@@ -1,7 +1,7 @@
-import { m } from "../functions/functions";
+import _ from "lodash";
+import { m } from "../shared/functions";
 import { timestampToUTCDateString } from "./date-util";
 import { CandleSeries, Range, Trade, Transaction } from "./types";
-import _ = require("lodash");
 
 export interface BacktestStatistics {
   /**

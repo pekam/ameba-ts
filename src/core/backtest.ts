@@ -1,4 +1,4 @@
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 import { startProgressBar } from "../util";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { TimeTraveller } from "./time-traveller";

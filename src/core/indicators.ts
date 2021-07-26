@@ -1,5 +1,5 @@
 import { ADX, MACD, RSI, SMA } from "technicalindicators";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
 import { Candle, CandleSeries } from "./types";
 
 export interface IndicatorSettings {

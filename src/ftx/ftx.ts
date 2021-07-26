@@ -1,7 +1,8 @@
 import { CandleSeries } from "../core/types";
-import { m } from "../functions/functions";
 import { getFtxSubAccountProperties, properties } from "../properties";
-import { getCurrentTimestampInSeconds, PERIODS } from "../util";
+import { m } from "../shared/functions";
+import { ftxResolutionToPeriod } from "../shared/periods";
+import { getCurrentTimestampInSeconds } from "../util";
 
 export const FtxMarkets = [
   "AAVE/USD",
@@ -31,18 +32,6 @@ const resolutionValues = [
   "1d",
 ] as const;
 export type FtxResolution = typeof resolutionValues[number];
-
-export const ftxResolutionToPeriod: {
-  [Property in FtxResolution]: number;
-} = {
-  "15sec": PERIODS.second * 15,
-  "1min": PERIODS.minute,
-  "5min": PERIODS.minute * 5,
-  "15min": PERIODS.minute * 15,
-  "1h": PERIODS.hour,
-  "4h": PERIODS.hour * 4,
-  "1d": PERIODS.day,
-};
 
 export interface FtxCandleRequestParams {
   market: FtxMarket;

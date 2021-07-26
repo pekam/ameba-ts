@@ -1,17 +1,17 @@
+import _ from "lodash";
 import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
 import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
 import { CandleSeries } from "../core/types";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
-import { m } from "../functions/functions";
+import { m } from "../shared/functions";
+import { PERIODS } from "../shared/periods";
 import { AutoOptimizer } from "../strats/auto-optimizer";
 import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
 import { MacdStrat } from "../strats/macd-strat";
-import { PERIODS } from "../util";
 import { getFtxClient } from "./ftx";
 import { getFtxUtil } from "./ftx-util";
 import { emaStrat, getBacktestableStrategy, getEmaStrat } from "./strats";
-import _ = require("lodash");
 
 async function run() {
   const ftx = getFtxClient({ subaccount: "bot-2" });

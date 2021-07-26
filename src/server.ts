@@ -1,10 +1,10 @@
 import * as bodyParser from "body-parser";
-import * as express from "express";
+import express from "express";
 import { CandleSeries } from "./core/types";
 import { CompanyWithAsyncCandles, getDataSet } from "./data/load-data-set";
-import { ftxResolutionToPeriod } from "./ftx/ftx";
 import { ftxBacktestStore } from "./ftx/ftx-backtest-store";
 import { ftxDataStore } from "./ftx/ftx-data-store";
+import { ftxResolutionToPeriod } from "./shared/periods";
 
 const app = express();
 const port = process.env.PORT || 5000;

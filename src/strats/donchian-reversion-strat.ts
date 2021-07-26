@@ -1,6 +1,6 @@
-import { CandleSeries, Order, Strategy, TradeState } from "../core/types";
 import { Indicators } from "../core/indicators";
-import { m } from "../functions/functions";
+import { CandleSeries, Order, Strategy, TradeState } from "../core/types";
+import { m } from "../shared/functions";
 
 /**
  */

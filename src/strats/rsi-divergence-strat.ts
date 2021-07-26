@@ -1,7 +1,7 @@
 import { Order, Strategy, TradeState } from "../core/types";
+import { m } from "../shared/functions";
 import { findRSIDivergences } from "./rsi-divergence";
 import { trailingLowExit } from "./trailing-low-exit";
-import { m } from "../functions/functions";
 
 export class RsiDivergenceStrategy implements Strategy {
   init(tradeState: TradeState): void {}

@@ -1,10 +1,10 @@
+import _ from "lodash";
 import { DateTime, DateTimeOptions } from "luxon";
 import { Candle, CandleSeries, OHLC } from "../core/types";
-import { PERIODS } from "../util";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
+import { PERIODS } from "./periods";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
-import _ = require("lodash");
 
 /**
  * Supports negative index to get from the end of the array.
