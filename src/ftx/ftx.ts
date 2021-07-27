@@ -1,7 +1,7 @@
 import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties, properties } from "../properties";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod } from "../shared/periods";
+import { ftxResolutionToPeriod } from "../shared/time-util";
 import { getCurrentTimestampInSeconds } from "../util";
 
 export const FtxMarkets = [

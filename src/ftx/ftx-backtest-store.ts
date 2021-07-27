@@ -3,7 +3,7 @@ import { BacktestResult } from "../core/backtest-result";
 import { Strategy } from "../core/types";
 import { db } from "../data/mongo";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod } from "../shared/periods";
+import { ftxResolutionToPeriod } from "../shared/time-util";
 import { FtxMarket, FtxResolution } from "./ftx";
 import { ftxDataStore } from "./ftx-data-store";
 

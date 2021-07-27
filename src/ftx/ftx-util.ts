@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod } from "../shared/periods";
+import { ftxResolutionToPeriod } from "../shared/time-util";
 import { FtxClient, FtxMarket, FtxResolution } from "./ftx";
 
 export function getFtxUtil({

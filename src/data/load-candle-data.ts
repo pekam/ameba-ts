@@ -1,6 +1,6 @@
-import { timestampToUTCDateString } from "../core/date-util";
 import { Candle } from "../core/types";
 import { m } from "../shared/functions";
+import { timestampToUTCDateString } from "../shared/time-util";
 import { fetchFromFinnhub } from "./finnhub";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";

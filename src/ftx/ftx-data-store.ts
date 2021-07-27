@@ -4,7 +4,7 @@ import { CandleSeries } from "../core/types";
 import { db } from "../data/mongo";
 import { properties } from "../properties";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod, PERIODS } from "../shared/periods";
+import { ftxResolutionToPeriod, PERIODS } from "../shared/time-util";
 import { getCurrentTimestampInSeconds } from "../util";
 import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { FtxUtil, getFtxUtil } from "./ftx-util";

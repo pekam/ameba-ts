@@ -3,8 +3,8 @@ import { DateTime, DateTimeOptions } from "luxon";
 import { Candle, CandleSeries, OHLC } from "../core/types";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
-import { PERIODS } from "./periods";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
+import { PERIODS } from "./time-util";
 
 /**
  * Supports negative index to get from the end of the array.

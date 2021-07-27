@@ -4,7 +4,7 @@ import { CandleSeries } from "./core/types";
 import { CompanyWithAsyncCandles, getDataSet } from "./data/load-data-set";
 import { ftxBacktestStore } from "./ftx/ftx-backtest-store";
 import { ftxDataStore } from "./ftx/ftx-data-store";
-import { ftxResolutionToPeriod } from "./shared/periods";
+import { ftxResolutionToPeriod } from "./shared/time-util";
 
 const app = express();
 const port = process.env.PORT || 5000;

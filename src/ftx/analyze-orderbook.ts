@@ -1,5 +1,8 @@
-import { timestampFromUTC, timestampToUTCDateString } from "../core/date-util";
 import { m } from "../shared/functions";
+import {
+  timestampFromUTC,
+  timestampToUTCDateString,
+} from "../shared/time-util";
 import { FtxMarket, getFtxClient, OrderBook } from "./ftx";
 import { getFtxDb } from "./ftx-db";
 

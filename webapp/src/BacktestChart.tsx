@@ -7,7 +7,7 @@ import {
 import React, { useEffect } from "react";
 import { CandleSeries, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
-import { ftxResolutionToPeriod } from "../../src/shared/periods";
+import { ftxResolutionToPeriod } from "../../src/shared/time-util";
 
 let chart: IChartApi | undefined;
 

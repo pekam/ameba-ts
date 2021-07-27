@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { m } from "../shared/functions";
-import { timestampToUTCDateString } from "./date-util";
+import { timestampToUTCDateString } from "../shared/time-util";
 import { CandleSeries, Range, Trade, Transaction } from "./types";
 
 export interface BacktestStatistics {
