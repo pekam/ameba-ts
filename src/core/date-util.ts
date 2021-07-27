@@ -9,7 +9,6 @@ import { DateTime } from "luxon";
  * @param hours
  * @param minutes
  * @param seconds
- * @param ms
  */
 export function timestampFromUTC(
   year: number,
@@ -17,8 +16,7 @@ export function timestampFromUTC(
   date?: number,
   hours?: number,
   minutes?: number,
-  seconds?: number,
-  ms?: number
+  seconds?: number
 ) {
   return Math.floor(
     Date.UTC(
@@ -28,7 +26,7 @@ export function timestampFromUTC(
       hours || 0,
       minutes || 0,
       seconds || 0,
-      ms || 0
+      0
     ) / 1000
   );
 }
