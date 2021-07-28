@@ -4,7 +4,7 @@ import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties } from "../properties";
 import { m } from "../shared/functions";
 import { getRiskBasedOnDrawdown } from "../shared/risk-management";
-import { getCurrentTimestampInSeconds } from "../util";
+import { getCurrentTimestampInSeconds } from "../shared/time-util";
 import { FtxBotStrat } from "./bot";
 import { FtxMarket, getFtxClient } from "./ftx";
 import { getFtxUtil } from "./ftx-util";

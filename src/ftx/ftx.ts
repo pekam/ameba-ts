@@ -1,8 +1,10 @@
 import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties, properties } from "../properties";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod } from "../shared/time-util";
-import { getCurrentTimestampInSeconds } from "../util";
+import {
+  ftxResolutionToPeriod,
+  getCurrentTimestampInSeconds,
+} from "../shared/time-util";
 
 export const FtxMarkets = [
   "AAVE/USD",

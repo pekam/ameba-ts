@@ -1,8 +1,9 @@
-import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
-import { getCurrentTimestampInSeconds, sleep, toFixed } from "../util";
-import { getFtxUtil } from "./ftx-util";
-import { FtxStaker } from "./ftx-staker";
 import { CandleSeries } from "../core/types";
+import { getCurrentTimestampInSeconds } from "../shared/time-util";
+import { sleep, toFixed } from "../util";
+import { FtxAddOrderParams, FtxMarket, getFtxClient } from "./ftx";
+import { FtxStaker } from "./ftx-staker";
+import { getFtxUtil } from "./ftx-util";
 
 const sleepMs = 2000;
 

@@ -6,10 +6,10 @@ import { properties } from "../properties";
 import { m } from "../shared/functions";
 import {
   ftxResolutionToPeriod,
+  getCurrentTimestampInSeconds,
   PERIODS,
   toDateTime,
 } from "../shared/time-util";
-import { getCurrentTimestampInSeconds } from "../util";
 import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { FtxUtil, getFtxUtil } from "./ftx-util";
 

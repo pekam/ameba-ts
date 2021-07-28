@@ -18,7 +18,7 @@ type MomentType =
  * @returns timestamp as seconds
  */
 export function toTimestamp(input: MomentType): number {
-  return toDateTime(input).toSeconds();
+  return Math.floor(toDateTime(input).toSeconds());
 }
 
 /**
@@ -35,6 +35,9 @@ export function toDateTime(input: MomentType): DateTime {
     return DateTime.fromObject({ ...input, ...options });
   }
 }
+
+export const getCurrentTimestampInSeconds = () =>
+  Math.floor(DateTime.utc().toSeconds());
 
 /**
  * Result is in seconds.

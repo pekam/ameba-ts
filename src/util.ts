@@ -49,9 +49,6 @@ export function getUrl(
   return `http://localhost:3000/dataSet?dataSetId=${dataSetId}&symbols=${chartParams}`;
 }
 
-export const getCurrentTimestampInSeconds = () =>
-  Math.round(Date.now() * 0.001);
-
 export async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
