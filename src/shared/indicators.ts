@@ -1,6 +1,6 @@
-import { m } from "./functions";
 import { ATR, EMA, SMA } from "technicalindicators";
 import { Candle, CandleSeries } from "../core/types";
+import { m } from "./functions";
 
 export interface IndicatorResult {
   values: number[];
@@ -43,8 +43,20 @@ function toResult(
   };
 }
 
+function withTimes(
+  indicatorValues: number[],
+  series: CandleSeries
+): { value: number; time: number }[] {
+  const lengthDiff = series.length - indicatorValues.length;
+  return indicatorValues.map((value, i) => ({
+    value,
+    time: series[i + lengthDiff].time,
+  }));
+}
+
 export const indicators = {
   sma,
   ema,
   atr,
+  withTimes,
 };

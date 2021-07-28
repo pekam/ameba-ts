@@ -7,6 +7,7 @@ import {
 import React, { useEffect } from "react";
 import { CandleSeries, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
+import { indicators } from "../../src/shared/indicators";
 import { ftxResolutionToPeriod } from "../../src/shared/time-util";
 
 let chart: IChartApi | undefined;
@@ -76,6 +77,17 @@ function BacktestChart({
         }))
       );
     });
+
+    const emaSeries = chart.addLineSeries({
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+      lineWidth: 1,
+    });
+    emaSeries.setData(
+      // @ts-ignore
+      indicators.withTimes(indicators.ema(candles, 20).values, candles)
+    );
   }, []);
 
   useEffect(() => {
