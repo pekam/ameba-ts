@@ -30,14 +30,14 @@ async function loadBacktestResult(
   return await db.get(collectionId, id);
 }
 
-async function backtestAndSave(args: {
+async function backtest(args: {
   stratProvider: () => Strategy;
   market: FtxMarket;
   resolution: FtxResolution;
   from: string;
   to: string;
   candlesBefore?: number;
-}): Promise<FtxBacktestResult & { id: number }> {
+}): Promise<FtxBacktestResult> {
   const { market, stratProvider, resolution, from, to } = args;
   const candlesBefore = args.candlesBefore || 50;
 
@@ -53,15 +53,24 @@ async function backtestAndSave(args: {
 
   const result = backtestStrategy(stratProvider, series, true, fromTimestamp);
 
-  return await saveBacktestResult({
-    result,
-    market,
-    resolution,
-  });
+  return { result, market, resolution };
+}
+
+async function backtestAndSave(args: {
+  stratProvider: () => Strategy;
+  market: FtxMarket;
+  resolution: FtxResolution;
+  from: string;
+  to: string;
+  candlesBefore?: number;
+}): Promise<FtxBacktestResult & { id: number }> {
+  const result = await backtest(args);
+  return await saveBacktestResult(result);
 }
 
 export const ftxBacktestStore = {
   saveBacktestResult,
   loadBacktestResult,
+  backtest,
   backtestAndSave,
 };
