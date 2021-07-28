@@ -1,3 +1,4 @@
+import regression, { DataPoint } from "regression";
 import { ATR, EMA, SMA } from "technicalindicators";
 import { Candle, CandleSeries } from "../core/types";
 import { m } from "./functions";
@@ -29,6 +30,13 @@ function atr(series: CandleSeries, period: number): IndicatorResult {
   return toResult(series, atrs);
 }
 
+function linearRegression(series: CandleSeries, period: number) {
+  const input: DataPoint[] = series.slice(-period).map((c, i) => [i, c.close]);
+  const result = regression.linear(input);
+  const regressionValues = result.points.map((p) => p[1]);
+  return { ...toResult(series, regressionValues), regressionResult: result };
+}
+
 function toResult(
   series: CandleSeries,
   indicatorValues: number[]
@@ -58,5 +66,6 @@ export const indicators = {
   sma,
   ema,
   atr,
+  linearRegression,
   withTimes,
 };
