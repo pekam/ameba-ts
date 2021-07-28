@@ -28,7 +28,11 @@ export function toTimestamp(input: MomentType): number {
 export function toDateTime(input: MomentType): DateTime {
   const options: DateTimeOptions = { zone: "utc" };
   if (typeof input === "string") {
-    return DateTime.fromISO(input, options);
+    const dateTime = DateTime.fromISO(input, options);
+    if (dateTime.invalidExplanation) {
+      throw Error(dateTime.invalidExplanation);
+    }
+    return dateTime;
   } else if (typeof input === "number") {
     return DateTime.fromSeconds(input, options);
   } else {
