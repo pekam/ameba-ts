@@ -4,7 +4,14 @@ import { FtxResolution } from "../ftx/ftx";
 type MomentType =
   | string
   | number
-  | { year: number; month: number; day: number };
+  | {
+      year: number;
+      month: number;
+      day?: number;
+      hour?: number;
+      minute?: number;
+      second?: number;
+    };
 
 /**
  * @param input either ISO date string (UTC), timestamp as seconds or object with date props (UTC)
@@ -16,7 +23,7 @@ export function toTimestamp(input: MomentType): number {
 
 /**
  * @param input either ISO date string (UTC), timestamp as seconds or object with date props (UTC)
- * @returns date time in utc time zone
+ * @returns date time in UTC time zone
  */
 export function toDateTime(input: MomentType): DateTime {
   const options: DateTimeOptions = { zone: "utc" };
@@ -25,7 +32,7 @@ export function toDateTime(input: MomentType): DateTime {
   } else if (typeof input === "number") {
     return DateTime.fromSeconds(input, options);
   } else {
-    return DateTime.utc(input.year, input.month, input.day);
+    return DateTime.fromObject({ ...input, ...options });
   }
 }
 
@@ -42,26 +49,16 @@ export function toDateTime(input: MomentType): DateTime {
 export function timestampFromUTC(
   year: number,
   month: number,
-  date?: number,
-  hours?: number,
-  minutes?: number,
-  seconds?: number
+  day?: number,
+  hour?: number,
+  minute?: number,
+  second?: number
 ) {
-  return Math.floor(
-    Date.UTC(
-      year,
-      month - 1,
-      date || 1,
-      hours || 0,
-      minutes || 0,
-      seconds || 0,
-      0
-    ) / 1000
-  );
+  return toTimestamp({ year, month, day, hour, minute, second });
 }
 
 export function getTimeInNewYork(timestamp: number): DateTime {
-  return DateTime.fromSeconds(timestamp).setZone("America/New_York");
+  return DateTime.fromSeconds(timestamp, { zone: "America/New_York" });
 }
 
 export function timestampToUTCDateString(timestamp: number) {
