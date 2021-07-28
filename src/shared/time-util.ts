@@ -1,5 +1,33 @@
-import { DateTime } from "luxon";
+import { DateTime, DateTimeOptions } from "luxon";
 import { FtxResolution } from "../ftx/ftx";
+
+type MomentType =
+  | string
+  | number
+  | { year: number; month: number; day: number };
+
+/**
+ * @param input either ISO date string (UTC), timestamp as seconds or object with date props (UTC)
+ * @returns timestamp as seconds
+ */
+export function toTimestamp(input: MomentType): number {
+  return toDateTime(input).toSeconds();
+}
+
+/**
+ * @param input either ISO date string (UTC), timestamp as seconds or object with date props (UTC)
+ * @returns date time in utc time zone
+ */
+export function toDateTime(input: MomentType): DateTime {
+  const options: DateTimeOptions = { zone: "utc" };
+  if (typeof input === "string") {
+    return DateTime.fromISO(input, options);
+  } else if (typeof input === "number") {
+    return DateTime.fromSeconds(input, options);
+  } else {
+    return DateTime.utc(input.year, input.month, input.day);
+  }
+}
 
 /**
  * Result is in seconds.

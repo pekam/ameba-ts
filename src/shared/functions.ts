@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { DateTime, DateTimeOptions } from "luxon";
 import { Candle, CandleSeries, OHLC } from "../core/types";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
@@ -200,57 +199,6 @@ function getWeightedAverage(values: number[]) {
 }
 
 /**
- * @returns in YYYY-MM-DD format
- */
-function objectToDateString(obj: {
-  year: number;
-  month: number;
-  day: number;
-}): string {
-  const { year, month, day } = obj;
-  function to2Digits(num: number) {
-    if (num < 10) return "0" + num;
-    return "" + num;
-  }
-  return year + "-" + to2Digits(month) + "-" + to2Digits(day);
-}
-
-/**
- * @param dateString in YYYY-MM-DD format
- */
-function dateStringToObject(dateString: string) {
-  if (!/^\d{4}\-\d{1,2}\-\d{1,2}$/.test(dateString)) {
-    throw Error("Date string not matching format YYYY-MM-DD");
-  }
-  const [year, month, day] = dateString.split("-").map((s) => parseInt(s));
-  return { year, month, day };
-}
-
-type MomentType =
-  | string
-  | number
-  | { year: number; month: number; day: number };
-
-function toTimestamp(input: MomentType): number {
-  return toDateTime(input).toSeconds();
-}
-
-/**
- * @param input either ISO date string, timestamp as seconds or object with year & month & day
- * @returns date time in utc time zone
- */
-function toDateTime(input: MomentType): DateTime {
-  const options: DateTimeOptions = { zone: "utc" };
-  if (typeof input === "string") {
-    return DateTime.fromISO(input, options);
-  } else if (typeof input === "number") {
-    return DateTime.fromSeconds(input, options);
-  } else {
-    return DateTime.utc(input.year, input.month, input.day);
-  }
-}
-
-/**
  * Collection of utility functions.
  */
 export const m = {
@@ -278,10 +226,6 @@ export const m = {
   isBetween,
   takeCandlesAfter,
   getWeightedAverage,
-  objectToDateString,
-  dateStringToObject,
-  toTimestamp,
-  toDateTime,
 
   getSwingHighs,
   getSwingLows,

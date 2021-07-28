@@ -4,7 +4,11 @@ import { CandleSeries } from "../core/types";
 import { db } from "../data/mongo";
 import { properties } from "../properties";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod, PERIODS } from "../shared/time-util";
+import {
+  ftxResolutionToPeriod,
+  PERIODS,
+  toDateTime,
+} from "../shared/time-util";
 import { getCurrentTimestampInSeconds } from "../util";
 import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { FtxUtil, getFtxUtil } from "./ftx-util";
@@ -30,8 +34,8 @@ async function getCandles(args: {
   startDate: string | number;
   endDate: string | number;
 }): Promise<CandleSeries> {
-  const startDate = m.toDateTime(args.startDate);
-  const endDate = m.toDateTime(args.endDate);
+  const startDate = toDateTime(args.startDate);
+  const endDate = toDateTime(args.endDate);
 
   if (startDate.toMillis() >= endDate.toMillis()) {
     throw Error("startDate should be before endDate");
@@ -155,11 +159,11 @@ function toNextMonth(date: DateTime): DateTime {
   const year = nextYear ? date.year + 1 : date.year;
   const day = 1;
 
-  return m.toDateTime({ year, month, day });
+  return toDateTime({ year, month, day });
 }
 
 function toFirstDayOfMonth(date: DateTime): DateTime {
-  return m.toDateTime({ year: date.year, month: date.month, day: 1 });
+  return toDateTime({ year: date.year, month: date.month, day: 1 });
 }
 
 function isSameMonth(date1: DateTime, date2: DateTime): boolean {

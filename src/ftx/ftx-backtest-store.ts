@@ -2,8 +2,7 @@ import { backtestStrategy } from "../core/backtest";
 import { BacktestResult } from "../core/backtest-result";
 import { Strategy } from "../core/types";
 import { db } from "../data/mongo";
-import { m } from "../shared/functions";
-import { ftxResolutionToPeriod } from "../shared/time-util";
+import { ftxResolutionToPeriod, toTimestamp } from "../shared/time-util";
 import { FtxMarket, FtxResolution } from "./ftx";
 import { ftxDataStore } from "./ftx-data-store";
 
@@ -42,7 +41,7 @@ async function backtestAndSave(args: {
   const { market, stratProvider, resolution, from, to } = args;
   const candlesBefore = args.candlesBefore || 50;
 
-  const fromTimestamp = m.toTimestamp(from);
+  const fromTimestamp = toTimestamp(from);
 
   const series = await ftxDataStore.getCandles({
     market,

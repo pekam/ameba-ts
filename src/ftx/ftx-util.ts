@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
-import { ftxResolutionToPeriod } from "../shared/time-util";
+import { ftxResolutionToPeriod, toTimestamp } from "../shared/time-util";
 import { FtxClient, FtxMarket, FtxResolution } from "./ftx";
 
 export function getFtxUtil({
@@ -118,7 +118,7 @@ export function getFtxUtil({
         if (typeof date === "number") {
           return date;
         } else {
-          return m.toTimestamp(date);
+          return toTimestamp(date);
         }
       }
     );

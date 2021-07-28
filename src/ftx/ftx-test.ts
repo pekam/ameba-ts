@@ -8,6 +8,7 @@ import {
   PERIODS,
   timestampFromUTC,
   timestampToUTCDateString,
+  toTimestamp,
 } from "../shared/time-util";
 import { AutoOptimizer } from "../strats/auto-optimizer";
 import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
@@ -34,7 +35,7 @@ async function run() {
   // return;
 
   const recentCandles = candles.filter(
-    (c) => c.time > m.toTimestamp("2021-05-01")
+    (c) => c.time > toTimestamp("2021-05-01")
   );
 
   const stratPool = [
