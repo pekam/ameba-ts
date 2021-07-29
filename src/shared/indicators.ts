@@ -32,7 +32,7 @@ function atr(series: CandleSeries, period: number): IndicatorResult {
 
 function linearRegression(series: CandleSeries, period: number) {
   const input: DataPoint[] = series.slice(-period).map((c, i) => [i, c.close]);
-  const result = regression.linear(input);
+  const result = regression.linear(input, { precision: 20 });
   const regressionValues = result.points.map((p) => p[1]);
   return { ...toResult(series, regressionValues), regressionResult: result };
 }
