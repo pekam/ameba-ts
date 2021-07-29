@@ -93,7 +93,14 @@ function BacktestChart({
     chart.subscribeCrosshairMove((param) => {
       const ohlc = param.seriesPrices.get(series) as OHLC;
       const time = param.time as number | undefined;
-      ohlc && time && setLegendCandle({ ...ohlc, time });
+      if (ohlc && time) {
+        setLegendCandle((oldValue) => {
+          if (oldValue.time === time) {
+            return oldValue;
+          }
+          return { ...ohlc, time };
+        });
+      }
     });
   }, [candles, ftxBacktestResult]);
 
@@ -109,6 +116,7 @@ function BacktestChart({
       });
     }
   }, [selectedTrade]);
+
   return (
     <div id="backtestChart">
       <Legend candle={legendCandle}></Legend>
