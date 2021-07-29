@@ -1,6 +1,7 @@
 import { Indicators } from "../core/indicators";
 import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
+import { cancelEntry } from "./strat-util";
 
 const rsiPeriod = 10;
 const adxPeriod = 20;
@@ -39,9 +40,7 @@ export class RsiReversalStrategy implements Strategy {
           stopLoss: m.last(series).low - m.getAverageCandleSize(series, 5) / 2,
         };
       } else {
-        return {
-          entryOrder: null,
-        };
+        return cancelEntry;
       }
     } else {
       if (rsi > 70) {

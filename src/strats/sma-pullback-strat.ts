@@ -1,5 +1,6 @@
 import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
+import { cancelEntry } from "./strat-util";
 
 const smaPeriod = 30;
 const lookback = 10;
@@ -31,11 +32,11 @@ export class SmaPullbackStrategy implements Strategy {
           ).length / lookback;
 
       if (aboveSma < 0.5) {
-        return { entryOrder: null };
+        return cancelEntry;
       }
 
       if (last.close > lastSma) {
-        return { entryOrder: null };
+        return cancelEntry;
       }
 
       const entryPrice = lastSma;

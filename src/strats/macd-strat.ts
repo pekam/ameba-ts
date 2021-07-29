@@ -7,7 +7,7 @@ import {
   TradeState,
 } from "../core/types";
 import { m } from "../shared/functions";
-import { stratUtil } from "./strat-util";
+import { withRelativeExits } from "./strat-util";
 
 export class MacdStrat implements Strategy {
   private indicators: Indicators;
@@ -64,7 +64,7 @@ export class MacdStrat implements Strategy {
         type: "stop",
         price: candle.high,
       };
-      return stratUtil.withRelativeExits({ entryOrder, ...this.settings });
+      return withRelativeExits({ entryOrder, ...this.settings });
     }
     if (
       this.settings.onlyDirection !== "long" &&
@@ -76,7 +76,7 @@ export class MacdStrat implements Strategy {
         type: "stop",
         price: candle.low,
       };
-      return stratUtil.withRelativeExits({ entryOrder, ...this.settings });
+      return withRelativeExits({ entryOrder, ...this.settings });
     }
     return { entryOrder: null };
   }

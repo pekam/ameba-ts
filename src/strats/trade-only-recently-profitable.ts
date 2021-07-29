@@ -5,6 +5,7 @@ import {
   StrategyUpdate,
   TradeState,
 } from "../core/types";
+import { cancelEntry } from "./strat-util";
 
 /**
  * Trades with the provided strategy only if it was profitable
@@ -56,7 +57,7 @@ export class TradeOnlyRecentlyProfitable implements Strategy {
 
     if (!state.position && !this.enabled) {
       // Not allowed to enter a trade
-      return { entryOrder: null };
+      return cancelEntry;
     } else {
       return update;
     }

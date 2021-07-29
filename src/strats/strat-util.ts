@@ -1,6 +1,10 @@
-import { Order } from "../core/types";
+import { Order, StrategyUpdate } from "../core/types";
 
-function withRelativeExits({
+export const cancelEntry: StrategyUpdate = {
+  entryOrder: null,
+} as const;
+
+export function withRelativeExits({
   entryOrder,
   relativeTakeProfit,
   relativeStopLoss,
@@ -23,7 +27,3 @@ function withRelativeExits({
     };
   }
 }
-
-export const stratUtil = {
-  withRelativeExits,
-};

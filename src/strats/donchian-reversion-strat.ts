@@ -6,6 +6,7 @@ import {
   TradeState,
 } from "../core/types";
 import { m } from "../shared/functions";
+import { cancelEntry } from "./strat-util";
 
 /**
  */
@@ -49,9 +50,7 @@ export class DonchianReversionStrategy implements Strategy {
       const lastSwingHighCandle = m.last(m.getSwingHighs(recentCandles));
       const lastSwingLowCandle = m.last(m.getSwingLows(recentCandles));
       if (!lastSwingHighCandle || !lastSwingLowCandle) {
-        return {
-          entryOrder: null,
-        };
+        return cancelEntry;
       }
       const lastSwingHigh = lastSwingHighCandle.high;
       const lastSwingLow = lastSwingLowCandle.low;
@@ -86,7 +85,7 @@ export class DonchianReversionStrategy implements Strategy {
         };
       }
 
-      return { entryOrder: null };
+      return cancelEntry;
     }
     return {};
   }
