@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { m } from "../shared/functions";
-import { toDateString } from "../shared/time-util";
 import { CandleSeries, Range, Trade, Transaction } from "./types";
 
 export interface BacktestStatistics {
@@ -163,7 +162,6 @@ function convertToTrades(transactions: Transaction[]): Trade[] {
           exit,
           position,
           profit,
-          period: toDateString(entry.time) + " - " + toDateString(exit.time),
         };
       })
   );
