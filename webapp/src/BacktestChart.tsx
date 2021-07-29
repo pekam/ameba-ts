@@ -4,11 +4,14 @@ import {
   IChartApi,
   LineStyle,
 } from "lightweight-charts";
-import React, { useEffect } from "react";
-import { CandleSeries, Trade } from "../../src/core/types";
+import { pick } from "lodash";
+import React, { useEffect, useState } from "react";
+import { Candle, CandleSeries, OHLC, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
+import { m } from "../../src/shared/functions";
 import { indicators } from "../../src/shared/indicators";
-import { ftxResolutionToPeriod } from "../../src/shared/time-util";
+import { ftxResolutionToPeriod, toDateTime } from "../../src/shared/time-util";
+import "./BacktestChart.css";
 
 let chart: IChartApi | undefined;
 
@@ -21,6 +24,8 @@ function BacktestChart({
   ftxBacktestResult: FtxBacktestResult;
   selectedTrade: Trade | null;
 }) {
+  const [legendCandle, setLegendCandle] = useState<Candle>(m.last(candles));
+
   useEffect(() => {
     chart = createChart("backtestChart", {
       width: document.body.clientWidth,
@@ -37,10 +42,6 @@ function BacktestChart({
       lastValueVisible: false,
     });
 
-    function formatProfit(profit: number): string {
-      return `${profit > 0 ? "+" : ""}${(profit * 100).toFixed(2)}%`;
-    }
-
     const markers = ftxBacktestResult.result.trades.flatMap((trade) => {
       return [trade.entry, trade.exit].map((order, i) => ({
         time: order.time,
@@ -48,7 +49,7 @@ function BacktestChart({
         shape: order.side === "buy" ? "arrowUp" : "arrowDown",
         color: "#2196F3",
         size: 0.5,
-        text: i === 1 ? formatProfit(trade.profit) : undefined,
+        text: i === 1 ? m.formatPercentage(trade.profit) : undefined,
       }));
     });
 
@@ -88,7 +89,13 @@ function BacktestChart({
       // @ts-ignore
       indicators.withTimes(indicators.ema(candles, 20).values, candles)
     );
-  }, []);
+
+    chart.subscribeCrosshairMove((param) => {
+      const ohlc = param.seriesPrices.get(series) as OHLC;
+      const time = param.time as number | undefined;
+      ohlc && time && setLegendCandle({ ...ohlc, time });
+    });
+  }, [candles, ftxBacktestResult]);
 
   useEffect(() => {
     const candlePeriod = ftxResolutionToPeriod[ftxBacktestResult.resolution];
@@ -102,8 +109,40 @@ function BacktestChart({
       });
     }
   }, [selectedTrade]);
+  return (
+    <div id="backtestChart">
+      <Legend candle={legendCandle}></Legend>
+    </div>
+  );
+}
 
-  return <div id="backtestChart"></div>;
+function Legend({ candle }: { candle: Candle }) {
+  const diff = candle.close - candle.open;
+  const relativeDiff = diff / candle.open;
+  const range = candle.high - candle.low;
+  const relativeRange = range / candle.low;
+
+  function objectToString(obj: any) {
+    return JSON.stringify(obj)
+      .replaceAll('"', "")
+      .replaceAll("{", "")
+      .replaceAll("}", "")
+      .replaceAll(",", "\n")
+      .replaceAll(":", ": ");
+  }
+
+  return (
+    <div className="BacktestChartLegend">
+      <div>{objectToString(pick(candle, "open", "high", "low", "close"))}</div>
+      <div>
+        {objectToString({
+          time: candle.time + " / " + toDateTime(candle.time).toISO(),
+          diff: diff.toFixed(5) + " / " + m.formatPercentage(relativeDiff),
+          range: range.toFixed(5) + " / " + m.formatPercentage(relativeRange),
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default BacktestChart;

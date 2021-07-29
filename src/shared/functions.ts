@@ -198,6 +198,10 @@ function getWeightedAverage(values: number[]) {
   return weightedMean(valuesWithWeights);
 }
 
+function formatPercentage(percent: number): string {
+  return `${percent > 0 ? "+" : ""}${(percent * 100).toFixed(2)}%`;
+}
+
 /**
  * Collection of utility functions.
  */
@@ -226,6 +230,7 @@ export const m = {
   isBetween,
   takeCandlesAfter,
   getWeightedAverage,
+  formatPercentage,
 
   getSwingHighs,
   getSwingLows,

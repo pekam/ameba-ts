@@ -1,0 +1,17 @@
+.BacktestChartLegend {
+  display: flex;
+  white-space: pre;
+  position: fixed;
+  z-index: 10;
+  margin: 5px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.BacktestChartLegend:first-child {
+  min-width: 100px;
+}
+
+.BacktestChartLegend *:not(:first-child) {
+  padding-left: 5px;
+}
