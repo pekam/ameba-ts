@@ -1,4 +1,4 @@
-import { StrategyUpdate } from "../core/types";
+import { StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
 /**
@@ -6,9 +6,9 @@ import { m } from "../shared/functions";
  *
  * However, never decreases the stop loss level.
  */
-export const trailingLowExit: StrategyUpdate = (tradeState) => {
+export function trailingLowExit(state: TradeState): StrategyUpdate {
   // Could be optimized to find only the latest low.
-  const swingLows = m.getSwingLows(tradeState.series);
+  const swingLows = m.getSwingLows(state.series);
 
   if (!swingLows.length) {
     return {};
@@ -20,19 +20,16 @@ export const trailingLowExit: StrategyUpdate = (tradeState) => {
   // Here the margin is relative to the recent average candle size.
   const margin =
     m.getAverageCandleSize(
-      tradeState.series.slice(
-        0,
-        m.indexOf(tradeState.series, latestLowCandle) + 1
-      ),
+      state.series.slice(0, m.indexOf(state.series, latestLowCandle) + 1),
       10
     ) / 4;
 
   const stopLoss = latestLowCandle.low - margin;
 
   // Don't allow decreasing stop loss.
-  if (tradeState.stopLoss && stopLoss < tradeState.stopLoss) {
+  if (state.stopLoss && stopLoss < state.stopLoss) {
     return {};
   }
 
   return { stopLoss };
-};
+}

@@ -1,4 +1,4 @@
-import { Order, Strategy, TradeState } from "../core/types";
+import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
 const smaPeriod = 30;
@@ -8,7 +8,7 @@ export class SmaPullbackStrategy implements Strategy {
   private smas: number[] = [];
   init(state: TradeState): void {}
 
-  update(state: TradeState) {
+  update(state: TradeState): StrategyUpdate {
     const series = state.series;
     const last = m.last(series);
 

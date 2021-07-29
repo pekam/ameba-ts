@@ -1,5 +1,5 @@
 import { Indicators } from "../core/indicators";
-import { Order, Strategy, TradeState } from "../core/types";
+import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
 const rsiPeriod = 10;
@@ -15,7 +15,7 @@ export class RsiReversalStrategy implements Strategy {
     this.indicators = new Indicators({ rsiPeriod, adxPeriod }, state.series);
   }
 
-  update(state: TradeState) {
+  update(state: TradeState): StrategyUpdate {
     const series = state.series;
 
     const { rsi, adx } = this.indicators.update(series) as {

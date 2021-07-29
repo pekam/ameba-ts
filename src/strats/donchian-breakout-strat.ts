@@ -1,5 +1,5 @@
 import { Indicators } from "../core/indicators";
-import { Order, Strategy, TradeState } from "../core/types";
+import { Strategy, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
 /**
@@ -19,9 +19,7 @@ export class DonchianBreakoutStrategy implements Strategy {
     );
   }
 
-  update(
-    state: TradeState
-  ): { entryOrder?: Order; stopLoss?: number; takeProfit?: number } {
+  update(state: TradeState): StrategyUpdate {
     const series = state.series;
 
     const { sma, donchianChannel } = this.indicators.update(series);

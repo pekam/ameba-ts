@@ -1,4 +1,4 @@
-import { Order, Strategy, TradeState } from "../core/types";
+import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { findRSIDivergences } from "./rsi-divergence";
 import { trailingLowExit } from "./trailing-low-exit";
@@ -6,7 +6,7 @@ import { trailingLowExit } from "./trailing-low-exit";
 export class RsiDivergenceStrategy implements Strategy {
   init(tradeState: TradeState): void {}
 
-  update(state: TradeState) {
+  update(state: TradeState): StrategyUpdate {
     const series = state.series;
 
     if (!state.position) {

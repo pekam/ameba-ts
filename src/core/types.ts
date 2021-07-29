@@ -85,19 +85,23 @@ export interface Transaction {
 }
 
 /**
- * A function describing a trading strategy.
- * It takes the current state as an argument,
- * and returns updates to the state.
+ * An update to the orders during a backtest.
+ *
+ * The changes will be applied to the trade state
+ * with the spread operator. This means that:
+ * - You can skip a property to not change it.
+ *   An empty object can be used to not make any
+ *   changes to the trade state.
+ * - To cancel an order, you need to explicitly
+ *   provide null or undefined as the value.
  *
  * When in a position, changes to entryOrder
  * should not be made, and they will be ignored.
  */
 export interface StrategyUpdate {
-  (tradeState: TradeState): {
-    entryOrder?: Order | null;
-    stopLoss?: number | null;
-    takeProfit?: number | null;
-  };
+  entryOrder?: Order | null;
+  stopLoss?: number | null;
+  takeProfit?: number | null;
 }
 
 export interface Strategy {
@@ -113,7 +117,7 @@ export interface Strategy {
    *
    * @see StrategyUpdate
    */
-  update: StrategyUpdate;
+  update: (state: TradeState) => StrategyUpdate;
 }
 
 export interface Trade {

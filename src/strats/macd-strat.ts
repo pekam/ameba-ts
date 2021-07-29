@@ -28,7 +28,7 @@ export class MacdStrat implements Strategy {
       state.series
     );
   }
-  update: StrategyUpdate = (state) => {
+  update(state: TradeState): StrategyUpdate {
     const series = state.series;
     const candle = m.last(series);
 
@@ -79,5 +79,5 @@ export class MacdStrat implements Strategy {
       return stratUtil.withRelativeExits({ entryOrder, ...this.settings });
     }
     return { entryOrder: null };
-  };
+  }
 }

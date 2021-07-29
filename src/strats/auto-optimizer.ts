@@ -24,7 +24,7 @@ export class AutoOptimizer implements Strategy {
 
   init(state: TradeState): void {}
 
-  update: StrategyUpdate = (state) => {
+  update(state: TradeState): StrategyUpdate {
     const time = m.last(state.series).time;
 
     const seriesLength = time - state.series[0].time;
@@ -40,7 +40,7 @@ export class AutoOptimizer implements Strategy {
     }
 
     return this.currentStrategy.update(state);
-  };
+  }
 
   private optimize({ series }: TradeState): Strategy {
     const withProfits = this.settings.stratPool.map((stratProvider) => {

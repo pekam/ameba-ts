@@ -1,5 +1,10 @@
-import { CandleSeries, Strategy, TradeState } from "../core/types";
 import { backtestStrategy } from "../core/backtest";
+import {
+  CandleSeries,
+  Strategy,
+  StrategyUpdate,
+  TradeState,
+} from "../core/types";
 
 /**
  * Trades with the provided strategy only if it was profitable
@@ -43,7 +48,7 @@ export class TradeOnlyRecentlyProfitable implements Strategy {
     this.strat.init(state);
   }
 
-  update(state: TradeState) {
+  update(state: TradeState): StrategyUpdate {
     this.updateEnabled(state.series);
 
     // Need to update indicators in all cases

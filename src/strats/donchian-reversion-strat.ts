@@ -1,5 +1,10 @@
 import { Indicators } from "../core/indicators";
-import { CandleSeries, Order, Strategy, TradeState } from "../core/types";
+import {
+  CandleSeries,
+  Strategy,
+  StrategyUpdate,
+  TradeState,
+} from "../core/types";
 import { m } from "../shared/functions";
 
 /**
@@ -16,13 +21,7 @@ export class DonchianReversionStrategy implements Strategy {
     );
   }
 
-  update(
-    state: TradeState
-  ): {
-    entryOrder?: Order | null;
-    stopLoss?: number | null;
-    takeProfit?: number | null;
-  } {
+  update(state: TradeState): StrategyUpdate {
     const series = state.series;
 
     const { donchianChannel } = this.indicators.update(series);
