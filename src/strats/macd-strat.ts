@@ -7,6 +7,7 @@ import {
   TradeState,
 } from "../core/types";
 import { m } from "../shared/functions";
+import { stratUtil } from "./strat-util";
 
 export class MacdStrat implements Strategy {
   private indicators: Indicators;
@@ -63,11 +64,7 @@ export class MacdStrat implements Strategy {
         type: "stop",
         price: candle.high,
       };
-      const long = {
-        entryOrder,
-        ...relativeExits({ entryOrder, ...this.settings }),
-      };
-      return long;
+      return stratUtil.withRelativeExits({ entryOrder, ...this.settings });
     }
     if (
       this.settings.onlyDirection !== "long" &&
@@ -79,34 +76,8 @@ export class MacdStrat implements Strategy {
         type: "stop",
         price: candle.low,
       };
-      const short = {
-        entryOrder,
-        ...relativeExits({ entryOrder, ...this.settings }),
-      };
-      return short;
+      return stratUtil.withRelativeExits({ entryOrder, ...this.settings });
     }
     return { entryOrder: null };
   };
-}
-
-function relativeExits({
-  entryOrder,
-  relativeTakeProfit,
-  relativeStopLoss,
-}: {
-  entryOrder: Order;
-  relativeTakeProfit: number;
-  relativeStopLoss: number;
-}): { takeProfit: number; stopLoss: number } {
-  if (entryOrder.side === "buy") {
-    return {
-      takeProfit: entryOrder.price * (1 + relativeTakeProfit),
-      stopLoss: entryOrder.price * (1 - relativeStopLoss),
-    };
-  } else {
-    return {
-      takeProfit: entryOrder.price * (1 - relativeTakeProfit),
-      stopLoss: entryOrder.price * (1 + relativeStopLoss),
-    };
-  }
 }
