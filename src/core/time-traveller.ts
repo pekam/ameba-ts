@@ -1,4 +1,4 @@
-import { timestampToUTCDateString } from "../shared/time-util";
+import { toDateString } from "../shared/time-util";
 import { CandleSeries, Range } from "./types";
 
 /**
@@ -60,7 +60,7 @@ export class TimeTraveller {
           "Could not find a candle with startTime " +
           from +
           " " +
-          timestampToUTCDateString(from!)
+          toDateString(from!)
       );
     }
     if (this.endIndex < 0) {
@@ -69,7 +69,7 @@ export class TimeTraveller {
           "Could not find a candle with endTime " +
           to +
           " " +
-          timestampToUTCDateString(to!)
+          toDateString(to!)
       );
     }
     this.length = this.endIndex - this.startIndex;

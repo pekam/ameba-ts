@@ -3,6 +3,7 @@ import { ReactTabulator } from "react-tabulator";
 import "react-tabulator/css/tabulator.min.css";
 import { Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
+import { toDateString } from "../../src/shared/time-util";
 
 function BacktestTradeTable({
   ftxBacktestResult,
@@ -13,10 +14,7 @@ function BacktestTradeTable({
 }) {
   function formatTime(cell: any): string {
     const timestamp: number = cell.getValue();
-    return new Date(timestamp * 1000)
-      .toISOString()
-      .substring(0, 16)
-      .replace("T", " ");
+    return toDateString(timestamp);
   }
 
   const columns = [

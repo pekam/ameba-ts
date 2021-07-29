@@ -1,8 +1,5 @@
 import { m } from "../shared/functions";
-import {
-  timestampFromUTC,
-  timestampToUTCDateString,
-} from "../shared/time-util";
+import { timestampFromUTC, toDateString } from "../shared/time-util";
 import { FtxMarket, getFtxClient, OrderBook } from "./ftx";
 import { getFtxDb } from "./ftx-db";
 
@@ -30,7 +27,7 @@ async function run() {
     endTime: timestampFromUTC(2021, 2, 6),
   });
   console.log(series.length);
-  console.log(timestampToUTCDateString(series[0].time));
+  console.log(toDateString(series[0].time));
 
   const books = await ftxDb.loadOrderBooksFromDb(market);
   const result = m.sortDescending(books, score).filter((book) => {
@@ -54,7 +51,7 @@ async function run() {
       market: book.market,
       price: book.midPrice,
       time: book.time,
-      utcDateString: timestampToUTCDateString(book.time),
+      utcDateString: toDateString(book.time),
       score: score(book),
     }))
   );

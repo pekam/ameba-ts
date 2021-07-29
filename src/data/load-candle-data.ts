@@ -1,6 +1,6 @@
 import { Candle } from "../core/types";
 import { m } from "../shared/functions";
-import { timestampToUTCDateString } from "../shared/time-util";
+import { toDateString } from "../shared/time-util";
 import { fetchFromFinnhub } from "./finnhub";
 
 export type Resolution = "1" | "5" | "15" | "30" | "60" | "D" | "W" | "M";
@@ -29,8 +29,8 @@ interface FinnhubCandleResponse {
 export function loadCandles(options: CandleRequest): Promise<Candle[]> {
   console.log("\nFetching data with params:", {
     ...options,
-    from: timestampToUTCDateString(options.from),
-    to: timestampToUTCDateString(options.to),
+    from: toDateString(options.from),
+    to: toDateString(options.to),
   });
 
   return fetchFromFinnhub(options.market, "candle", options).then((json) => {
@@ -69,9 +69,9 @@ export function loadCandles(options: CandleRequest): Promise<Candle[]> {
 
     console.log(
       "Candles loaded for time period: " +
-        timestampToUTCDateString(candles[0].time) +
+        toDateString(candles[0].time) +
         " - " +
-        timestampToUTCDateString(m.last(candles).time)
+        toDateString(m.last(candles).time)
     );
     return candles;
   });

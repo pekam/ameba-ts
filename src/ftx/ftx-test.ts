@@ -7,7 +7,7 @@ import { m } from "../shared/functions";
 import {
   PERIODS,
   timestampFromUTC,
-  timestampToUTCDateString,
+  toDateString,
   toTimestamp,
 } from "../shared/time-util";
 import { AutoOptimizer } from "../strats/auto-optimizer";
@@ -114,14 +114,14 @@ async function run() {
       const diff = c.time - prev.time;
       if (diff !== 60) {
         console.error("diff " + diff + " index " + i);
-        console.log(timestampToUTCDateString(c.time));
-        console.log(timestampToUTCDateString(prev.time));
+        console.log(toDateString(c.time));
+        console.log(toDateString(prev.time));
       }
     }
   });
   console.log(candleSeries.length / 24 / 60);
-  console.log(timestampToUTCDateString(candleSeries[0].time));
-  console.log(timestampToUTCDateString(m.last(candleSeries).time));
+  console.log(toDateString(candleSeries[0].time));
+  console.log(toDateString(m.last(candleSeries).time));
 
   save(candleSeries, "btc.json");
 
@@ -157,9 +157,6 @@ async function run() {
     0.0005
   );
   console.log(resultWithTransactionCosts.stats);
-  console.log(
-    timestampToUTCDateString(series[0].time),
-    timestampToUTCDateString(m.last(series).time)
-  );
+  console.log(toDateString(series[0].time), toDateString(m.last(series).time));
 }
 run();

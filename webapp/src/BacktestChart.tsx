@@ -10,7 +10,10 @@ import { Candle, CandleSeries, OHLC, Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
 import { m } from "../../src/shared/functions";
 import { indicators } from "../../src/shared/indicators";
-import { ftxResolutionToPeriod, toDateTime } from "../../src/shared/time-util";
+import {
+  ftxResolutionToPeriod,
+  toDateString,
+} from "../../src/shared/time-util";
 import "./BacktestChart.css";
 
 let chart: IChartApi | undefined;
@@ -144,7 +147,7 @@ function Legend({ candle }: { candle: Candle }) {
       <div>{objectToString(pick(candle, "open", "high", "low", "close"))}</div>
       <div>
         {objectToString({
-          time: candle.time + " / " + toDateTime(candle.time).toISO(),
+          time: candle.time + " / " + toDateString(candle.time),
           diff: diff.toFixed(5) + " / " + m.formatPercentage(relativeDiff),
           range: range.toFixed(5) + " / " + m.formatPercentage(relativeRange),
         })}
