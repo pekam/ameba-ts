@@ -128,8 +128,8 @@ function BacktestChart({
 }
 
 function Legend({ candle }: { candle: Candle }) {
-  const diff = candle.close - candle.open;
-  const relativeDiff = diff / candle.open;
+  const change = candle.close - candle.open;
+  const relativeChange = change / candle.open;
   const range = candle.high - candle.low;
   const relativeRange = range / candle.low;
 
@@ -146,11 +146,13 @@ function Legend({ candle }: { candle: Candle }) {
     <div className="BacktestChartLegend">
       <div>{objectToString(pick(candle, "open", "high", "low", "close"))}</div>
       <div>
-        {objectToString({
-          time: candle.time + " / " + toDateString(candle.time),
-          diff: diff.toFixed(5) + " / " + m.formatPercentage(relativeDiff),
-          range: range.toFixed(5) + " / " + m.formatPercentage(relativeRange),
-        })}
+        <div className="BacktestChartLegendTime">
+          {toDateString(candle.time)}
+        </div>
+        <div className="BacktestChartLegendChange" data-negative={change < 0}>
+          {m.formatPercentage(relativeChange)}
+        </div>
+        <div>(range: {m.formatPercentage(relativeRange, false)})</div>
       </div>
     </div>
   );

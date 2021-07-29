@@ -198,8 +198,13 @@ function getWeightedAverage(values: number[]) {
   return weightedMean(valuesWithWeights);
 }
 
-function formatPercentage(percent: number): string {
-  return `${percent > 0 ? "+" : ""}${(percent * 100).toFixed(2)}%`;
+function formatPercentage(
+  percent: number,
+  showPlusSign: boolean = true
+): string {
+  return `${showPlusSign && percent > 0 ? "+" : ""}${(percent * 100).toFixed(
+    2
+  )}%`;
 }
 
 /**

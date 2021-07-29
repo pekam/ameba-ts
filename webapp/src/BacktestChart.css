@@ -5,13 +5,24 @@
   z-index: 10;
   margin: 5px;
   padding: 5px;
-  background: rgba(255, 255, 255, 0.5);
+  font-family: monospace;
+  background: white;
+  border: 1px solid;
 }
 
-.BacktestChartLegend:first-child {
-  min-width: 100px;
+.BacktestChartLegend > *:first-child {
+  min-width: 10em;
 }
 
-.BacktestChartLegend *:not(:first-child) {
-  padding-left: 5px;
+.BacktestChartLegendTime {
+  font-size: x-large;
+}
+
+.BacktestChartLegendChange {
+  color: green;
+  font-size: x-large;
+}
+
+.BacktestChartLegendChange[data-negative="true"] {
+  color: red;
 }
