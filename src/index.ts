@@ -1,5 +1,5 @@
-import { getDataSet } from "./data/load-data-set";
 import { backtestMultiple } from "./core/backtest-multiple";
+import { getDataSet } from "./data/load-data-set";
 import { DonchianBreakoutStrategy } from "./strats/donchian-breakout-strat";
 import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profitable";
 
@@ -13,7 +13,7 @@ import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   const result = backtestMultiple(
     () =>
       new TradeOnlyRecentlyProfitable(
-        () => new DonchianBreakoutStrategy(30, 20)
+        () => new DonchianBreakoutStrategy(30, 20, "long")
       ),
     companiesWithCandles.map((c) => c.candles)
   );

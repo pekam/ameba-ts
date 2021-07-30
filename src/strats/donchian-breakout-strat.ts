@@ -1,16 +1,25 @@
 import { Indicators } from "../core/indicators";
-import { Strategy, StrategyUpdate, TradeState } from "../core/types";
+import {
+  MarketPosition,
+  Strategy,
+  StrategyUpdate,
+  TradeState,
+} from "../core/types";
 import { m } from "../shared/functions";
 
 /**
- * Buy when making new high on the upper Donchian channel.
+ * Buy when breaking the Donchian channel.
  *
  * Sell when crossing SMA.
  */
 export class DonchianBreakoutStrategy implements Strategy {
   private indicators: Indicators;
 
-  constructor(private channelPeriod: number, private smaPeriod: number) {}
+  constructor(
+    private channelPeriod: number,
+    private smaPeriod: number,
+    private onlyDirection?: MarketPosition
+  ) {}
 
   init(state: TradeState): void {
     this.indicators = new Indicators(
@@ -21,15 +30,16 @@ export class DonchianBreakoutStrategy implements Strategy {
 
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
+    const currentPrice = m.last(state.series).close;
 
     const { sma, donchianChannel } = this.indicators.update(series);
 
-    if (series.length < this.channelPeriod || !donchianChannel) {
+    if (series.length < this.channelPeriod || !donchianChannel || !sma) {
       return {};
     }
 
     if (!state.position) {
-      return {
+      const longEntry: StrategyUpdate = {
         entryOrder: {
           price:
             donchianChannel.upper +
@@ -39,6 +49,33 @@ export class DonchianBreakoutStrategy implements Strategy {
         },
         stopLoss: sma,
       };
+
+      const shortEntry: StrategyUpdate = {
+        entryOrder: {
+          price:
+            donchianChannel.lower -
+            m.getAverageCandleSize(series, this.channelPeriod) / 5,
+          type: "stop",
+          side: "sell",
+        },
+        stopLoss: sma,
+      };
+
+      if (this.onlyDirection === "long") {
+        return longEntry;
+      } else if (this.onlyDirection === "short") {
+        return shortEntry;
+      }
+
+      const closerToUpperChannel =
+        Math.abs(donchianChannel.upper - currentPrice) <
+        Math.abs(currentPrice - donchianChannel.lower);
+
+      if (closerToUpperChannel) {
+        return longEntry;
+      } else {
+        return shortEntry;
+      }
     } else {
       return { stopLoss: sma };
     }
