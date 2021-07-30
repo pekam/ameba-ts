@@ -81,7 +81,12 @@ async function run() {
         const channelPeriod = _.random(100, 1000);
         const smaPeriod = _.random(20, 100);
         const result = backtestStrategy(
-          () => new DonchianBreakoutStrategy(channelPeriod, smaPeriod, "long"),
+          () =>
+            new DonchianBreakoutStrategy({
+              channelPeriod,
+              smaPeriod,
+              onlyDirection: "long",
+            }),
           candles
         );
         const withCosts = withRelativeTransactionCost(result, 0.0007);

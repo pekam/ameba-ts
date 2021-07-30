@@ -13,7 +13,12 @@ import { TradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   const result = backtestMultiple(
     () =>
       new TradeOnlyRecentlyProfitable(
-        () => new DonchianBreakoutStrategy(30, 20, "long")
+        () =>
+          new DonchianBreakoutStrategy({
+            channelPeriod: 30,
+            smaPeriod: 20,
+            onlyDirection: "long",
+          })
       ),
     companiesWithCandles.map((c) => c.candles)
   );

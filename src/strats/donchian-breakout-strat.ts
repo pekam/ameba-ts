@@ -16,14 +16,20 @@ export class DonchianBreakoutStrategy implements Strategy {
   private indicators: Indicators;
 
   constructor(
-    private channelPeriod: number,
-    private smaPeriod: number,
-    private onlyDirection?: MarketPosition
+    private settings: {
+      channelPeriod: number;
+      smaPeriod: number;
+      onlyDirection?: MarketPosition;
+      maxRelativeStopLoss?: number;
+    }
   ) {}
 
   init(state: TradeState): void {
     this.indicators = new Indicators(
-      { donchianChannelPeriod: this.channelPeriod, smaPeriod: this.smaPeriod },
+      {
+        donchianChannelPeriod: this.settings.channelPeriod,
+        smaPeriod: this.settings.smaPeriod,
+      },
       state.series
     );
   }
@@ -34,35 +40,53 @@ export class DonchianBreakoutStrategy implements Strategy {
 
     const { sma, donchianChannel } = this.indicators.update(series);
 
-    if (series.length < this.channelPeriod || !donchianChannel || !sma) {
+    if (
+      series.length < this.settings.channelPeriod ||
+      !donchianChannel ||
+      !sma
+    ) {
       return {};
     }
 
     if (!state.position) {
       const avgRange = m.getAverageCandleSize(series, 20);
 
-      const longEntry: StrategyUpdate = {
-        entryOrder: {
-          price: donchianChannel.upper + avgRange / 5,
-          type: "stop",
-          side: "buy",
-        },
-        stopLoss: Math.max(sma, donchianChannel.upper - avgRange),
+      const longEntry: () => StrategyUpdate = () => {
+        const entryPrice = donchianChannel.upper + avgRange / 5;
+        const stopLosses = [sma, entryPrice - avgRange];
+        if (this.settings.maxRelativeStopLoss) {
+          stopLosses.push(entryPrice * (1 - this.settings.maxRelativeStopLoss));
+        }
+        return {
+          entryOrder: {
+            price: entryPrice,
+            type: "stop",
+            side: "buy",
+          },
+          stopLoss: Math.max(...stopLosses),
+        };
       };
 
-      const shortEntry: StrategyUpdate = {
-        entryOrder: {
-          price: donchianChannel.lower - avgRange / 5,
-          type: "stop",
-          side: "sell",
-        },
-        stopLoss: Math.min(sma, donchianChannel.lower + avgRange),
+      const shortEntry: () => StrategyUpdate = () => {
+        const entryPrice = donchianChannel.lower - avgRange / 5;
+        const stopLosses = [sma, entryPrice + avgRange];
+        if (this.settings.maxRelativeStopLoss) {
+          stopLosses.push(entryPrice * (1 + this.settings.maxRelativeStopLoss));
+        }
+        return {
+          entryOrder: {
+            price: entryPrice,
+            type: "stop",
+            side: "sell",
+          },
+          stopLoss: Math.min(...stopLosses),
+        };
       };
 
-      if (this.onlyDirection === "long") {
-        return longEntry;
-      } else if (this.onlyDirection === "short") {
-        return shortEntry;
+      if (this.settings.onlyDirection === "long") {
+        return longEntry();
+      } else if (this.settings.onlyDirection === "short") {
+        return shortEntry();
       }
 
       const closerToUpperChannel =
@@ -70,9 +94,9 @@ export class DonchianBreakoutStrategy implements Strategy {
         Math.abs(currentPrice - donchianChannel.lower);
 
       if (closerToUpperChannel) {
-        return longEntry;
+        return longEntry();
       } else {
-        return shortEntry;
+        return shortEntry();
       }
     } else {
       if (state.position === "long") {
