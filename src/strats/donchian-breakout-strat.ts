@@ -39,26 +39,24 @@ export class DonchianBreakoutStrategy implements Strategy {
     }
 
     if (!state.position) {
+      const avgRange = m.getAverageCandleSize(series, 20);
+
       const longEntry: StrategyUpdate = {
         entryOrder: {
-          price:
-            donchianChannel.upper +
-            m.getAverageCandleSize(series, this.channelPeriod) / 5,
+          price: donchianChannel.upper + avgRange / 5,
           type: "stop",
           side: "buy",
         },
-        stopLoss: sma,
+        stopLoss: Math.max(sma, donchianChannel.upper - avgRange),
       };
 
       const shortEntry: StrategyUpdate = {
         entryOrder: {
-          price:
-            donchianChannel.lower -
-            m.getAverageCandleSize(series, this.channelPeriod) / 5,
+          price: donchianChannel.lower - avgRange / 5,
           type: "stop",
           side: "sell",
         },
-        stopLoss: sma,
+        stopLoss: Math.min(sma, donchianChannel.lower + avgRange),
       };
 
       if (this.onlyDirection === "long") {
@@ -77,7 +75,11 @@ export class DonchianBreakoutStrategy implements Strategy {
         return shortEntry;
       }
     } else {
-      return { stopLoss: sma };
+      if (state.position === "long") {
+        return { stopLoss: Math.max(state.stopLoss!, sma) };
+      } else {
+        return { stopLoss: Math.min(state.stopLoss!, sma) };
+      }
     }
   }
 }
