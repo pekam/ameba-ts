@@ -4,6 +4,13 @@ import { m } from "../shared/functions";
 import { ftxResolutionToPeriod, toTimestamp } from "../shared/time-util";
 import { FtxClient, FtxMarket, FtxResolution } from "./ftx";
 
+export interface FtxWallet {
+  usd: number;
+  coin: number;
+  coinUsdValue: number;
+  totalUsdValue: number;
+}
+
 export function getFtxUtil({
   ftx,
   market,
@@ -11,17 +18,23 @@ export function getFtxUtil({
   ftx: FtxClient;
   market: FtxMarket;
 }) {
-  async function getWallet() {
+  async function getWallet(): Promise<FtxWallet> {
     const balances = await ftx.getBalances();
     const usdBalance = balances.find((b) => b.coin === "USD");
     const coinBalance = balances.find((b) => b.coin === market.split("/")[0]);
 
     const usd = usdBalance ? usdBalance.total : 0;
     const coin = coinBalance ? coinBalance.total : 0;
+    const coinUsdValue = coinBalance ? coinBalance.usdValue : 0;
 
-    const totalUsdValue = usd + (coinBalance ? coinBalance.usdValue : 0);
+    const totalUsdValue = usd + coinUsdValue;
 
-    return { usd, coin, totalUsdValue };
+    return {
+      usd,
+      coin,
+      coinUsdValue,
+      totalUsdValue,
+    };
   }
 
   async function getQuote() {
