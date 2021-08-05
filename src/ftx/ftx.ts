@@ -1,5 +1,5 @@
 import { CandleSeries } from "../core/types";
-import { getFtxSubAccountProperties, properties } from "../properties";
+import { getFtxSubAccountProperties } from "../properties";
 import { m } from "../shared/functions";
 import {
   ftxResolutionToPeriod,
@@ -95,6 +95,13 @@ export interface FtxAddOrderParams {
   postOnly: boolean;
 }
 
+export interface FtxAddStopOrderParams {
+  market: FtxMarket;
+  side: "buy" | "sell";
+  size: number;
+  triggerPrice: number;
+}
+
 export interface FtxFill {
   price: number;
   size: number;
@@ -105,8 +112,6 @@ export interface FtxFill {
 }
 
 const FtxRest = require("ftx-api-rest");
-
-const { ftx } = properties;
 
 export function getFtxClient({
   subaccount,
@@ -233,6 +238,10 @@ export function getFtxClient({
     return get(`/orders?market=${market}`);
   }
 
+  async function addOrder(params: FtxAddOrderParams): Promise<{ id: number }> {
+    return post("/orders", params);
+  }
+
   async function getOrderStatus(
     id: number
   ): Promise<{
@@ -244,6 +253,45 @@ export function getFtxClient({
   }
 
   async function cancelOrder(id: number): Promise<string> {
+    return gracefullyCancelOrder("orders", id);
+  }
+
+  /**
+   * This also cancels trigger orders.
+   */
+  async function cancelAllOrders(market: FtxMarket): Promise<string> {
+    return request("DELETE", `/orders`, { market });
+  }
+
+  async function getOpenTriggerOrders(
+    market: FtxMarket
+  ): Promise<
+    {
+      id: number;
+      market: FtxMarket;
+      triggerPrice: number;
+      side: "buy" | "sell";
+      size: number;
+      type: string;
+    }[]
+  > {
+    return get(`/conditional_orders?market=${market}`);
+  }
+
+  async function addStopTriggerOrder(
+    params: FtxAddStopOrderParams
+  ): Promise<{ id: number }> {
+    return post("/conditional_orders", { ...params, type: "stop" });
+  }
+
+  async function cancelTriggerOrder(id: number): Promise<string> {
+    return gracefullyCancelOrder("conditional_orders", id);
+  }
+
+  async function gracefullyCancelOrder(
+    api: "orders" | "conditional_orders",
+    orderId: number
+  ) {
     const errorHandler = (e: Error) => {
       if (e.message.includes("Order already")) {
         console.log(
@@ -254,15 +302,7 @@ export function getFtxClient({
         return true;
       }
     };
-    return request("DELETE", `/orders/${id}`, undefined, errorHandler);
-  }
-
-  async function cancelAllOrders(market: FtxMarket): Promise<string> {
-    return request("DELETE", `/orders`, { market });
-  }
-
-  async function addOrder(params: FtxAddOrderParams): Promise<{ id: number }> {
-    return post("/orders", params);
+    return request("DELETE", `/${api}/${orderId}`, undefined, errorHandler);
   }
 
   async function getFills(params: {
@@ -282,10 +322,13 @@ export function getFtxClient({
     getCandles,
     getOrderBook,
     getOpenOrders,
+    addOrder,
     getOrderStatus,
     cancelOrder,
     cancelAllOrders,
-    addOrder,
+    addStopTriggerOrder,
+    cancelTriggerOrder,
+    getOpenTriggerOrders,
     getFills,
     subaccount,
   };
