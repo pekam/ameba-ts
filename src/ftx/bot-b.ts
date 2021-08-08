@@ -11,7 +11,7 @@ import {
   getCurrentTimestampInSeconds,
   toDateString,
 } from "../shared/time-util";
-import { sleep } from "../util";
+import { clearLastLine, sleep } from "../util";
 import { FtxResolution } from "./ftx";
 import { FtxUtil, FtxWallet } from "./ftx-util";
 
@@ -146,8 +146,19 @@ async function sleepAndUpdateExitsUntilNextCandle(
 
   let oldPosition: MarketPosition | null = null;
 
+  let skipClearingLines = true;
+  let logPrefix = "";
+
   while (isOnSameCandle(getCurrentTimestampInSeconds(), startTime, period)) {
-    console.log({ now: toDateString(getCurrentTimestampInSeconds(), true) });
+    skipClearingLines || clearLastLine(2);
+    skipClearingLines = false;
+
+    console.log(logPrefix, {
+      s: toDateString(startTime, true),
+      e: toDateString(getCurrentTimestampInSeconds(), true),
+    });
+    logPrefix += ".";
+
     const wallet = await ftxUtil.getWallet();
     const nextPosition = getCurrentPosition(wallet);
 
@@ -160,10 +171,12 @@ async function sleepAndUpdateExitsUntilNextCandle(
         ftxUtil,
         wallet,
       });
+      skipClearingLines = true;
     }
     if (oldPosition && !nextPosition) {
       console.log("Exited, cancel the potential other exit order");
       await ftxUtil.ftx.cancelAllOrders(ftxUtil.market);
+      skipClearingLines = true;
     }
 
     oldPosition = nextPosition;

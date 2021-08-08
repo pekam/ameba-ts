@@ -1,6 +1,8 @@
 //@ts-ignore cli-progress type defs are broken
 import { Presets, SingleBar } from "cli-progress";
+import { range } from "lodash";
 import { Candle } from "./core/types";
+const readline = require("readline");
 
 export const startProgressBar = (length: number, enabled = true) => {
   if (!enabled) {
@@ -55,4 +57,11 @@ export async function sleep(ms: number) {
 
 export function toFixed(num: number, decimals: number): number {
   return parseFloat(num.toFixed(decimals));
+}
+
+export function clearLastLine(times = 1) {
+  range(times).forEach((i) => {
+    readline.moveCursor(process.stdout, -999, -1); // up one line
+    readline.clearLine(process.stdout, 1); // from cursor to end
+  });
 }
