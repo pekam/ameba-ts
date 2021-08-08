@@ -100,9 +100,13 @@ export class DonchianBreakoutStrategy implements Strategy {
       }
     } else {
       if (state.position === "long") {
-        return { stopLoss: Math.max(state.stopLoss!, sma) };
+        return {
+          stopLoss: state.stopLoss ? Math.max(state.stopLoss, sma) : sma,
+        };
       } else {
-        return { stopLoss: Math.min(state.stopLoss!, sma) };
+        return {
+          stopLoss: state.stopLoss ? Math.min(state.stopLoss, sma) : sma,
+        };
       }
     }
   }
