@@ -71,8 +71,11 @@ export function getTimeInNewYork(timestamp: number): DateTime {
 /**
  * Returns a string representation of the provided time in UTC time zone.
  */
-export function toDateString(time: MomentType) {
-  return toDateTime(time).toISO().substring(0, 16).replace("T", " ");
+export function toDateString(time: MomentType, withSeconds = false) {
+  return toDateTime(time)
+    .toISO()
+    .substring(0, withSeconds ? 19 : 16)
+    .replace("T", " ");
 }
 
 const second = 1,

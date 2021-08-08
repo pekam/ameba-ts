@@ -1,33 +1,24 @@
-import { FtxMarket } from "./ftx";
-import { runFtxBot } from "./bot";
-import { getFtxMarketMaker } from "./market-maker-orders";
-import { getEmaStrat } from "./strats";
-import { getFtxStaker } from "./ftx-staker";
+import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
+import { botB } from "./bot-b";
+import { FtxMarket, getFtxClient } from "./ftx";
+import { getFtxUtil } from "./ftx-util";
 
 (async function () {
   const subaccount = "bot-4";
-  const market: FtxMarket = "FTT/USD";
-  const { enter, exit } = getFtxMarketMaker({
-    subaccount,
-    market,
-    staker: getFtxStaker({
-      subaccount,
-      market,
-      stakeByPeakAccountValue: false,
-    }),
-  });
-  // const util = getFtxUtil({ ftx: getFtxClient({ subaccount }), market });
-  // const marketOrders = getFtxMarketOrders(util);
+  const market: FtxMarket = "SUSHI/USD";
 
-  await runFtxBot({
-    subaccount,
+  const ftxUtil = getFtxUtil({
+    ftx: getFtxClient({ subaccount }),
     market,
-    strat: getEmaStrat(2, 5),
-    resolution: "1min",
-    candleSeriesLookBack: 60 * 60 * 6, // 6h
-    safeZoneMargin: 0.0005,
-    enter,
-    exit,
-    // loopMs: 60 * 1000,
+  });
+
+  await botB.run({
+    ftxUtil,
+    resolution: "5min",
+    strat: new DonchianBreakoutStrategy({
+      channelPeriod: 200,
+      smaPeriod: 50,
+      maxRelativeStopLoss: 0.02,
+    }),
   });
 })();
