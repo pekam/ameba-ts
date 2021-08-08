@@ -278,6 +278,12 @@ export function getFtxClient({
     return get(`/conditional_orders?market=${market}`);
   }
 
+  /**
+   * This throws if the current price is already beyond the provided trigger price.
+   * In this case, error.message will be either
+   * "Trigger price too low", or
+   * "Trigger price too high"
+   */
   async function addStopTriggerOrder(
     params: FtxAddStopOrderParams
   ): Promise<{ id: number }> {

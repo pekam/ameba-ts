@@ -119,7 +119,7 @@ async function addOrder(order: Order, size: number, ftxUtil: FtxUtil) {
       postOnly: false,
     });
   } else if (order.type === "stop") {
-    await ftxUtil.ftx.addStopTriggerOrder({
+    await ftxUtil.addStopOrder({
       market: ftxUtil.market,
       triggerPrice: order.price,
       side: order.side,

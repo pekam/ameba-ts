@@ -2,7 +2,12 @@ import _ from "lodash";
 import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { ftxResolutionToPeriod, toTimestamp } from "../shared/time-util";
-import { FtxClient, FtxMarket, FtxResolution } from "./ftx";
+import {
+  FtxAddStopOrderParams,
+  FtxClient,
+  FtxMarket,
+  FtxResolution,
+} from "./ftx";
 
 export interface FtxWallet {
   usd: number;
@@ -158,6 +163,37 @@ export function getFtxUtil({
     return m.filterConsecutiveDuplicates(_.flatten(results));
   }
 
+  /**
+   * If the trigger price is too low (buy order) or too high (sell order),
+   * meaning that the price has already crossed the stop level, this will
+   * handle the situation by adding a market order instead of throwing an
+   * error.
+   */
+  async function addStopOrder(
+    params: FtxAddStopOrderParams
+  ): Promise<{ id: number }> {
+    try {
+      return await ftx.addStopTriggerOrder(params);
+    } catch (e) {
+      if (
+        e.message.includes("Trigger price too low") ||
+        e.message.includes("Trigger price too high")
+      ) {
+        console.log("Trigger price crossed already, adding market order");
+        return ftx.addOrder({
+          market: params.market,
+          side: params.side,
+          size: params.size,
+          type: "market",
+          price: 0,
+          postOnly: false,
+        });
+      } else {
+        throw e;
+      }
+    }
+  }
+
   return {
     ftx,
     market,
@@ -166,6 +202,7 @@ export function getFtxUtil({
     getState,
     getRecentTradeProfits,
     getCandles,
+    addStopOrder,
   };
 }
 
