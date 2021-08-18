@@ -1,7 +1,7 @@
 import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { getCurrentTimestampInSeconds } from "../shared/time-util";
-import { sleep } from "../util";
+import { restartOnError, sleep } from "../util";
 import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { FtxBotOrder } from "./market-maker-orders";
 
@@ -10,64 +10,42 @@ export type FtxBotStrat = (params: {
   lastOrder?: FtxBotOrder;
 }) => boolean;
 
-/**
- * safeZoneMargin:
- * How much the price needs to change from previous order to trigger a new order,
- * even if the other conditions would tell to change the position. This avoids
- * going back-and-forth "at the limit" (e.g. MA crossover point), wasting money.
- *
- * candleSeriesLookBack:
- * How long into the history will candles be loaded for each iteration
- * of the strategy.
- */
-export async function runFtxBot(params: {
+interface FtxBotArgs {
   subaccount: string;
   market: FtxMarket;
   strat: FtxBotStrat;
+  /**
+   * How much the price needs to change from previous order to trigger a new order,
+   * even if the other conditions would tell to change the position. This avoids
+   * going back-and-forth "at the limit" (e.g. MA crossover point), wasting money.
+   */
   safeZoneMargin: number;
   resolution: FtxResolution;
+  /**
+   * How long into the history will candles be loaded for each iteration
+   * of the strategy.
+   */
   candleSeriesLookBack: number;
   enter: (series: CandleSeries) => Promise<FtxBotOrder | undefined>;
   exit: () => Promise<FtxBotOrder | undefined>;
   loopMs?: number;
-}) {
-  let retrySleep = 1000;
-  while (true) {
-    try {
-      await run(params, () => (retrySleep = 1000));
-    } catch (e) {
-      console.error(e);
-      console.log(`Restarting after ${retrySleep}ms...`);
-      await sleep(retrySleep);
-      retrySleep = Math.min(retrySleep * 1.5, 60 * 1000);
-    }
-  }
 }
 
-async function run(
-  {
-    resolution,
-    subaccount,
-    market,
-    safeZoneMargin,
-    candleSeriesLookBack,
-    strat,
-    enter,
-    exit,
-    loopMs,
-  }: {
-    subaccount: string;
-    market: FtxMarket;
-    strat: FtxBotStrat;
-    safeZoneMargin: number;
-    resolution: FtxResolution;
-    candleSeriesLookBack: number;
-    enter: (series: CandleSeries) => Promise<FtxBotOrder | undefined>;
-    exit: () => Promise<FtxBotOrder | undefined>;
-    loopMs?: number;
-  },
-  afterSuccessfulIteration: () => void
-) {
+export async function runFtxBot(args: FtxBotArgs) {
+  await restartOnError(() => run(args));
+}
+
+async function run({
+  resolution,
+  subaccount,
+  market,
+  safeZoneMargin,
+  candleSeriesLookBack,
+  strat,
+  enter,
+  exit,
+  loopMs,
+}: FtxBotArgs): Promise<void> {
   const ftx = getFtxClient({ subaccount });
 
   async function getRecentCandles() {
@@ -102,7 +80,6 @@ async function run(
       console.log(order ? "exit finished" : "already exited");
       lastOrder = order || lastOrder;
     }
-    afterSuccessfulIteration();
 
     const sleepMs = loopMs !== undefined ? loopMs : 10 * 1000;
     console.log(`sleeping for ${sleepMs / 1000}s`);
