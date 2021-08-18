@@ -11,23 +11,25 @@ import {
   getCurrentTimestampInSeconds,
   toDateString,
 } from "../shared/time-util";
-import { clearLastLine, sleep } from "../util";
+import { clearLastLine, restartOnError, sleep } from "../util";
 import { FtxResolution } from "./ftx";
 import { FtxUtil, FtxWallet } from "./ftx-util";
+
+interface BotBArgs {
+  strat: Strategy;
+  resolution: FtxResolution;
+  ftxUtil: FtxUtil;
+}
+
+async function run(args: BotBArgs) {
+  await restartOnError(() => doRun(args));
+}
 
 /**
  * Runs a Strategy (the same type that can be used with the backtester)
  * in FTX.
  */
-async function run({
-  strat,
-  resolution,
-  ftxUtil,
-}: {
-  strat: Strategy;
-  resolution: FtxResolution;
-  ftxUtil: FtxUtil;
-}) {
+async function doRun({ strat, resolution, ftxUtil }: BotBArgs): Promise<void> {
   /*
    * Consider exiting any existing positions when starting the bot.
    * This would simplify things, as the strategies wouldn't need to
