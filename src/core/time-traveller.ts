@@ -1,4 +1,4 @@
-import { toDateString } from "../shared/time-util";
+import { Moment, toDateString, toTimestamp } from "../shared/time-util";
 import { CandleSeries, Range } from "./types";
 
 /**
@@ -36,11 +36,13 @@ export class TimeTraveller {
    */
   readonly range: Range;
 
-  constructor(series: CandleSeries, from?: number, to?: number) {
+  constructor(series: CandleSeries, from?: Moment, to?: Moment) {
     this.series = series;
 
     if (from) {
-      this.startIndex = series.findIndex((candle) => candle.time >= from);
+      this.startIndex = series.findIndex(
+        (candle) => candle.time >= toTimestamp(from)
+      );
     } else {
       // Default to 1 instead of 0 so that indicators can be initialized
       this.startIndex = 1;
@@ -49,7 +51,9 @@ export class TimeTraveller {
     this.subseries = series.slice(0, this.nextIndex);
 
     if (to) {
-      this.endIndex = series.findIndex((candle) => candle.time === to);
+      this.endIndex = series.findIndex(
+        (candle) => candle.time === toTimestamp(to)
+      );
     } else {
       this.endIndex = series.length;
     }

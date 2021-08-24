@@ -1,4 +1,5 @@
 import { m } from "../shared/functions";
+import { Moment } from "../shared/time-util";
 import { startProgressBar } from "../util";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { TimeTraveller } from "./time-traveller";
@@ -30,8 +31,8 @@ export function backtestStrategy(
   stratProvider: () => Strategy,
   series: CandleSeries,
   showProgressBar = true,
-  from?: number,
-  to?: number
+  from?: Moment,
+  to?: Moment
 ): BacktestResult {
   if (!series.length) {
     throw Error("Can't backtest with empty series");

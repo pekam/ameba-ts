@@ -1,7 +1,7 @@
 import { DateTime, DateTimeOptions } from "luxon";
 import { FtxResolution } from "../ftx/ftx";
 
-type MomentType =
+export type Moment =
   | string
   | number
   | {
@@ -17,7 +17,7 @@ type MomentType =
  * @param input either ISO date string (UTC), timestamp as seconds or object with date props (UTC)
  * @returns timestamp as seconds
  */
-export function toTimestamp(input: MomentType): number {
+export function toTimestamp(input: Moment): number {
   return Math.floor(toDateTime(input).toSeconds());
 }
 
@@ -25,7 +25,7 @@ export function toTimestamp(input: MomentType): number {
  * @param input either ISO date string (UTC), timestamp as seconds or object with date props (UTC)
  * @returns date time in UTC time zone
  */
-export function toDateTime(input: MomentType): DateTime {
+export function toDateTime(input: Moment): DateTime {
   const options: DateTimeOptions = { zone: "utc" };
   if (typeof input === "string") {
     const dateTime = DateTime.fromISO(input, options);
@@ -71,7 +71,7 @@ export function getTimeInNewYork(timestamp: number): DateTime {
 /**
  * Returns a string representation of the provided time in UTC time zone.
  */
-export function toDateString(time: MomentType, withSeconds = false) {
+export function toDateString(time: Moment, withSeconds = false) {
   return toDateTime(time)
     .toISO()
     .substring(0, withSeconds ? 19 : 16)
