@@ -44,7 +44,8 @@ export function loadCandles(options: CandleRequest): Promise<Candle[]> {
       const data: FinnhubCandleResponse = json;
 
       if (data.s === "no_data") {
-        throw new Error("No data received.");
+        console.log("No data received.");
+        return [];
       }
 
       const length = data.o.length;
