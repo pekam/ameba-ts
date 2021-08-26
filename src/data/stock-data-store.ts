@@ -4,11 +4,11 @@
 
 import { concat } from "lodash";
 import { CandleSeries } from "../core/types";
-import { m } from "../shared/functions";
 import {
   getCurrentTimestampInSeconds,
   Moment,
   PERIODS,
+  toStartOfDay,
   toTimestamp,
 } from "../shared/time-util";
 import { loadCandles } from "./load-candle-data";
@@ -31,7 +31,10 @@ async function getDailyCandles(args: {
   const from = toTimestamp(args.from);
   const to = toTimestamp(args.to);
 
-  if (getCurrentTimestampInSeconds() - to < PERIODS.day) {
+  const now = getCurrentTimestampInSeconds();
+  const yesterday = toStartOfDay(now - PERIODS.day);
+
+  if (now - to < PERIODS.day) {
     // TODO handle loading for the current day
     throw Error(
       "Fetching data for the current day is not supported yet. " +
@@ -40,12 +43,10 @@ async function getDailyCandles(args: {
     );
   }
 
-  async function getFromDb(): Promise<CandleSeries> {
-    const entry: DbEntry | undefined = await db.get(collectionId, symbol);
-    return entry?.candles || [];
+  async function getFromDb(): Promise<DbEntry | undefined> {
+    return await db.get(collectionId, symbol);
   }
-  async function setToDb(candles: CandleSeries): Promise<void> {
-    const entry: DbEntry = { symbol, candles };
+  async function setToDb(entry: DbEntry): Promise<void> {
     await db.set(collectionId, symbol, entry);
   }
   async function getFromInternet({
@@ -64,44 +65,40 @@ async function getDailyCandles(args: {
     });
   }
 
-  const candlesFromDb = await getFromDb();
+  const entryFromDb: DbEntry | undefined = await getFromDb();
 
   const wasDbUpdated: boolean = await (async () => {
-    if (!candlesFromDb.length) {
-      const candles: CandleSeries = await getFromInternet({
+    if (!entryFromDb) {
+      const range = {
         from: from - extraPeriodToLoad,
-        to,
-      });
-      await setToDb(candles);
+        to: Math.min(to, yesterday),
+      };
+      const candles: CandleSeries = await getFromInternet(range);
+      await setToDb({ candles, symbol, ...range });
       return true;
     } else {
-      const firstCandleTime = candlesFromDb[0].time;
-      const lastCandleTime = m.last(candlesFromDb).time;
+      let range = { from: entryFromDb.from, to: entryFromDb.to };
 
-      const candlesBefore =
-        from < firstCandleTime
-          ? await getFromInternet({
-              from: from - extraPeriodToLoad,
-              to: firstCandleTime,
-            })
-          : [];
-
-      const candlesAfter = await (async () => {
-        if (to <= lastCandleTime) {
+      const candlesBefore = await (async () => {
+        if (from >= entryFromDb.from) {
           return [];
         }
-        const candles = await getFromInternet({
-          from: lastCandleTime,
-          to: to + extraPeriodToLoad,
+        range.from = from - extraPeriodToLoad;
+        return await getFromInternet({
+          from: range.from,
+          to: entryFromDb.from,
         });
-        // Filter out the last candle if it might be still incomplete
-        if (
-          candles.length &&
-          m.last(candles).time > getCurrentTimestampInSeconds() - PERIODS.day
-        ) {
-          return candles.slice(0, candles.length - 1);
+      })();
+
+      const candlesAfter = await (async () => {
+        if (to <= entryFromDb.to) {
+          return [];
         }
-        return candles;
+        range.to = Math.min(to + extraPeriodToLoad, yesterday);
+        return await getFromInternet({
+          from: entryFromDb.to,
+          to: range.to,
+        });
       })();
 
       if (!candlesBefore.length && !candlesAfter.length) {
@@ -110,19 +107,21 @@ async function getDailyCandles(args: {
 
       const allCandles = concatSeries(
         candlesBefore,
-        candlesFromDb,
+        entryFromDb.candles,
         candlesAfter
       );
-      await setToDb(allCandles);
+      await setToDb({
+        symbol,
+        candles: allCandles,
+        ...range,
+      });
       return true;
     }
   })();
 
-  const candles: CandleSeries = wasDbUpdated
-    ? await getFromDb()
-    : candlesFromDb;
+  const entry: DbEntry = wasDbUpdated ? (await getFromDb())! : entryFromDb!;
 
-  return candles.filter((c) => c.time >= from && c.time <= to);
+  return entry.candles.filter((c) => c.time >= from && c.time <= to);
 }
 
 /**
@@ -144,6 +143,16 @@ function concatSeries(...serieses: CandleSeries[]): CandleSeries {
 interface DbEntry {
   symbol: string;
   candles: CandleSeries;
+  /**
+   * The earliest timestamp that has been requested for this entry. It might still not have
+   * candle for that specific timestamp.
+   */
+  from: number;
+  /**
+   * The latest timestamp that has been requested for this entry. It might still not have
+   * candle for that specific timestamp.
+   */
+  to: number;
 }
 
 export const stockDataStore = {

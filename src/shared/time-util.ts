@@ -78,6 +78,15 @@ export function toDateString(time: Moment, withSeconds = false) {
     .replace("T", " ");
 }
 
+export function toStartOfDay(time: Moment): number {
+  const dateTime = toDateTime(time);
+  return toTimestamp({
+    year: dateTime.year,
+    month: dateTime.month,
+    day: dateTime.day,
+  });
+}
+
 const second = 1,
   minute = second * 60,
   hour = minute * 60,
