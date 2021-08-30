@@ -1,4 +1,4 @@
-import { ADX, MACD, RSI, SMA } from "technicalindicators";
+import { ADX, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
 import { m } from "../shared/functions";
 import { Candle, CandleSeries } from "./types";
 
@@ -12,6 +12,12 @@ export interface IndicatorSettings {
     slowPeriod: number;
     signalPeriod: number;
   };
+  readonly keltnerChannelSettings?: {
+    atrPeriod: number;
+    maPeriod: number;
+    multiplier: number;
+    useSma?: boolean;
+  };
 }
 
 export interface IndicatorValues {
@@ -22,6 +28,7 @@ export interface IndicatorValues {
   mdi?: number;
   pdi?: number;
   macd?: MacdResult;
+  keltnerChannel?: { upper: number; middle: number; lower: number };
 }
 
 export interface MacdResult {
@@ -35,6 +42,7 @@ export class Indicators {
   private readonly rsi: RSI;
   private readonly adx: ADX;
   private readonly macd: MACD;
+  private readonly keltnerChannel: KeltnerChannels;
 
   private readonly candleToIndicators: WeakMap<
     Candle,
@@ -65,6 +73,15 @@ export class Indicators {
         SimpleMAOscillator: false,
         SimpleMASignal: false,
         values: close,
+      });
+    }
+    if (settings.keltnerChannelSettings) {
+      this.keltnerChannel = new KeltnerChannels({
+        ...settings.keltnerChannelSettings,
+        high,
+        low,
+        close,
+        useSMA: !!settings.keltnerChannelSettings.useSma,
       });
     }
   }
@@ -103,6 +120,9 @@ export class Indicators {
         : undefined,
       ...directionalIndicators,
       macd,
+      keltnerChannel:
+        // @ts-ignore TS defs have wrong argument type
+        this.keltnerChannel && this.keltnerChannel.nextValue({ ...candle }),
     };
 
     this.candleToIndicators.set(candle, indicatorValues);
