@@ -4,8 +4,6 @@ import { findRSIDivergences } from "./rsi-divergence";
 import { trailingLowExit } from "./trailing-low-exit";
 
 export class RsiDivergenceStrategy implements Strategy {
-  init(tradeState: TradeState): void {}
-
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
 

@@ -24,19 +24,19 @@ export class DonchianBreakoutStrategy implements Strategy {
     }
   ) {}
 
-  init(state: TradeState): void {
-    this.indicators = new Indicators(
-      {
-        donchianChannelPeriod: this.settings.channelPeriod,
-        smaPeriod: this.settings.smaPeriod,
-      },
-      state.series
-    );
-  }
-
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
     const currentPrice = m.last(state.series).close;
+
+    if (!this.indicators) {
+      this.indicators = new Indicators(
+        {
+          donchianChannelPeriod: this.settings.channelPeriod,
+          smaPeriod: this.settings.smaPeriod,
+        },
+        state.series
+      );
+    }
 
     const { sma, donchianChannel } = this.indicators.update(series);
 

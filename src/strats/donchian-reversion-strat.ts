@@ -15,15 +15,15 @@ export class DonchianReversionStrategy implements Strategy {
 
   constructor(private channelPeriod: number) {}
 
-  init(state: TradeState): void {
-    this.indicators = new Indicators(
-      { donchianChannelPeriod: this.channelPeriod },
-      state.series
-    );
-  }
-
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
+
+    if (!this.indicators) {
+      this.indicators = new Indicators(
+        { donchianChannelPeriod: this.channelPeriod },
+        state.series
+      );
+    }
 
     const { donchianChannel } = this.indicators.update(series);
 

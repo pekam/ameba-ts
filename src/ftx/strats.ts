@@ -98,7 +98,6 @@ export function getBacktestableStrategy(
   };
 
   return {
-    init(tradeState: TradeState): void {},
     update(state: TradeState) {
       const series = state.series;
       const last = m.last(series);

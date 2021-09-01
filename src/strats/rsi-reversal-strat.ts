@@ -12,12 +12,12 @@ const adxPeriod = 20;
 export class RsiReversalStrategy implements Strategy {
   private indicators: Indicators;
 
-  init(state: TradeState): void {
-    this.indicators = new Indicators({ rsiPeriod, adxPeriod }, state.series);
-  }
-
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
+
+    if (!this.indicators) {
+      this.indicators = new Indicators({ rsiPeriod, adxPeriod }, series);
+    }
 
     const { rsi, adx } = this.indicators.update(series) as {
       rsi: number;

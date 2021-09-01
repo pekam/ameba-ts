@@ -22,8 +22,6 @@ export class AutoOptimizer implements Strategy {
     }
   ) {}
 
-  init(state: TradeState): void {}
-
   update(state: TradeState): StrategyUpdate {
     const time = m.last(state.series).time;
 
@@ -35,7 +33,6 @@ export class AutoOptimizer implements Strategy {
       time >= this.lastOptimizedTimestamp + this.settings.optimizeInterval
     ) {
       this.currentStrategy = this.optimize(state);
-      this.currentStrategy.init(state);
       this.lastOptimizedTimestamp = time;
     }
 
@@ -74,5 +71,4 @@ const noopStrategy: Strategy = {
     takeProfit: null,
     stopLoss: null,
   }),
-  init(): void {},
 };

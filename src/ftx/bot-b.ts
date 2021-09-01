@@ -52,8 +52,6 @@ async function doRun({ strat, resolution, ftxUtil }: BotBArgs): Promise<void> {
     transactions: [],
   };
 
-  let stratInitCalled = false;
-
   while (true) {
     await sleepAndUpdateExitsUntilNextCandle(state, candlePeriod, ftxUtil);
 
@@ -72,11 +70,6 @@ async function doRun({ strat, resolution, ftxUtil }: BotBArgs): Promise<void> {
     console.log({ now: toDateString(now, true) });
     state.series = filterIncompleteCandleIfNeeded(series, candlePeriod);
     state.position = getCurrentPosition(wallet);
-
-    if (!stratInitCalled) {
-      strat.init(state);
-      stratInitCalled = true;
-    }
 
     const updates = strat.update(state);
     state = { ...state, ...updates };

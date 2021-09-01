@@ -17,8 +17,6 @@ export class VolatilityStrategy implements Strategy {
     private settings: { period: number; onlyDirection?: MarketPosition }
   ) {}
 
-  init(state: TradeState): void {}
-
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
 

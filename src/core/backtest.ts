@@ -57,14 +57,8 @@ export function backtestStrategy(
 
   // Recursion removed to avoid heap out of memory
   let state = initialState;
-  let initCalled = false;
   while (tt.hasNext()) {
-    const stateWithNewCandles = { ...state, series: tt.next() };
-    if (!initCalled) {
-      strat.init(stateWithNewCandles);
-      initCalled = true;
-    }
-    state = nextState(stateWithNewCandles, strat);
+    state = nextState({ ...state, series: tt.next() }, strat);
     progressBar.increment();
   }
   progressBar.stop();

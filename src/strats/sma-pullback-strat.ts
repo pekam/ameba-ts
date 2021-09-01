@@ -7,7 +7,6 @@ const lookback = 10;
 
 export class SmaPullbackStrategy implements Strategy {
   private smas: number[] = [];
-  init(state: TradeState): void {}
 
   update(state: TradeState): StrategyUpdate {
     const series = state.series;

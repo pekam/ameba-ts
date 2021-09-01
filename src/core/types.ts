@@ -106,12 +106,6 @@ export interface StrategyUpdate {
 
 export interface Strategy {
   /**
-   * Called once during a backtest,
-   * right before calling update for
-   * the first time.
-   */
-  init(tradeState: TradeState): void;
-  /**
    * Called once per candle during
    * a backtest.
    *

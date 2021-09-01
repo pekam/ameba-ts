@@ -45,10 +45,6 @@ export class TradeOnlyRecentlyProfitable implements Strategy {
     this.resultThreshold = resultThreshold;
   }
 
-  init(state: TradeState): void {
-    this.strat.init(state);
-  }
-
   update(state: TradeState): StrategyUpdate {
     this.updateEnabled(state.series);
 

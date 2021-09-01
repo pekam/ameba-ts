@@ -20,17 +20,18 @@ export class MacdStrat implements Strategy {
     }
   ) {}
 
-  init(state: TradeState): void {
-    this.indicators = new Indicators(
-      {
-        macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-      },
-      state.series
-    );
-  }
   update(state: TradeState): StrategyUpdate {
     const series = state.series;
     const candle = m.last(series);
+
+    if (!this.indicators) {
+      this.indicators = new Indicators(
+        {
+          macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+        },
+        state.series
+      );
+    }
 
     const { macd } = this.indicators.update(series);
 
