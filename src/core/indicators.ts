@@ -1,3 +1,4 @@
+import { takeRightWhile } from "lodash";
 import { ADX, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
 import { m } from "../shared/functions";
 import { Candle, CandleSeries } from "./types";
@@ -43,52 +44,53 @@ export class Indicators {
   private readonly adx: ADX;
   private readonly macd: MACD;
   private readonly keltnerChannel: KeltnerChannels;
+  private readonly donchianChannel: DonchianChannel;
 
   private readonly candleToIndicators: WeakMap<
     Candle,
     IndicatorValues
   > = new WeakMap();
 
-  constructor(
-    public readonly settings: IndicatorSettings,
-    initialSeries: CandleSeries
-  ) {
-    const candlesToInclude = initialSeries.slice(0, initialSeries.length - 1);
-    const close = candlesToInclude.map(m.close);
-    const high = candlesToInclude.map(m.high);
-    const low = candlesToInclude.map(m.low);
+  private lastTimestamp = -1;
 
+  constructor(public readonly settings: IndicatorSettings) {
     if (settings.smaPeriod) {
-      this.sma = new SMA({ period: settings.smaPeriod, values: close });
+      this.sma = new SMA({ period: settings.smaPeriod, values: [] });
     }
     if (settings.rsiPeriod) {
-      this.rsi = new RSI({ period: settings.rsiPeriod, values: close });
+      this.rsi = new RSI({ period: settings.rsiPeriod, values: [] });
+    }
+    if (settings.donchianChannelPeriod) {
+      this.donchianChannel = getDonchianChannel(settings.donchianChannelPeriod);
     }
     if (settings.adxPeriod) {
-      this.adx = new ADX({ close, high, low, period: settings.adxPeriod });
+      this.adx = new ADX({
+        close: [],
+        high: [],
+        low: [],
+        period: settings.adxPeriod,
+      });
     }
     if (settings.macdSettings) {
       this.macd = new MACD({
         ...settings.macdSettings,
         SimpleMAOscillator: false,
         SimpleMASignal: false,
-        values: close,
+        values: [],
       });
     }
     if (settings.keltnerChannelSettings) {
       this.keltnerChannel = new KeltnerChannels({
         ...settings.keltnerChannelSettings,
-        high,
-        low,
-        close,
+        high: [],
+        low: [],
+        close: [],
         useSMA: !!settings.keltnerChannelSettings.useSma,
       });
     }
   }
 
-  update(series: CandleSeries): IndicatorValues {
-    const candle = m.last(series);
-
+  private addIndicatorsForNextCandle(candle: Candle) {
     // Result has values for adx, mdi and pdi
     const directionalIndicators = this.adx
       ? // @ts-ignore TS defs have wrong argument type
@@ -115,9 +117,7 @@ export class Indicators {
     const indicatorValues = {
       sma: this.sma && this.sma.nextValue(candle.close),
       rsi: this.rsi && this.rsi.nextValue(candle.close),
-      donchianChannel: this.settings.donchianChannelPeriod
-        ? getDonchianChannel(series, this.settings.donchianChannelPeriod)
-        : undefined,
+      donchianChannel: this.donchianChannel && this.donchianChannel(candle),
       ...directionalIndicators,
       macd,
       keltnerChannel:
@@ -126,8 +126,16 @@ export class Indicators {
     };
 
     this.candleToIndicators.set(candle, indicatorValues);
+  }
 
-    return indicatorValues;
+  update(series: CandleSeries): IndicatorValues {
+    takeRightWhile(series, (c) => c.time > this.lastTimestamp).forEach(
+      (candle) => {
+        this.addIndicatorsForNextCandle(candle);
+      }
+    );
+    this.lastTimestamp = Math.max(this.lastTimestamp, m.last(series).time);
+    return this.get(m.last(series))!;
   }
 
   get(candle: Candle): IndicatorValues | undefined {
@@ -135,13 +143,27 @@ export class Indicators {
   }
 }
 
-export function getDonchianChannel(
-  series: CandleSeries,
-  period: number
-): { upper: number; middle: number; lower: number } {
-  const subseries = series.slice(-period);
-  const upper = Math.max(...subseries.map(m.high));
-  const lower = Math.min(...subseries.map(m.low));
-  const middle = lower + (upper - lower) / 2;
-  return { upper, lower, middle };
+type DonchianChannel = (
+  candle: Candle
+) => { upper: number; middle: number; lower: number } | undefined;
+
+function getDonchianChannel(period: number): DonchianChannel {
+  if (period < 1) {
+    throw Error("Donchian channel period must be >=1");
+  }
+  const candles: Candle[] = [];
+
+  return (candle: Candle) => {
+    if (candles.length === period) {
+      candles.shift();
+    }
+    candles.push(candle);
+    if (candles.length !== period) {
+      return undefined;
+    }
+    const upper = Math.max(...candles.map(m.high));
+    const lower = Math.min(...candles.map(m.low));
+    const middle = m.avg([upper, lower]);
+    return { upper, lower, middle };
+  };
 }

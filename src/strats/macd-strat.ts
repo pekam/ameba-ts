@@ -25,12 +25,9 @@ export class MacdStrat implements Strategy {
     const candle = m.last(series);
 
     if (!this.indicators) {
-      this.indicators = new Indicators(
-        {
-          macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-        },
-        state.series
-      );
+      this.indicators = new Indicators({
+        macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+      });
     }
 
     const { macd } = this.indicators.update(series);

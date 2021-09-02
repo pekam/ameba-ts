@@ -29,13 +29,10 @@ export class DonchianBreakoutStrategy implements Strategy {
     const currentPrice = m.last(state.series).close;
 
     if (!this.indicators) {
-      this.indicators = new Indicators(
-        {
-          donchianChannelPeriod: this.settings.channelPeriod,
-          smaPeriod: this.settings.smaPeriod,
-        },
-        state.series
-      );
+      this.indicators = new Indicators({
+        donchianChannelPeriod: this.settings.channelPeriod,
+        smaPeriod: this.settings.smaPeriod,
+      });
     }
 
     const { sma, donchianChannel } = this.indicators.update(series);

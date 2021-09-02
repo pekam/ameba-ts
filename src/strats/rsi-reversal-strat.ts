@@ -16,7 +16,7 @@ export class RsiReversalStrategy implements Strategy {
     const series = state.series;
 
     if (!this.indicators) {
-      this.indicators = new Indicators({ rsiPeriod, adxPeriod }, series);
+      this.indicators = new Indicators({ rsiPeriod, adxPeriod });
     }
 
     const { rsi, adx } = this.indicators.update(series) as {
