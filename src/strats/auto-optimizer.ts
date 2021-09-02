@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { backtestStrategy } from "../core/backtest";
 import { withRelativeTransactionCost } from "../core/backtest-result";
-import { Strategy, StrategyUpdate, TradeState } from "../core/types";
+import { Strategy, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
 const relativeTransactionCost = 0.0007;
@@ -10,38 +10,17 @@ const relativeTransactionCost = 0.0007;
  * Periodically backtests all the strategies in the pool and uses the most
  * profitable one.
  */
-export class AutoOptimizer implements Strategy {
-  private currentStrategy: Strategy = noopStrategy;
-  private lastOptimizedTimestamp: number = 0;
+export function autoOptimizer(settings: {
+  stratPool: (() => Strategy)[];
+  optimizeInterval: number;
+  optimizePeriod: number;
+}): Strategy {
+  let currentStrategy: Strategy = noopStrategy;
+  let lastOptimizedTimestamp: number = 0;
 
-  constructor(
-    private settings: {
-      stratPool: (() => Strategy)[];
-      optimizeInterval: number;
-      optimizePeriod: number;
-    }
-  ) {}
-
-  update(state: TradeState): StrategyUpdate {
-    const time = m.last(state.series).time;
-
-    const seriesLength = time - state.series[0].time;
-
-    if (
-      seriesLength > this.settings.optimizePeriod &&
-      !state.position &&
-      time >= this.lastOptimizedTimestamp + this.settings.optimizeInterval
-    ) {
-      this.currentStrategy = this.optimize(state);
-      this.lastOptimizedTimestamp = time;
-    }
-
-    return this.currentStrategy.update(state);
-  }
-
-  private optimize({ series }: TradeState): Strategy {
-    const withProfits = this.settings.stratPool.map((stratProvider) => {
-      const from = m.last(series).time - this.settings.optimizePeriod;
+  function optimize({ series }: TradeState): Strategy {
+    const withProfits = settings.stratPool.map((stratProvider) => {
+      const from = m.last(series).time - settings.optimizePeriod;
       const result = backtestStrategy(
         stratProvider,
         series.slice(-10000),
@@ -63,12 +42,27 @@ export class AutoOptimizer implements Strategy {
       return best.stratProvider();
     }
   }
+
+  return (state: TradeState) => {
+    const time = m.last(state.series).time;
+
+    const seriesLength = time - state.series[0].time;
+
+    if (
+      seriesLength > settings.optimizePeriod &&
+      !state.position &&
+      time >= lastOptimizedTimestamp + settings.optimizeInterval
+    ) {
+      currentStrategy = optimize(state);
+      lastOptimizedTimestamp = time;
+    }
+
+    return currentStrategy(state);
+  };
 }
 
-const noopStrategy: Strategy = {
-  update: () => ({
-    entryOrder: null,
-    takeProfit: null,
-    stopLoss: null,
-  }),
-};
+const noopStrategy: Strategy = () => ({
+  entryOrder: null,
+  takeProfit: null,
+  stopLoss: null,
+});

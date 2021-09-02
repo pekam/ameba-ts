@@ -1,4 +1,10 @@
-import { Candle, CandleSeries, Strategy, TradeState } from "../core/types";
+import {
+  Candle,
+  CandleSeries,
+  Strategy,
+  StrategyUpdate,
+  TradeState,
+} from "../core/types";
 import { m } from "../shared/functions";
 import { indicators } from "../shared/indicators";
 import { FtxBotStrat } from "./bot";
@@ -97,47 +103,45 @@ export function getBacktestableStrategy(
     };
   };
 
-  return {
-    update(state: TradeState) {
-      const series = state.series;
-      const last = m.last(series);
+  return function (state: TradeState): StrategyUpdate {
+    const series = state.series;
+    const last = m.last(series);
 
-      const shouldBeLong = ftxStrat({ series, lastOrder });
+    const shouldBeLong = ftxStrat({ series, lastOrder });
 
-      if (!state.position) {
-        if (shouldBeLong) {
-          updateLastOrder(last, "buy");
-          return {
-            entryOrder: {
-              price: last.close * 1.1,
-              type: "limit",
-              side: "buy",
-            },
-          };
-        } else {
-          updateLastOrder(last, "sell");
-          return {
-            entryOrder: shortingEnabled
-              ? {
-                  side: "sell",
-                  price: last.close * 0.9,
-                  type: "limit",
-                }
-              : null,
-          };
-        }
-      }
-
-      if (state.position === "long" && !shouldBeLong) {
-        updateLastOrder(last, "sell");
-        return { takeProfit: last.close * 0.9 };
-      }
-
-      if (state.position === "short" && shouldBeLong) {
+    if (!state.position) {
+      if (shouldBeLong) {
         updateLastOrder(last, "buy");
-        return { takeProfit: last.close * 1.1 };
+        return {
+          entryOrder: {
+            price: last.close * 1.1,
+            type: "limit",
+            side: "buy",
+          },
+        };
+      } else {
+        updateLastOrder(last, "sell");
+        return {
+          entryOrder: shortingEnabled
+            ? {
+                side: "sell",
+                price: last.close * 0.9,
+                type: "limit",
+              }
+            : null,
+        };
       }
-      return {};
-    },
+    }
+
+    if (state.position === "long" && !shouldBeLong) {
+      updateLastOrder(last, "sell");
+      return { takeProfit: last.close * 0.9 };
+    }
+
+    if (state.position === "short" && shouldBeLong) {
+      updateLastOrder(last, "buy");
+      return { takeProfit: last.close * 1.1 };
+    }
+    return {};
   };
 }

@@ -1,9 +1,4 @@
-import {
-  MarketPosition,
-  Strategy,
-  StrategyUpdate,
-  TradeState,
-} from "../core/types";
+import { MarketPosition, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
@@ -12,12 +7,11 @@ import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
  * Enters when there's a big one-directional move relative to the
  * current volatility (average range/candlesize).
  */
-export class VolatilityStrategy implements Strategy {
-  constructor(
-    private settings: { period: number; onlyDirection?: MarketPosition }
-  ) {}
-
-  update(state: TradeState): StrategyUpdate {
+export function volatilityStrategy(settings: {
+  period: number;
+  onlyDirection?: MarketPosition;
+}) {
+  return function (state: TradeState): StrategyUpdate {
     const series = state.series;
 
     const avgRangePeriod = 20;
@@ -28,7 +22,7 @@ export class VolatilityStrategy implements Strategy {
         return {};
       }
 
-      const period = this.settings.period;
+      const period = settings.period;
 
       const recentDiff =
         m.last(series).close - m.get(series, -(period + 1)).close;
@@ -36,7 +30,7 @@ export class VolatilityStrategy implements Strategy {
       const longCondition = recentDiff > period * avgSize;
       const shortCondition = recentDiff < 0 - period * avgSize;
 
-      if (longCondition && this.settings.onlyDirection !== "short") {
+      if (longCondition && settings.onlyDirection !== "short") {
         const entryPrice = m.combine(series.slice(-(period + 1))).high;
         return {
           entryOrder: {
@@ -48,7 +42,7 @@ export class VolatilityStrategy implements Strategy {
         };
       }
 
-      if (shortCondition && this.settings.onlyDirection !== "long") {
+      if (shortCondition && settings.onlyDirection !== "long") {
         const entryPrice = m.combine(series.slice(-(period + 1))).low;
         return {
           entryOrder: {
@@ -68,5 +62,5 @@ export class VolatilityStrategy implements Strategy {
         stopLossType: "diff",
       });
     }
-  }
+  };
 }

@@ -158,7 +158,7 @@ function handleTakeProfit(state: TradeState) {
 }
 
 function applyStrategy(state: TradeState, strat: Strategy) {
-  const mutations = strat.update(state);
+  const mutations = strat(state);
   if (state.position && mutations && mutations.entryOrder) {
     throw new Error(
       "Changing entry order while already in a position is not allowed."

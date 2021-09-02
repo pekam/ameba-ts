@@ -1,34 +1,33 @@
-import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
+import { Order, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
 const smaPeriod = 30;
 const lookback = 10;
 
-export class SmaPullbackStrategy implements Strategy {
-  private smas: number[] = [];
+export function smaPullbackStrategy() {
+  const smas: number[] = [];
 
-  update(state: TradeState): StrategyUpdate {
+  return function (state: TradeState): StrategyUpdate {
     const series = state.series;
     const last = m.last(series);
 
     if (series.length >= smaPeriod) {
-      this.smas.push(m.avg(series.slice(-smaPeriod).map((c) => c.close)));
+      smas.push(m.avg(series.slice(-smaPeriod).map((c) => c.close)));
     }
 
     if (series.length < smaPeriod + lookback) {
       return {};
     }
 
-    const lastSma = m.last(this.smas);
+    const lastSma = m.last(smas);
 
     if (!state.position) {
       const aboveSma =
         series
           .slice(-lookback)
-          .filter(
-            (c, i) => c.close > this.smas[this.smas.length - lookback + i]
-          ).length / lookback;
+          .filter((c, i) => c.close > smas[smas.length - lookback + i]).length /
+        lookback;
 
       if (aboveSma < 0.5) {
         return cancelEntry;
@@ -56,5 +55,5 @@ export class SmaPullbackStrategy implements Strategy {
       };
     }
     return {};
-  }
+  };
 }

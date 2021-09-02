@@ -1,4 +1,4 @@
-import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
+import { donchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
 import { botB } from "./bot-b";
 import { FtxMarket, getFtxClient } from "./ftx";
 import { getFtxUtil } from "./ftx-util";
@@ -15,7 +15,7 @@ import { getFtxUtil } from "./ftx-util";
   await botB.run({
     ftxUtil,
     resolution: "5min",
-    strat: new DonchianBreakoutStrategy({
+    strat: donchianBreakoutStrategy({
       channelPeriod: 200,
       smaPeriod: 50,
       maxRelativeStopLoss: 0.02,

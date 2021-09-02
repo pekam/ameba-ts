@@ -71,7 +71,7 @@ async function doRun({ strat, resolution, ftxUtil }: BotBArgs): Promise<void> {
     state.series = filterIncompleteCandleIfNeeded(series, candlePeriod);
     state.position = getCurrentPosition(wallet);
 
-    const updates = strat.update(state);
+    const updates = strat(state);
     state = { ...state, ...updates };
     console.log({ updates, state: { ...state, series: null } });
 

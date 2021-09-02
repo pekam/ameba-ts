@@ -10,9 +10,9 @@ import {
   toDateString,
   toTimestamp,
 } from "../shared/time-util";
-import { AutoOptimizer } from "../strats/auto-optimizer";
-import { DonchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
-import { MacdStrat } from "../strats/macd-strat";
+import { autoOptimizer } from "../strats/auto-optimizer";
+import { donchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
+import { macdStrat } from "../strats/macd-strat";
 import { getFtxClient } from "./ftx";
 import { getFtxUtil } from "./ftx-util";
 import { emaStrat, getBacktestableStrategy, getEmaStrat } from "./strats";
@@ -40,19 +40,19 @@ async function run() {
 
   const stratPool = [
     () =>
-      new MacdStrat({
+      macdStrat({
         relativeTakeProfit: 0.015,
         relativeStopLoss: 0.01,
         onlyDirection: "short",
       }),
     () =>
-      new MacdStrat({
+      macdStrat({
         relativeTakeProfit: 0.015,
         relativeStopLoss: 0.01,
         onlyDirection: "long",
       }),
     () =>
-      new MacdStrat({
+      macdStrat({
         relativeTakeProfit: 0.015,
         relativeStopLoss: 0.01,
       }),
@@ -60,7 +60,7 @@ async function run() {
   ];
 
   const stratProvider = () =>
-    new AutoOptimizer({
+    autoOptimizer({
       stratPool,
       optimizeInterval: PERIODS.day * 2,
       optimizePeriod: PERIODS.day * 2,
@@ -82,7 +82,7 @@ async function run() {
         const smaPeriod = _.random(20, 100);
         const result = backtestStrategy(
           () =>
-            new DonchianBreakoutStrategy({
+            donchianBreakoutStrategy({
               channelPeriod,
               smaPeriod,
               onlyDirection: "long",

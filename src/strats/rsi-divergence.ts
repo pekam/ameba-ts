@@ -29,5 +29,6 @@ export function findRSIDivergences(
         rsiValues[m.indexOf(series, swingLows[indexInList - 1]) + lengthDiff]
     );
   });
+
   return divergenceCandles;
 }

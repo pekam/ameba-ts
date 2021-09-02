@@ -2,38 +2,29 @@ import { Indicators } from "../core/indicators";
 import {
   MarketPosition,
   Order,
-  Strategy,
   StrategyUpdate,
   TradeState,
 } from "../core/types";
 import { m } from "../shared/functions";
 import { withRelativeExits } from "./strat-util";
 
-export class MacdStrat implements Strategy {
-  private indicators: Indicators;
+export function macdStrat(settings: {
+  relativeTakeProfit: number;
+  relativeStopLoss: number;
+  onlyDirection?: MarketPosition;
+}) {
+  const indicators = new Indicators({
+    macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
+  });
 
-  constructor(
-    private settings: {
-      relativeTakeProfit: number;
-      relativeStopLoss: number;
-      onlyDirection?: MarketPosition;
-    }
-  ) {}
-
-  update(state: TradeState): StrategyUpdate {
+  return function (state: TradeState): StrategyUpdate {
     const series = state.series;
     const candle = m.last(series);
 
-    if (!this.indicators) {
-      this.indicators = new Indicators({
-        macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-      });
-    }
-
-    const { macd } = this.indicators.update(series);
+    const { macd } = indicators.update(series);
 
     const previousMacd = (() => {
-      const prevIndicators = this.indicators.get(m.get(series, -2));
+      const prevIndicators = indicators.get(m.get(series, -2));
       return prevIndicators && prevIndicators.macd;
     })();
 
@@ -52,30 +43,24 @@ export class MacdStrat implements Strategy {
       previousMacd.histogram < macd.histogram,
     ];
 
-    if (
-      this.settings.onlyDirection !== "short" &&
-      bullishFilters.every((b) => b)
-    ) {
+    if (settings.onlyDirection !== "short" && bullishFilters.every((b) => b)) {
       // Long
       const entryOrder: Order = {
         side: "buy",
         type: "stop",
         price: candle.high,
       };
-      return withRelativeExits({ entryOrder, ...this.settings });
+      return withRelativeExits({ entryOrder, ...settings });
     }
-    if (
-      this.settings.onlyDirection !== "long" &&
-      bullishFilters.every((b) => !b)
-    ) {
+    if (settings.onlyDirection !== "long" && bullishFilters.every((b) => !b)) {
       // Short
       const entryOrder: Order = {
         side: "sell",
         type: "stop",
         price: candle.low,
       };
-      return withRelativeExits({ entryOrder, ...this.settings });
+      return withRelativeExits({ entryOrder, ...settings });
     }
     return { entryOrder: null };
-  }
+  };
 }

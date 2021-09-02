@@ -104,15 +104,7 @@ export interface StrategyUpdate {
   takeProfit?: number | null;
 }
 
-export interface Strategy {
-  /**
-   * Called once per candle during
-   * a backtest.
-   *
-   * @see StrategyUpdate
-   */
-  update: (state: TradeState) => StrategyUpdate;
-}
+export type Strategy = (state: TradeState) => StrategyUpdate;
 
 export interface Trade {
   entry: Transaction;

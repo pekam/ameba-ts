@@ -1,5 +1,5 @@
 import { Indicators } from "../core/indicators";
-import { Order, Strategy, StrategyUpdate, TradeState } from "../core/types";
+import { Order, StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
@@ -9,17 +9,13 @@ const adxPeriod = 20;
 /**
  * If ADX is low (there is a sideways trend), buy when RSI is low.
  */
-export class RsiReversalStrategy implements Strategy {
-  private indicators: Indicators;
+export function rsiReversalStrategy() {
+  const indicators = new Indicators({ rsiPeriod, adxPeriod });
 
-  update(state: TradeState): StrategyUpdate {
+  return function (state: TradeState): StrategyUpdate {
     const series = state.series;
 
-    if (!this.indicators) {
-      this.indicators = new Indicators({ rsiPeriod, adxPeriod });
-    }
-
-    const { rsi, adx } = this.indicators.update(series) as {
+    const { rsi, adx } = indicators.update(series) as {
       rsi: number;
       adx: number;
     };
@@ -51,5 +47,5 @@ export class RsiReversalStrategy implements Strategy {
       }
     }
     return {};
-  }
+  };
 }

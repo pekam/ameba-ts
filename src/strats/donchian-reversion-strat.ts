@@ -1,32 +1,21 @@
 import { Indicators } from "../core/indicators";
-import {
-  CandleSeries,
-  Strategy,
-  StrategyUpdate,
-  TradeState,
-} from "../core/types";
+import { CandleSeries, Strategy, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
 /**
  */
-export class DonchianReversionStrategy implements Strategy {
-  private indicators: Indicators;
+function donchianReversionStrategy(channelPeriod: number): Strategy {
+  const indicators = new Indicators({
+    donchianChannelPeriod: channelPeriod,
+  });
 
-  constructor(private channelPeriod: number) {}
-
-  update(state: TradeState): StrategyUpdate {
+  return (state: TradeState) => {
     const series = state.series;
 
-    if (!this.indicators) {
-      this.indicators = new Indicators({
-        donchianChannelPeriod: this.channelPeriod,
-      });
-    }
+    const { donchianChannel } = indicators.update(series);
 
-    const { donchianChannel } = this.indicators.update(series);
-
-    if (series.length < this.channelPeriod || !donchianChannel) {
+    if (series.length < channelPeriod || !donchianChannel) {
       return {};
     }
     const { lower, upper, middle } = donchianChannel;
@@ -87,7 +76,7 @@ export class DonchianReversionStrategy implements Strategy {
       return cancelEntry;
     }
     return {};
-  }
+  };
 }
 
 function howManyTimesHasCrossed(series: CandleSeries, valueToCross: number) {
