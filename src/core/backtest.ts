@@ -13,6 +13,8 @@ import {
   Transaction,
 } from "./types";
 
+export const usedStrats = new WeakSet<Strategy>();
+
 /**
  * Tests how the given strategy would have performed with
  * the provided historical price data.
@@ -38,9 +40,17 @@ export function backtestStrategy(
     throw Error("Can't backtest with empty series");
   }
 
-  // Strategies are stateful, which is why a new instance is needed
-  // for each backtest.
+  // Strategies are stateful, which is why a new instance is needed for each backtest.
   const strat: Strategy = stratProvider();
+  if (usedStrats.has(strat)) {
+    // In case the stratProvider returns the same instance many times.
+    throw Error(
+      "This strategy instance has been backtested already. " +
+        "Strategies are often stateful, so backtesting a strategy " +
+        "multiple times would cause problems in most cases."
+    );
+  }
+  usedStrats.add(strat);
 
   const tt = new TimeTraveller(series, from, to);
 
