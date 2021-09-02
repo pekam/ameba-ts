@@ -44,8 +44,7 @@ export class TimeTraveller {
         (candle) => candle.time >= toTimestamp(from)
       );
     } else {
-      // Default to 1 instead of 0 so that indicators can be initialized
-      this.startIndex = 1;
+      this.startIndex = 0;
     }
     this.nextIndex = this.startIndex;
     this.subseries = series.slice(0, this.nextIndex);
