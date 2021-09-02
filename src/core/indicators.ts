@@ -21,15 +21,21 @@ export interface IndicatorSettings {
   };
 }
 
+interface IndicatorChannel {
+  upper: number;
+  middle: number;
+  lower: number;
+}
+
 export interface IndicatorValues {
   sma?: number;
   rsi?: number;
-  donchianChannel?: { upper: number; middle: number; lower: number };
+  donchianChannel?: IndicatorChannel;
   adx?: number;
   mdi?: number;
   pdi?: number;
   macd?: MacdResult;
-  keltnerChannel?: { upper: number; middle: number; lower: number };
+  keltnerChannel?: IndicatorChannel;
 }
 
 export interface MacdResult {
@@ -143,9 +149,7 @@ export class Indicators {
   }
 }
 
-type DonchianChannel = (
-  candle: Candle
-) => { upper: number; middle: number; lower: number } | undefined;
+type DonchianChannel = (candle: Candle) => IndicatorChannel | undefined;
 
 function getDonchianChannel(period: number): DonchianChannel {
   if (period < 1) {
