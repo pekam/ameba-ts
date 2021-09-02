@@ -1,8 +1,9 @@
+import { PERIODS } from "../shared/time-util";
 import { runFtxBot } from "./bot";
-import { emaStrat } from "./strats";
 import { FtxMarket } from "./ftx";
-import { getFtxMarketMaker } from "./market-maker-orders";
 import { getFtxStaker } from "./ftx-staker";
+import { getFtxMarketMaker } from "./market-maker-orders";
+import { emaStrat } from "./strats";
 
 (async function () {
   const subaccount = "bot-2";
@@ -26,7 +27,7 @@ import { getFtxStaker } from "./ftx-staker";
     market,
     strat,
     resolution: "1min",
-    candleSeriesLookBack: 60 * 60 * 6, // 6h
+    candleSeriesLookBack: PERIODS.hour * 18,
     safeZoneMargin: 0.002,
     enter,
     exit,
