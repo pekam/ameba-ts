@@ -1,4 +1,4 @@
-import { takeRightWhile } from "lodash";
+import { maxBy, minBy, takeRightWhile } from "lodash";
 import { ADX, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
 import { m } from "../shared/functions";
 import { Candle, CandleSeries } from "./types";
@@ -157,16 +157,32 @@ function getDonchianChannel(period: number): DonchianChannel {
   }
   const candles: Candle[] = [];
 
+  let maxCandle: Candle | undefined;
+  let minCandle: Candle | undefined;
+
   return (candle: Candle) => {
-    if (candles.length === period) {
-      candles.shift();
-    }
     candles.push(candle);
+
+    const removed = candles.length > period && candles.shift();
+
     if (candles.length !== period) {
       return undefined;
     }
-    const upper = Math.max(...candles.map(m.high));
-    const lower = Math.min(...candles.map(m.low));
+
+    if (!maxCandle || removed === maxCandle) {
+      maxCandle = maxBy(candles, (c) => c.high)!;
+    } else if (candle.high > maxCandle.high) {
+      maxCandle = candle;
+    }
+
+    if (!minCandle || removed === minCandle) {
+      minCandle = minBy(candles, (c) => c.low)!;
+    } else if (candle.low < minCandle.low) {
+      minCandle = candle;
+    }
+
+    const upper = maxCandle.high;
+    const lower = minCandle.low;
     const middle = m.avg([upper, lower]);
     return { upper, lower, middle };
   };
