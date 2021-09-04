@@ -19,6 +19,21 @@ export interface IndicatorSettings {
     multiplier: number;
     useSma?: boolean;
   };
+  /**
+   * Indicator that tells how many of the past N candles satisfy the given condition.
+   * For example, to check how many of the past 20 candles are above the SMA:
+   *
+   * {
+   *   predicate: (candle, { sma }) => !!sma && candles.low > sma,
+   *   period: 20,
+   * }
+   *
+   * The result is the proportion, e.g. 0.25 if 5 of the past 20 candles are above sma.
+   */
+  readonly predicateCounterSettings?: {
+    predicate: (candle: Candle, indicatorValues: IndicatorValues) => boolean;
+    period: number;
+  };
 }
 
 interface IndicatorChannel {
@@ -36,6 +51,11 @@ export interface IndicatorValues {
   pdi?: number;
   macd?: MacdResult;
   keltnerChannel?: IndicatorChannel;
+  /**
+   * The proportion of candles during the period which
+   * satisfy the predicate, e.g. 0.5.
+   */
+  predicateCounter?: number;
 }
 
 export interface MacdResult {
@@ -51,6 +71,9 @@ export class Indicators {
   private readonly macd: MACD;
   private readonly keltnerChannel: KeltnerChannels;
   private readonly donchianChannel: DonchianChannel;
+  private readonly predicateCounterFunc: (
+    condition: boolean
+  ) => number | undefined;
 
   private readonly candleToIndicators: WeakMap<
     Candle,
@@ -94,6 +117,11 @@ export class Indicators {
         useSMA: !!settings.keltnerChannelSettings.useSma,
       });
     }
+    if (settings.predicateCounterSettings) {
+      this.predicateCounterFunc = getPredicateCounter(
+        settings.predicateCounterSettings.period
+      );
+    }
   }
 
   private addIndicatorsForNextCandle(candle: Candle) {
@@ -120,7 +148,7 @@ export class Indicators {
       };
     })();
 
-    const indicatorValues = {
+    const indicatorValues: IndicatorValues = {
       sma: this.sma && this.sma.nextValue(candle.close),
       rsi: this.rsi && this.rsi.nextValue(candle.close),
       donchianChannel: this.donchianChannel && this.donchianChannel(candle),
@@ -130,6 +158,16 @@ export class Indicators {
         // @ts-ignore TS defs have wrong argument type
         this.keltnerChannel && this.keltnerChannel.nextValue({ ...candle }),
     };
+
+    if (this.predicateCounterFunc) {
+      const predicateCounter = this.predicateCounterFunc(
+        this.settings.predicateCounterSettings!.predicate(
+          candle,
+          indicatorValues
+        )
+      );
+      indicatorValues.predicateCounter = predicateCounter;
+    }
 
     this.candleToIndicators.set(candle, indicatorValues);
   }
@@ -185,5 +223,30 @@ function getDonchianChannel(period: number): DonchianChannel {
     const lower = minCandle.low;
     const middle = m.avg([upper, lower]);
     return { upper, lower, middle };
+  };
+}
+
+function getPredicateCounter(period: number) {
+  if (period < 1) {
+    throw Error("Period must be >=1");
+  }
+  const results: boolean[] = [];
+  let counter = 0;
+
+  return (result: boolean) => {
+    results.push(result);
+    if (result) {
+      counter++;
+    }
+    if (results.length > period) {
+      const removed = results.shift();
+      if (removed) {
+        counter--;
+      }
+    }
+    if (results.length !== period) {
+      return undefined;
+    }
+    return counter / period;
   };
 }
