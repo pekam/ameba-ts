@@ -1,5 +1,5 @@
 import { maxBy, minBy, takeRightWhile } from "lodash";
-import { ADX, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
+import { ADX, ATR, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
 import { m } from "../shared/functions";
 import { Candle, CandleSeries } from "./types";
 
@@ -19,6 +19,7 @@ export interface IndicatorSettings {
     multiplier: number;
     useSma?: boolean;
   };
+  readonly atrPeriod?: number;
   /**
    * Indicator that tells how many of the past N candles satisfy the given condition.
    * For example, to check how many of the past 20 candles are above the SMA:
@@ -51,6 +52,7 @@ export interface IndicatorValues {
   pdi?: number;
   macd?: MacdResult;
   keltnerChannel?: IndicatorChannel;
+  atr?: number;
   /**
    * The proportion of candles during the period which
    * satisfy the predicate, e.g. 0.5.
@@ -71,6 +73,7 @@ export class Indicators {
   private readonly macd: MACD;
   private readonly keltnerChannel: KeltnerChannels;
   private readonly donchianChannel: DonchianChannel;
+  private readonly atr: ATR;
   private readonly predicateCounterFunc: (
     condition: boolean
   ) => number | undefined;
@@ -117,6 +120,14 @@ export class Indicators {
         useSMA: !!settings.keltnerChannelSettings.useSma,
       });
     }
+    if (settings.atrPeriod) {
+      this.atr = new ATR({
+        close: [],
+        high: [],
+        low: [],
+        period: settings.atrPeriod,
+      });
+    }
     if (settings.predicateCounterSettings) {
       this.predicateCounterFunc = getPredicateCounter(
         settings.predicateCounterSettings.period
@@ -157,6 +168,7 @@ export class Indicators {
       keltnerChannel:
         // @ts-ignore TS defs have wrong argument type
         this.keltnerChannel && this.keltnerChannel.nextValue({ ...candle }),
+      atr: this.atr && this.atr.nextValue(candle),
     };
 
     if (this.predicateCounterFunc) {
