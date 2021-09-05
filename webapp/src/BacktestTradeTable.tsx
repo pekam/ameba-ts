@@ -3,6 +3,7 @@ import { ReactTabulator } from "react-tabulator";
 import "react-tabulator/css/tabulator.min.css";
 import { Trade } from "../../src/core/types";
 import { FtxBacktestResult } from "../../src/ftx/ftx-backtest-store";
+import { m } from "../../src/shared/functions";
 import { toDateString } from "../../src/shared/time-util";
 
 function BacktestTradeTable({
@@ -28,7 +29,9 @@ function BacktestTradeTable({
 
         const color = value > 0 ? "green" : "red";
 
-        return `<span style="color:${color}">${value.toFixed(4)}</span>`;
+        return `<span style="color:${color}">${m.formatPercentage(
+          value
+        )}</span>`;
       },
     },
     { title: "Entry time", field: "entryTime", formatter: formatTime },
