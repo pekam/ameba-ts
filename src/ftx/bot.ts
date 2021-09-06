@@ -1,6 +1,6 @@
 import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
-import { getCurrentTimestampInSeconds } from "../shared/time-util";
+import { getCurrentTimestampInSeconds, PERIODS } from "../shared/time-util";
 import { restartOnError, sleep } from "../util";
 import { FtxMarket, FtxResolution, getFtxClient } from "./ftx";
 import { FtxBotOrder } from "./market-maker-orders";
@@ -32,7 +32,7 @@ interface FtxBotArgs {
 }
 
 export async function runFtxBot(args: FtxBotArgs) {
-  await restartOnError(() => run(args));
+  await restartOnError(() => run(args), PERIODS.second * 15);
 }
 
 async function run({

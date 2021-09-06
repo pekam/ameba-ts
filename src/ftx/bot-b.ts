@@ -9,6 +9,7 @@ import { m } from "../shared/functions";
 import {
   ftxResolutionToPeriod,
   getCurrentTimestampInSeconds,
+  PERIODS,
   toDateString,
 } from "../shared/time-util";
 import { clearLastLine, restartOnError, sleep } from "../util";
@@ -22,7 +23,7 @@ interface BotBArgs {
 }
 
 async function run(args: BotBArgs) {
-  await restartOnError(() => doRun(args));
+  await restartOnError(() => doRun(args), PERIODS.minute * 2);
 }
 
 /**

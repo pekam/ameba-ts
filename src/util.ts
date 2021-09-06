@@ -2,7 +2,7 @@
 import { Presets, SingleBar } from "cli-progress";
 import { range } from "lodash";
 import { Candle } from "./core/types";
-import { getCurrentTimestampInSeconds, PERIODS } from "./shared/time-util";
+import { getCurrentTimestampInSeconds } from "./shared/time-util";
 const readline = require("readline");
 
 export const startProgressBar = (length: number, enabled = true) => {
@@ -67,9 +67,10 @@ export function clearLastLine(times = 1) {
   });
 }
 
-export async function restartOnError(run: () => Promise<any>) {
-  const retryResetPeriod = PERIODS.minute * 2;
-
+export async function restartOnError(
+  run: () => Promise<any>,
+  retryResetPeriod: number
+) {
   let retrySleepSec = 1;
   let lastRetryTime: number | undefined;
 
