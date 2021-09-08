@@ -10,7 +10,7 @@ import { FtxMarket, getFtxClient } from "./ftx";
 import { getFtxUtil } from "./ftx-util";
 import { getBacktestableStrategy } from "./strats";
 
-function getStakeMultiplier(
+function getDrawdownMultiplier(
   accountValue: number,
   peakAccountValueIfUsingRiskManagement?: number
 ) {
@@ -39,7 +39,7 @@ function getBacktestStaker(strat: FtxBotStrat) {
 
     if (!lastTimeBacktested || now > lastTimeBacktested + backtestIntervalSec) {
       const result = withRelativeTransactionCost(
-        await backtestStrategy(() => getBacktestableStrategy(strat), series),
+        backtestStrategy(() => getBacktestableStrategy(strat), series),
         transactionCost
       );
       const trades = result.trades;
@@ -130,11 +130,18 @@ export function getFtxStaker({
     if (!spotMarginEnabled) {
       const stakeMultiplier = await (async () => {
         let multiplier = 1;
+        const drawdownMultiplier = getDrawdownMultiplier(
+          totalUsdValue,
+          peakAccountValue
+        );
         if (stakeByPeakAccountValue) {
-          multiplier *= getStakeMultiplier(totalUsdValue, peakAccountValue);
+          multiplier *= drawdownMultiplier;
         }
         if (backtestStaker) {
           multiplier *= await backtestStaker(series);
+        }
+        if (multiplier < 0.5 && drawdownMultiplier > 0.9) {
+          multiplier = 0.5;
         }
         if (multiplier > 1) return 1;
         if (multiplier < 0) return 0;
