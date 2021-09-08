@@ -5,7 +5,7 @@ import { getFtxUtil } from "./ftx-util";
 
 (async function () {
   const subaccount = "bot-4";
-  const market: FtxMarket = "SOL/USD";
+  const market: FtxMarket = "FTT/USD";
 
   const ftxUtil = getFtxUtil({
     ftx: getFtxClient({ subaccount }),
@@ -14,12 +14,12 @@ import { getFtxUtil } from "./ftx-util";
 
   await botB.run({
     ftxUtil,
-    resolution: "5min",
+    resolution: "1min",
     strat: donchianBreakoutStrategy({
-      channelPeriod: 50,
-      smaPeriod: 50,
-      maxRelativeStopLoss: 0.02,
+      channelPeriod: 100,
+      smaPeriod: 100,
       onlyDirection: "long",
+      maxRelativeStopLoss: 0.02,
     }),
   });
 })();
