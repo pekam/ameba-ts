@@ -20,6 +20,7 @@ import { getFtxUtil } from "./ftx-util";
       smaPeriod: 100,
       onlyDirection: "long",
       maxRelativeStopLoss: 0.02,
+      maxAtrStoploss: 5,
     }),
   });
 })();

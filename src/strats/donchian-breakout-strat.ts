@@ -17,30 +17,33 @@ export function donchianBreakoutStrategy(settings: {
   smaPeriod: number;
   onlyDirection?: MarketPosition;
   maxRelativeStopLoss?: number;
+  maxAtrStoploss?: number;
 }): Strategy {
   const indicators = new Indicators({
     donchianChannelPeriod: settings.channelPeriod,
     smaPeriod: settings.smaPeriod,
+    atrPeriod: 20,
   });
 
   return (state: TradeState) => {
     const series = state.series;
     const currentPrice = m.last(state.series).close;
 
-    const { sma, donchianChannel } = indicators.update(series);
+    const { sma, donchianChannel, atr } = indicators.update(series);
 
-    if (series.length < settings.channelPeriod || !donchianChannel || !sma) {
+    if (!donchianChannel || !sma || !atr) {
       return {};
     }
 
     if (!state.position) {
-      const avgRange = m.getAverageCandleSize(series, 20);
-
       const longEntry: () => StrategyUpdate = () => {
-        const entryPrice = donchianChannel.upper + avgRange / 5;
-        const stopLosses = [sma, entryPrice - avgRange];
+        const entryPrice = donchianChannel.upper + atr / 5;
+        const stopLosses = [sma];
         if (settings.maxRelativeStopLoss) {
           stopLosses.push(entryPrice * (1 - settings.maxRelativeStopLoss));
+        }
+        if (settings.maxAtrStoploss) {
+          stopLosses.push(entryPrice - atr * settings.maxAtrStoploss);
         }
         return {
           entryOrder: {
@@ -53,10 +56,13 @@ export function donchianBreakoutStrategy(settings: {
       };
 
       const shortEntry: () => StrategyUpdate = () => {
-        const entryPrice = donchianChannel.lower - avgRange / 5;
-        const stopLosses = [sma, entryPrice + avgRange];
+        const entryPrice = donchianChannel.lower - atr / 5;
+        const stopLosses = [sma];
         if (settings.maxRelativeStopLoss) {
           stopLosses.push(entryPrice * (1 + settings.maxRelativeStopLoss));
+        }
+        if (settings.maxAtrStoploss) {
+          stopLosses.push(entryPrice + atr * settings.maxAtrStoploss);
         }
         return {
           entryOrder: {
