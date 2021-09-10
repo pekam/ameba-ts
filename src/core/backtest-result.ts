@@ -65,16 +65,10 @@ export function combineResults(
       "The backtest results to combine have inconsistent transaction costs."
     );
   }
-  const range = results[0].stats.range;
-  if (
-    results.some(
-      (r) => r.stats.range.from !== range.from || r.stats.range.to !== range.to
-    )
-  ) {
-    throw new Error(
-      "The backtest results to combine have inconsistent ranges."
-    );
-  }
+  const range: Range = {
+    from: Math.min(...results.map((r) => r.stats.range.from)),
+    to: Math.max(...results.map((r) => r.stats.range.to)),
+  };
 
   const allTrades: Trade[] = _.flatMap(results, (r) => r.trades);
   return tradesToResult(
@@ -173,14 +167,10 @@ function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
       if (!series.length) {
         return 0;
       }
-      const startCandle = series.find((c) => c.time === range.from);
-      if (!startCandle) {
-        throw Error("Candle with range start time not found");
-      }
-      const endCandle = series.find((c) => c.time === range.to);
-      if (!endCandle) {
-        throw Error("Candle with range end time not found");
-      }
+      const startCandle =
+        series.find((c) => c.time === range.from) || series[0];
+      const endCandle =
+        series.find((c) => c.time === range.to) || m.last(series);
       const startPrice = startCandle.open;
       const endPrice = endCandle.close;
       return (endPrice - startPrice) / startPrice;
