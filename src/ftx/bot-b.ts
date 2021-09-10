@@ -20,6 +20,7 @@ interface BotBArgs {
   strat: Strategy;
   resolution: FtxResolution;
   ftxUtil: FtxUtil;
+  leverage?: number;
 }
 
 async function run(args: BotBArgs) {
@@ -30,7 +31,12 @@ async function run(args: BotBArgs) {
  * Runs a Strategy (the same type that can be used with the backtester)
  * in FTX.
  */
-async function doRun({ strat, resolution, ftxUtil }: BotBArgs): Promise<void> {
+async function doRun({
+  strat,
+  resolution,
+  ftxUtil,
+  leverage,
+}: BotBArgs): Promise<void> {
   /*
    * Consider exiting any existing positions when starting the bot.
    * This would simplify things, as the strategies wouldn't need to
@@ -78,7 +84,8 @@ async function doRun({ strat, resolution, ftxUtil }: BotBArgs): Promise<void> {
 
     // Entry order
     if (!state.position && state.entryOrder) {
-      const target = wallet.totalUsdValue / state.entryOrder.price;
+      const targetUsdValue = wallet.totalUsdValue * (leverage || 1);
+      const target = targetUsdValue / state.entryOrder.price;
       const size =
         state.entryOrder.side === "buy"
           ? target - wallet.coin

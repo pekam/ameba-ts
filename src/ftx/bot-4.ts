@@ -22,5 +22,6 @@ import { getFtxUtil } from "./ftx-util";
       maxRelativeStopLoss: 0.02,
       maxAtrStoploss: 5,
     }),
+    leverage: 2,
   });
 })();
