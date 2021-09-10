@@ -35,6 +35,7 @@ export interface IndicatorSettings {
     predicate: (candle: Candle, indicatorValues: IndicatorValues) => boolean;
     period: number;
   };
+  readonly avgVolPeriod?: number;
 }
 
 interface IndicatorChannel {
@@ -58,6 +59,7 @@ export interface IndicatorValues {
    * satisfy the predicate, e.g. 0.5.
    */
   predicateCounter?: number;
+  avgVol?: number;
 }
 
 export interface MacdResult {
@@ -77,6 +79,7 @@ export class Indicators {
   private readonly predicateCounterFunc: (
     condition: boolean
   ) => number | undefined;
+  private readonly avgVol: SMA;
 
   private readonly candleToIndicators: WeakMap<
     Candle,
@@ -133,6 +136,9 @@ export class Indicators {
         settings.predicateCounterSettings.period
       );
     }
+    if (settings.avgVolPeriod) {
+      this.avgVol = new SMA({ period: settings.avgVolPeriod, values: [] });
+    }
   }
 
   private addIndicatorsForNextCandle(candle: Candle) {
@@ -169,6 +175,10 @@ export class Indicators {
         // @ts-ignore TS defs have wrong argument type
         this.keltnerChannel && this.keltnerChannel.nextValue({ ...candle }),
       atr: this.atr && this.atr.nextValue(candle),
+      avgVol:
+        this.avgVol && candle.volume !== undefined
+          ? this.avgVol.nextValue(candle.volume)
+          : undefined,
     };
 
     if (this.predicateCounterFunc) {
