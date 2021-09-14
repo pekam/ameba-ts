@@ -153,7 +153,7 @@ async function sleepAndUpdateExitsUntilNextCandle(
   let logPrefix = "";
 
   while (isOnSameCandle(getCurrentTimestampInSeconds(), startTime, period)) {
-    skipClearingLines || clearLastLine(2);
+    skipClearingLines || clearLastLine(3);
     skipClearingLines = false;
 
     console.log(logPrefix, {
@@ -164,6 +164,10 @@ async function sleepAndUpdateExitsUntilNextCandle(
 
     const wallet = await ftxUtil.getWallet();
     const nextPosition = getCurrentPosition(wallet);
+    console.log({
+      totalUsd: wallet.totalUsdValue,
+      coinUsd: wallet.coinUsdValue,
+    });
 
     if (!oldPosition && nextPosition) {
       console.log("Entered, setup exit orders");
@@ -236,9 +240,10 @@ async function setupExitOrders({
 }
 
 function getCurrentPosition(wallet: FtxWallet): MarketPosition | null {
-  if (wallet.coinUsdValue > wallet.totalUsdValue / 2) {
+  const posLimit = Math.min(wallet.totalUsdValue / 4, 20);
+  if (wallet.coinUsdValue > posLimit) {
     return "long";
-  } else if (wallet.coinUsdValue < -wallet.totalUsdValue / 2) {
+  } else if (wallet.coinUsdValue < -posLimit) {
     return "short";
   } else {
     return null;
