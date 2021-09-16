@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Candle, CandleSeries, OHLC, Range } from "../core/types";
+import { Candle, CandleSeries, OHLC, Range, SeriesMap } from "../core/types";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
@@ -214,6 +214,15 @@ function combineRanges(...ranges: Range[]) {
   };
 }
 
+function seriesWithSymbolsToMap(
+  seriesWithSymbols: { symbol: string; series: CandleSeries }[]
+): SeriesMap {
+  return seriesWithSymbols.reduce((seriesMap, current) => {
+    seriesMap[current.symbol] = current.series;
+    return seriesMap;
+  }, {} as SeriesMap);
+}
+
 /**
  * Collection of utility functions.
  */
@@ -244,6 +253,7 @@ export const m = {
   getWeightedAverage,
   formatPercentage,
   combineRanges,
+  seriesWithSymbolsToMap,
 
   getSwingHighs,
   getSwingLows,

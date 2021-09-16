@@ -1,6 +1,6 @@
 import { flatMap } from "lodash";
 import { Indicators } from "../core/indicators";
-import { CandleSeries, Range } from "../core/types";
+import { CandleSeries, Range, SeriesMap } from "../core/types";
 import { MARKET_CAPS } from "../data/load-company-profiles";
 import { stockDataStore } from "../data/stock-data-store";
 import { m } from "../shared/functions";
@@ -20,13 +20,15 @@ function getNextTimestamp(state: State): number | undefined {
 }
 
 type DailySignals = {
-  time: number;
-  stocks: {
-    symbol: string;
-    index: number;
-    series: CandleSeries;
+  signals: {
+    time: number;
+    stocks: {
+      symbol: string;
+      index: number;
+    }[];
   }[];
-}[];
+  serieses: SeriesMap;
+};
 
 /**
  * Returns an array with an entry for each day when there was at least one signal.
@@ -58,7 +60,7 @@ export async function getDailyStockSignals({
     signaler: signalerProvider(),
   }));
 
-  const results = [];
+  const signals = [];
 
   while (true) {
     const nextTimestamps = states
@@ -100,26 +102,29 @@ export async function getDailyStockSignals({
     );
 
     if (signaled.length) {
-      results.push({
+      signals.push({
         time: toStartOfDay(getNextTimestamp(signaled[0])!),
         stocks: signaled.map((s) => ({
           symbol: s.symbol,
           index: s.nextIndex,
-          series: s.series,
         })),
       });
     }
     included.forEach((s) => s.nextIndex++);
   }
-  return results;
+  return { signals, serieses: m.seriesWithSymbolsToMap(data) };
 }
 
 export function getDailySignalProfitStatistics(
   signals: DailySignals,
   afterDays: number
 ) {
-  const dailyProfits: number[] = flatMap(signals, (dailySignals) => {
+  const dailyProfits: number[] = flatMap(signals.signals, (dailySignals) => {
     const profitsOfDay = dailySignals.stocks
+      .map((s) => ({
+        ...s,
+        series: signals.serieses[s.symbol],
+      }))
       .filter((s) => s.series[s.index + afterDays])
       .map((s) => {
         const start = s.series[s.index].close;

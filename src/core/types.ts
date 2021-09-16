@@ -123,3 +123,8 @@ export interface Range {
   readonly from: number;
   readonly to: number;
 }
+
+/**
+ * Mapping from a symbol to the corresponding candle series.
+ */
+export type SeriesMap = { [key: string]: CandleSeries };
