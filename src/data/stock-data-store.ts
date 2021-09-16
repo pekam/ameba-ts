@@ -3,7 +3,7 @@
  */
 
 import { concat } from "lodash";
-import { CandleSeries } from "../core/types";
+import { CandleSeries, Range } from "../core/types";
 import {
   getCurrentTimestampInSeconds,
   Moment,
@@ -12,6 +12,7 @@ import {
   toTimestamp,
 } from "../shared/time-util";
 import { loadCandles } from "./load-candle-data";
+import { getStocksByMarketCap } from "./load-company-profiles";
 import { db } from "./mongo";
 
 const collectionId = "stock-daily-candles";
@@ -155,6 +156,30 @@ interface DbEntry {
   to: number;
 }
 
+async function getDailyCandlesByMarketCap(args: {
+  from: Moment;
+  to: Moment;
+  marketCapRange: Range;
+}): Promise<{ symbol: string; series: CandleSeries }[]> {
+  const { marketCapRange } = args;
+
+  const companyProfiles = await getStocksByMarketCap(
+    marketCapRange.from,
+    marketCapRange.to
+  );
+
+  return (
+    await Promise.all(
+      companyProfiles.map(async (profile) => {
+        const symbol = profile.symbol;
+        const series = await getDailyCandles({ symbol, ...args });
+        return { series, symbol };
+      })
+    )
+  ).filter((data) => data.series.length);
+}
+
 export const stockDataStore = {
   getDailyCandles,
+  getDailyCandlesByMarketCap,
 };
