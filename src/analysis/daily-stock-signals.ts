@@ -120,26 +120,55 @@ export function getDailySignalProfitStatistics(
   afterDays: number
 ) {
   const dailyProfits: number[] = flatMap(signals.signals, (dailySignals) => {
-    const profitsOfDay = dailySignals.stocks
-      .map((s) => ({
-        ...s,
-        series: signals.serieses[s.symbol],
-      }))
-      .filter((s) => s.series[s.index + afterDays])
-      .map((s) => {
-        const start = s.series[s.index].close;
-        const end = s.series[s.index + afterDays].close;
-        return (end - start) / start;
-      });
+    const profitsOfDay = flatMap(dailySignals.stocks, (s) => {
+      const series = signals.serieses[s.symbol];
+      const followingCandle = series[s.index + afterDays];
+      if (!followingCandle) {
+        return [];
+      }
+      const startPrice = series[s.index].close;
+      const endPrice = followingCandle.close;
+      return (endPrice - startPrice) / startPrice;
+    });
+
     if (!profitsOfDay.length) {
       return [];
     }
     return [m.avg(profitsOfDay)];
   });
+
+  function profitsToStats(profits: number[]) {
+    return {
+      profitable: profits.filter((p) => p > 0).length / profits.length,
+      avgProfit: m.avg(profits),
+    };
+  }
+
+  const stats = {
+    daysWithSignal: dailyProfits.length,
+    ...profitsToStats(dailyProfits),
+  };
+
+  /* Stats for all days (signaled or not) so that we can compare whether the signal
+     actually has an edge over buy-and-hold of every stock in the basket.
+     Taking a shortcut here by not first grouping by day like with the signaled stats. */
+  const everyCandleProfit = flatMap(
+    Object.values(signals.serieses),
+    (series) => {
+      return flatMap(series, (candle, i) => {
+        const prev = series[i - 1];
+        if (!prev) {
+          return [];
+        }
+        return [(candle.close - prev.close) / prev.close];
+      });
+    }
+  );
+  const all = profitsToStats(everyCandleProfit);
+
   return {
-    count: dailyProfits.length,
-    profitable: dailyProfits.filter((p) => p > 0).length / dailyProfits.length,
-    avgProfit: m.avg(dailyProfits),
+    ...stats,
+    all,
   };
 }
 
