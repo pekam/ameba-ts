@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Candle, CandleSeries, OHLC } from "../core/types";
+import { Candle, CandleSeries, OHLC, Range } from "../core/types";
 import { candlePatterns } from "./candle-patterns";
 import { candleUtils } from "./candle-utils";
 import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
@@ -207,6 +207,13 @@ function formatPercentage(
   )}%`;
 }
 
+function combineRanges(...ranges: Range[]) {
+  return {
+    from: Math.min(...ranges.map((r) => r.from)),
+    to: Math.max(...ranges.map((r) => r.to)),
+  };
+}
+
 /**
  * Collection of utility functions.
  */
@@ -236,6 +243,7 @@ export const m = {
   takeCandlesAfter,
   getWeightedAverage,
   formatPercentage,
+  combineRanges,
 
   getSwingHighs,
   getSwingLows,
