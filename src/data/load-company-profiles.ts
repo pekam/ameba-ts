@@ -1,3 +1,4 @@
+import { Range } from "../core/types";
 import { m } from "../shared/functions";
 import { fetchFromFinnhub } from "./finnhub";
 import { readCachedSymbols } from "./load-symbols";
@@ -27,10 +28,25 @@ export async function readCachedProfiles(): Promise<CompanyProfile[]> {
   return db.access((db) => db.collection(collection).find().toArray());
 }
 
-export async function getStocksByMarketCap(min: number, max: number) {
+/**
+ * In millions.
+ */
+export const MARKET_CAPS = {
+  micro: { from: 50, to: 300 },
+  small: { from: 300, to: 2000 },
+  mid: { from: 2000, to: 10000 },
+  large: { from: 10000, to: 200000 },
+  mega: { from: 200000, to: Infinity },
+} as const;
+
+/**
+ * @param range in millions
+ */
+export async function getStocksByMarketCap(range: Range) {
   return (await readCachedProfiles()).filter(
     (profile) =>
-      profile.marketCapitalization >= min && profile.marketCapitalization < max
+      profile.marketCapitalization >= range.from &&
+      profile.marketCapitalization < range.to
   );
 }
 
@@ -41,10 +57,6 @@ export async function getStocksSortedByMarketCap(count?: number) {
     (profile) => profile.marketCapitalization
   );
   return count ? sorted.slice(0, count) : sorted;
-}
-
-export function getMidCapStocks() {
-  return getStocksByMarketCap(2000, 10000);
 }
 
 // https://finnhub.io/docs/api#company-profile2

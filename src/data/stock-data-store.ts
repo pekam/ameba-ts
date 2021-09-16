@@ -163,10 +163,7 @@ async function getDailyCandlesByMarketCap(args: {
 }): Promise<{ symbol: string; series: CandleSeries }[]> {
   const { marketCapRange } = args;
 
-  const companyProfiles = await getStocksByMarketCap(
-    marketCapRange.from,
-    marketCapRange.to
-  );
+  const companyProfiles = await getStocksByMarketCap(marketCapRange);
 
   return (
     await Promise.all(

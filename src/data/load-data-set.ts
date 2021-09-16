@@ -114,7 +114,7 @@ async function loadDataSet(
 }
 
 async function run() {
-  const companies = await getStocksByMarketCap(10000, 100000);
+  const companies = await getStocksByMarketCap({ from: 10000, to: 100000 });
   loadDataSet(
     "makkara",
     "Hourly candles for lower large-cap (10-100 billion), 1.5.-10.10.2020",
