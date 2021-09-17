@@ -12,6 +12,7 @@
   },
   "author": "Pekka Maanpää",
   "dependencies": {
+    "ascii-table": "^0.0.9",
     "body-parser": "^1.18.3",
     "cli-progress": "^3.8.2",
     "express": "^4.16.4",
