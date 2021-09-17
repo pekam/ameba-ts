@@ -1,16 +1,9 @@
 import { flatMap } from "lodash";
 import { median } from "mathjs";
-import { Indicators } from "../core/indicators";
 import { CandleSeries, Range, SeriesMap } from "../core/types";
-import { MARKET_CAPS } from "../data/load-company-profiles";
 import { stockDataStore } from "../data/stock-data-store";
 import { m } from "../shared/functions";
-import {
-  Moment,
-  PERIODS,
-  toDateString,
-  toStartOfDay,
-} from "../shared/time-util";
+import { Moment, toDateString, toStartOfDay } from "../shared/time-util";
 const AsciiTable = require("ascii-table");
 
 type Signaler = (series: CandleSeries) => boolean;
@@ -233,63 +226,3 @@ export async function reportSignalStats(
   });
   console.log(addResultTable(all, "All (for comparison)"));
 }
-
-async function example() {
-  const signals = await getDailyStockSignals({
-    marketCapRange: m.combineRanges(MARKET_CAPS.large, MARKET_CAPS.mega),
-    from: "2020-08-01",
-    to: "2021-08-01",
-    signalerProvider: () => {
-      const ind = new Indicators({
-        donchianChannelPeriod: 100,
-        smaPeriod: 100,
-        atrPeriod: 10,
-      });
-      let lastDonchianBreakout = -Infinity;
-      let lastSmaTouch = -Infinity;
-
-      return (series) => {
-        const candle = m.last(series);
-        const { donchianChannel, sma, atr } = ind.update(series);
-        const prev = ind.get(series[series.length - 2])?.donchianChannel;
-        if (!donchianChannel || !prev || !sma || !atr) {
-          return false;
-        }
-        if (donchianChannel.upper > prev.upper) {
-          lastDonchianBreakout = candle.time;
-          return false;
-        }
-        if (candle.low < sma) {
-          lastSmaTouch = candle.time;
-        }
-        const signal =
-          candle.time - lastDonchianBreakout < PERIODS.day * 14 &&
-          lastSmaTouch > lastDonchianBreakout &&
-          candle.open < candle.close;
-
-        if (signal) {
-          // Reset
-          lastDonchianBreakout = -Infinity;
-          lastSmaTouch = -Infinity;
-        }
-        return signal;
-      };
-    },
-  });
-
-  // console.log(
-  //   signals.map((s) => ({
-  //     t: toDateString(s.time),
-  //     s: s.stocks.map((ss) => ss.symbol),
-  //   }))
-  // );
-
-  reportSignalStats(signals, [
-    { afterDays: 1, relativeTo: "currentOpen" },
-    { afterDays: 1, relativeTo: "signalClose" },
-    { afterDays: 3, relativeTo: "signalClose" },
-    { afterDays: 5, relativeTo: "signalClose" },
-  ]);
-}
-
-// example();
