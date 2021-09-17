@@ -74,7 +74,7 @@ async function doRun({
       }),
       ftxUtil.getWallet(),
     ]);
-    console.log({ now: toDateString(now, "sec") });
+    console.log({ now: toDateString(now, "s") });
     state.series = filterIncompleteCandleIfNeeded(series, candlePeriod);
     state.position = getCurrentPosition(wallet);
 
@@ -104,7 +104,7 @@ function filterIncompleteCandleIfNeeded(
   const now = getCurrentTimestampInSeconds();
   if (isOnSameCandle(candleTime, now, period)) {
     console.log(
-      "Removed incomplete candle at " + toDateString(candleTime, "sec")
+      "Removed incomplete candle at " + toDateString(candleTime, "s")
     );
     return series.slice(0, series.length - 1);
   }
@@ -157,8 +157,8 @@ async function sleepAndUpdateExitsUntilNextCandle(
     skipClearingLines = false;
 
     console.log(logPrefix, {
-      s: toDateString(startTime, "sec"),
-      e: toDateString(getCurrentTimestampInSeconds(), "sec"),
+      s: toDateString(startTime, "s"),
+      e: toDateString(getCurrentTimestampInSeconds(), "s"),
     });
     logPrefix += ".";
 

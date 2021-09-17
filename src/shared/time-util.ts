@@ -70,15 +70,16 @@ export function getTimeInNewYork(timestamp: number): DateTime {
 
 /**
  * Returns a string representation of the provided time in UTC time zone.
+ *
+ * @param time the time to convert to string
+ * @param resolution whether to show only the date part,
+ * or also the time up to minutes or seconds
  */
-export function toDateString(
-  time: Moment,
-  resolution: "D" | "min" | "sec" = "min"
-) {
+export function toDateString(time: Moment, resolution: "d" | "m" | "s" = "m") {
   const endIndex = (() => {
-    if (resolution === "D") {
+    if (resolution === "d") {
       return 10;
-    } else if (resolution === "min") {
+    } else if (resolution === "m") {
       return 16;
     } else {
       return 19;

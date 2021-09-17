@@ -178,9 +178,9 @@ export async function reportSignalStats(
   );
   argsTable.addRow(
     "Time",
-    toDateString(signals.args.from, "D"),
+    toDateString(signals.args.from, "d"),
     "-",
-    toDateString(signals.args.to, "D")
+    toDateString(signals.args.to, "d")
   );
   console.log();
   console.log(argsTable.toString());
