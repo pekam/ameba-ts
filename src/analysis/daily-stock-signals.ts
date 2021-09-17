@@ -28,7 +28,15 @@ type DailySignals = {
     }[];
   }[];
   serieses: SeriesMap;
+  args: StockSignalArgs;
 };
+
+interface StockSignalArgs {
+  marketCapRange: Range;
+  signalerProvider: () => Signaler;
+  from: Moment;
+  to: Moment;
+}
 
 /**
  * Returns an array with an entry for each day when there was at least one signal.
@@ -37,17 +45,10 @@ type DailySignals = {
  * The profit statistics after N days of the signal occured can be calculated
  * with getDailySignalProfitStatistics().
  */
-export async function getDailyStockSignals({
-  marketCapRange,
-  from,
-  to,
-  signalerProvider,
-}: {
-  marketCapRange: Range;
-  signalerProvider: () => Signaler;
-  from: Moment;
-  to: Moment;
-}): Promise<DailySignals> {
+export async function getDailyStockSignals(
+  args: StockSignalArgs
+): Promise<DailySignals> {
+  const { marketCapRange, from, to, signalerProvider } = args;
   const data = await stockDataStore.getDailyCandlesByMarketCap({
     from,
     to,
@@ -112,7 +113,7 @@ export async function getDailyStockSignals({
     }
     included.forEach((s) => s.nextIndex++);
   }
-  return { signals, serieses: m.seriesWithSymbolsToMap(data) };
+  return { signals, serieses: m.seriesWithSymbolsToMap(data), args };
 }
 
 export function getDailySignalProfitStatistics(
