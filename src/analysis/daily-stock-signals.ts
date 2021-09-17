@@ -1,4 +1,5 @@
 import { flatMap } from "lodash";
+import { median } from "mathjs";
 import { Indicators } from "../core/indicators";
 import { CandleSeries, Range, SeriesMap } from "../core/types";
 import { MARKET_CAPS } from "../data/load-company-profiles";
@@ -166,6 +167,7 @@ function profitsToStats(profits: number[]) {
   return {
     profitable: profits.filter((p) => p > 0).length / profits.length,
     avgProfit: m.avg(profits),
+    medianProfit: median(...profits),
   };
 }
 
@@ -197,6 +199,7 @@ export async function reportSignalStats(
       "Diff from",
       "Profitable",
       "Avg profit",
+      "Median",
       "Sample size (days)"
     );
     reportInputs.forEach((input) => {
@@ -213,6 +216,7 @@ export async function reportSignalStats(
         relativeTo,
         m.formatPercentage(stats.profitable, false),
         m.formatPercentage(stats.avgProfit),
+        m.formatPercentage(stats.medianProfit),
         stats.daysWithSignal
       );
     });
