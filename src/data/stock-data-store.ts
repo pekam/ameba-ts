@@ -82,7 +82,7 @@ async function getDailyCandles(args: {
 
       const candlesBefore = await (async () => {
         if (from >= entryFromDb.from) {
-          return [];
+          return undefined;
         }
         range.from = from - extraPeriodToLoad;
         return await getFromInternet({
@@ -93,7 +93,7 @@ async function getDailyCandles(args: {
 
       const candlesAfter = await (async () => {
         if (to <= entryFromDb.to) {
-          return [];
+          return undefined;
         }
         range.to = Math.min(to + extraPeriodToLoad, yesterday);
         return await getFromInternet({
@@ -102,14 +102,14 @@ async function getDailyCandles(args: {
         });
       })();
 
-      if (!candlesBefore.length && !candlesAfter.length) {
+      if (!candlesBefore && !candlesAfter) {
         return false;
       }
 
       const allCandles = concatSeries(
-        candlesBefore,
+        candlesBefore || [],
         entryFromDb.candles,
-        candlesAfter
+        candlesAfter || []
       );
       await setToDb({
         symbol,
