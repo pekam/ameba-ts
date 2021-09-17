@@ -117,7 +117,8 @@ export async function getDailyStockSignals({
 
 export function getDailySignalProfitStatistics(
   signals: DailySignals,
-  afterDays: number
+  afterDays: number,
+  relativeTo: "signalClose" | "currentOpen" = "signalClose"
 ) {
   const dailyProfits: number[] = flatMap(signals.signals, (dailySignals) => {
     const profitsOfDay = flatMap(dailySignals.stocks, (s) => {
@@ -126,7 +127,10 @@ export function getDailySignalProfitStatistics(
       if (!followingCandle) {
         return [];
       }
-      const startPrice = series[s.index].close;
+      const startPrice =
+        relativeTo === "signalClose"
+          ? series[s.index].close
+          : followingCandle.open;
       const endPrice = followingCandle.close;
       return (endPrice - startPrice) / startPrice;
     });
