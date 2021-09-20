@@ -216,13 +216,17 @@ export async function reportSignalStats(
     return resultTable.toString();
   }
 
-  console.log(addResultTable(signals, "Results"));
+  if (signals.signals.length) {
+    console.log(addResultTable(signals, "Results"));
 
-  /* Stats for all days (signaled or not) so that we can compare whether the signal
-   * actually has an edge over buy-and-hold of every stock in the basket. */
-  const all = await getDailyStockSignals({
-    ...signals.args,
-    signalerProvider: () => () => true,
-  });
-  console.log(addResultTable(all, "All (for comparison)"));
+    /* Stats for all days (signaled or not) so that we can compare whether the signal
+     * actually has an edge over buy-and-hold of every stock in the basket. */
+    const all = await getDailyStockSignals({
+      ...signals.args,
+      signalerProvider: () => () => true,
+    });
+    console.log(addResultTable(all, "All (for comparison)"));
+  } else {
+    console.log("\n!!! No signals, no report !!!\n");
+  }
 }
