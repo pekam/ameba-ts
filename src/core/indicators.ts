@@ -38,7 +38,7 @@ export interface IndicatorSettings {
   readonly avgVolPeriod?: number;
 }
 
-interface IndicatorChannel {
+export interface IndicatorChannel {
   upper: number;
   middle: number;
   lower: number;
