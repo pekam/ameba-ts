@@ -1,5 +1,5 @@
+import { Candle, CandleSeries } from "../core/types";
 import { m } from "./functions";
-import { CandleSeries } from "../core/types";
 
 export const candlePatterns = {
   isInsideBar: function (series: CandleSeries) {
@@ -11,5 +11,19 @@ export const candlePatterns = {
     const lastCandle = m.last(series);
     const prevCandle = m.get(series, -2);
     return lastCandle.high < prevCandle.high && lastCandle.low > prevCandle.low;
+  },
+
+  isPinBar: function (args: {
+    candle: Candle;
+    minSize: number;
+    closeLimit?: number;
+  }) {
+    const { candle, minSize, closeLimit } = {
+      closeLimit: 0.8,
+      ...args,
+    };
+    const size = candle.high - candle.close;
+    const limit = candle.low + closeLimit * size;
+    return size >= minSize && candle.close >= limit && candle.open >= limit;
   },
 };
