@@ -39,7 +39,8 @@ export function tradeOnlyRecentlyProfitable(
     ) {
       const backtestResult = backtestStrategy(
         stratProvider,
-        series.slice(-backtestCandleCount)
+        series.slice(-backtestCandleCount),
+        false
       );
       enabled = backtestResult.stats.result > resultThreshold;
     }
