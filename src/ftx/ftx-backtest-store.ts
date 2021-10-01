@@ -20,6 +20,7 @@ async function saveBacktestResult(
   const id: number = (await db.get(collectionId, "nextId"))?.value || 1;
   await db.set(collectionId, "nextId", { value: id + 1 });
   const resultWithId = { ...result, id };
+  console.log("Backtest result saved with id " + id);
   await db.set(collectionId, id, resultWithId);
   return resultWithId;
 }
