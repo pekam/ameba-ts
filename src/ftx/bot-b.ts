@@ -17,11 +17,14 @@ import { FtxResolution } from "./ftx";
 import { FtxUtil, FtxWallet } from "./ftx-util";
 
 interface BotBArgs {
-  strat: Strategy;
+  stratProvider: () => Strategy;
   resolution: FtxResolution;
   ftxUtil: FtxUtil;
-  leverage?: number;
+  requiredCandles: number;
+  stakerProvider?: () => Staker;
 }
+
+type Staker = (balance: number, series: CandleSeries) => number;
 
 async function run(args: BotBArgs) {
   await restartOnError(() => doRun(args), PERIODS.minute * 2);
@@ -32,10 +35,11 @@ async function run(args: BotBArgs) {
  * in FTX.
  */
 async function doRun({
-  strat,
+  stratProvider,
   resolution,
   ftxUtil,
-  leverage,
+  requiredCandles,
+  stakerProvider,
 }: BotBArgs): Promise<void> {
   /*
    * Consider exiting any existing positions when starting the bot.
@@ -46,7 +50,12 @@ async function doRun({
    */
 
   const candlePeriod = ftxResolutionToPeriod[resolution];
-  const requiredCandles = 1000;
+
+  const strat = stratProvider();
+
+  const staker: Staker = stakerProvider
+    ? stakerProvider()
+    : (balance) => balance;
 
   let state: TradeState = {
     series: [],
@@ -84,7 +93,7 @@ async function doRun({
 
     // Entry order
     if (!state.position && state.entryOrder) {
-      const targetUsdValue = wallet.totalUsdValue * (leverage || 1);
+      const targetUsdValue = staker(wallet.totalUsdValue, series);
       const target = targetUsdValue / state.entryOrder.price;
       const size =
         state.entryOrder.side === "buy"
