@@ -94,13 +94,15 @@ async function doRun({
     // Entry order
     if (!state.position && state.entryOrder) {
       const targetUsdValue = staker(wallet.totalUsdValue, series);
-      const target = targetUsdValue / state.entryOrder.price;
-      const size =
-        state.entryOrder.side === "buy"
-          ? target - wallet.coin
-          : target + wallet.coin;
+      if (targetUsdValue !== 0) {
+        const target = targetUsdValue / state.entryOrder.price;
+        const size =
+          state.entryOrder.side === "buy"
+            ? target - wallet.coin
+            : target + wallet.coin;
 
-      await addOrder(state.entryOrder, size, ftxUtil);
+        await addOrder(state.entryOrder, size, ftxUtil);
+      }
     }
   }
 }

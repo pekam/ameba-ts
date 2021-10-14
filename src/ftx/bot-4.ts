@@ -50,10 +50,12 @@ import { getFtxUtil } from "./ftx-util";
         backtest(series);
       }
 
-      if (backtestResult !== null && backtestResult > 1.005) {
-        return balance * 3;
-      } else {
+      if (backtestResult === null || backtestResult < 1.003) {
+        return 0;
+      } else if (backtestResult < 1.005) {
         return balance;
+      } else {
+        return balance * 3;
       }
     };
   }
