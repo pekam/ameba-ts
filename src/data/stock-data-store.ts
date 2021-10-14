@@ -1,5 +1,5 @@
 /*
- * Candles are loaded from Finnhub and cached in mongodb on demand.
+ * Daily candles are loaded from Finnhub and cached in mongodb on demand.
  */
 
 import { concat } from "lodash";
@@ -11,14 +11,14 @@ import {
   toStartOfDay,
   toTimestamp,
 } from "../shared/time-util";
-import { loadCandles } from "./load-candle-data";
+import { loadCandles, Resolution } from "./load-candle-data";
 import { getStocksByMarketCap } from "./load-company-profiles";
 import { db } from "./mongo";
 
 const collectionId = "stock-daily-candles";
 
 /**
- * How many candles before/after the requested ones to load in addition.
+ * How many daily candles before/after the requested ones to load in addition.
  * This reduces the need for further requests.
  */
 const extraPeriodToLoad = PERIODS.day * 100;
@@ -161,6 +161,15 @@ async function getDailyCandlesByMarketCap(args: {
   to: Moment;
   marketCapRange: Range;
 }): Promise<{ symbol: string; series: CandleSeries }[]> {
+  return getCandlesByMarketCap({ ...args, resolution: "D" });
+}
+
+async function getCandlesByMarketCap(args: {
+  from: Moment;
+  to: Moment;
+  resolution: Resolution;
+  marketCapRange: Range;
+}): Promise<{ symbol: string; series: CandleSeries }[]> {
   const { marketCapRange } = args;
 
   const companyProfiles = await getStocksByMarketCap(marketCapRange);
@@ -169,14 +178,35 @@ async function getDailyCandlesByMarketCap(args: {
     await Promise.all(
       companyProfiles.map(async (profile) => {
         const symbol = profile.symbol;
-        const series = await getDailyCandles({ symbol, ...args });
+        const series = await getCandles({ symbol, ...args });
         return { series, symbol };
       })
     )
   ).filter((data) => data.series.length);
 }
 
+async function getCandles(args: {
+  symbol: string;
+  from: Moment;
+  to: Moment;
+  resolution: Resolution;
+}): Promise<CandleSeries> {
+  if (args.resolution === "D") {
+    return getDailyCandles(args);
+  }
+  return loadCandles({ ...args, market: "stock" });
+}
+
+/**
+ * Interface for getting stock candle data.
+ * Currently daily candles are cached locally to avoid
+ * fetching the same data multiple times.
+ * Others are fetched on demand and thus will be equally slow
+ * on each request.
+ */
 export const stockDataStore = {
   getDailyCandles,
   getDailyCandlesByMarketCap,
+  getCandles,
+  getCandlesByMarketCap,
 };
