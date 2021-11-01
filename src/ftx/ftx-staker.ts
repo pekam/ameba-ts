@@ -89,11 +89,13 @@ export function getFtxStaker({
   market,
   stakeByPeakAccountValue,
   stratIfStakingByBacktest,
+  overrideMultiplier,
 }: {
   subaccount: string;
   market: FtxMarket;
   stakeByPeakAccountValue: boolean;
   stratIfStakingByBacktest?: FtxBotStrat;
+  overrideMultiplier?: number;
 }) {
   const ftxUtil = getFtxUtil({ ftx: getFtxClient({ subaccount }), market });
   /*
@@ -119,52 +121,55 @@ export function getFtxStaker({
       leverage,
     } = await ftxUtil.getState();
 
-    if (!spotMarginEnabled) {
-      const stakeMultiplier = await (async () => {
-        let multiplier = 1;
-        const drawdownMultiplier = getDrawdownMultiplier(
-          totalUsdValue,
-          peakAccountValue
-        );
-        if (stakeByPeakAccountValue) {
-          multiplier *= drawdownMultiplier;
-        }
-        if (backtestStaker) {
-          multiplier *= await backtestStaker(series);
-        }
-        if (multiplier < 0.5 && drawdownMultiplier > 0.9) {
-          multiplier = 0.5;
-        }
-        if (multiplier > 1) return 1;
-        if (multiplier < 0) return 0;
-        return multiplier;
-      })();
-
-      const targetPositionUsdValue = totalUsdValue * stakeMultiplier;
-      const currentPositionUsdValue = coin * bid;
-      const howMuchStillCanBuyUsdValue = Math.max(
-        targetPositionUsdValue - currentPositionUsdValue,
-        0
-      );
-      console.log({
+    // if (!spotMarginEnabled) {
+    const stakeMultiplier = await (async () => {
+      if (overrideMultiplier) {
+        return overrideMultiplier;
+      }
+      let multiplier = 1;
+      const drawdownMultiplier = getDrawdownMultiplier(
         totalUsdValue,
-        peak: peakAccountValue,
-        stakeMultiplier,
-        targetPositionUsdValue,
-        currentPositionUsdValue,
-        howMuchStillCanBuyUsdValue,
-      });
-      return {
-        value: howMuchStillCanBuyUsdValue / bid,
-        usdValue: howMuchStillCanBuyUsdValue,
-        price: bid,
-      };
-    } else {
-      const maxPosition = getMaxPositionOnMargin(collateral, leverage, bid);
-      const diff = maxPosition - coin;
-      const value = Math.max(diff, 0);
-      return { value, usdValue: value * bid, price: bid };
-    }
+        peakAccountValue
+      );
+      if (stakeByPeakAccountValue) {
+        multiplier *= drawdownMultiplier;
+      }
+      if (backtestStaker) {
+        multiplier *= await backtestStaker(series);
+      }
+      if (multiplier < 0.5 && drawdownMultiplier > 0.9) {
+        multiplier = 0.5;
+      }
+      if (multiplier > 1) return 1;
+      if (multiplier < 0) return 0;
+      return multiplier;
+    })();
+
+    const targetPositionUsdValue = totalUsdValue * stakeMultiplier;
+    const currentPositionUsdValue = coin * bid;
+    const howMuchStillCanBuyUsdValue = Math.max(
+      targetPositionUsdValue - currentPositionUsdValue,
+      0
+    );
+    console.log({
+      totalUsdValue,
+      peak: peakAccountValue,
+      stakeMultiplier,
+      targetPositionUsdValue,
+      currentPositionUsdValue,
+      howMuchStillCanBuyUsdValue,
+    });
+    return {
+      value: howMuchStillCanBuyUsdValue / bid,
+      usdValue: howMuchStillCanBuyUsdValue,
+      price: bid,
+    };
+    // } else {
+    //   const maxPosition = getMaxPositionOnMargin(collateral, leverage, bid);
+    //   const diff = maxPosition - coin;
+    //   const value = Math.max(diff, 0);
+    //   return { value, usdValue: value * bid, price: bid };
+    // }
   }
 
   async function howMuchCanSell() {
@@ -177,14 +182,14 @@ export function getFtxStaker({
       leverage,
     } = await ftxUtil.getState();
 
-    if (!spotMarginEnabled) {
-      return { value: coin, usdValue: coin * ask, price: ask };
-    } else {
-      const maxPosition = getMaxPositionOnMargin(collateral, leverage, ask);
-      const diff = maxPosition + coin;
-      const value = Math.max(diff, 0);
-      return { value, usdValue: value * ask, price: ask };
-    }
+    // if (!spotMarginEnabled) {
+    return { value: coin, usdValue: coin * ask, price: ask };
+    // } else {
+    //   const maxPosition = getMaxPositionOnMargin(collateral, leverage, ask);
+    //   const diff = maxPosition + coin;
+    //   const value = Math.max(diff, 0);
+    //   return { value, usdValue: value * ask, price: ask };
+    // }
   }
 
   function getMaxPositionOnMargin(
