@@ -84,13 +84,13 @@ export function getFtxMarketMaker(params: {
 
   async function addBestBid(size: number): Promise<FtxBotOrder> {
     const { bid } = await ftxUtil.getQuote();
-    const price = toFixed(bid + 0.001, 3);
+    const price = toFixed(bid + 0.0000000001, 10);
     return addOrder({ price, size, side: "buy" });
   }
 
   async function addBestAsk(size: number): Promise<FtxBotOrder> {
     const { ask } = await ftxUtil.getQuote();
-    const price = toFixed(ask - 0.001, 3);
+    const price = toFixed(ask - 0.0000000001, 10);
     return addOrder({ price, size, side: "sell" });
   }
 
