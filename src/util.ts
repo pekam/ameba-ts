@@ -77,6 +77,8 @@ export async function restartOnError(
   while (true) {
     try {
       await run();
+      // Finished without error
+      return;
     } catch (e) {
       console.error(e);
 

@@ -22,6 +22,7 @@ interface BotBArgs {
   ftxUtil: FtxUtil;
   requiredCandles: number;
   stakerProvider?: () => Staker;
+  stopper?: (state: TradeState) => boolean;
 }
 
 type Staker = (balance: number, series: CandleSeries) => number;
@@ -40,6 +41,7 @@ async function doRun({
   ftxUtil,
   requiredCandles,
   stakerProvider,
+  stopper,
 }: BotBArgs): Promise<void> {
   /*
    * Consider exiting any existing positions when starting the bot.
@@ -90,6 +92,11 @@ async function doRun({
     const updates = strat(state);
     state = { ...state, ...updates };
     console.log({ updates, state: { ...state, series: null } });
+
+    if (stopper && stopper(state)) {
+      console.log("!STOP! exiting bot-b");
+      break;
+    }
 
     // Entry order
     if (!state.position && state.entryOrder) {
