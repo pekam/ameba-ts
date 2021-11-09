@@ -3,9 +3,11 @@ import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { PERIODS } from "../shared/time-util";
 import { donchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
+import { macdStrat } from "../strats/macd-strat";
 import { runFtxBot } from "./bot";
 import { botB } from "./bot-b";
 import { FtxMarket, getFtxClient } from "./ftx";
+import { ftxAutoPickerBot } from "./ftx-auto-picker-bot";
 import { getFtxStaker } from "./ftx-staker";
 import { getFtxUtil } from "./ftx-util";
 import { getFtxMarketMaker } from "./market-maker-orders";
@@ -22,6 +24,9 @@ keeping a best bid/ask in the orderbook and waiting for someone to take them
 The second bot runs botB, which integrates with this project's Strategy type. It
 uses stop and limit orders as defined by the strategy, so some limit orders might
 be market maker (0 fees), but mostly you shouldn't count on that.
+
+The third example uses the auto picker, which periodically picks the best crypto
++ strategy combination to be traded with botB.
 
 properties.json must contain entries for these subaccounts, e.g.
 {
@@ -129,5 +134,42 @@ async function botBExample() {
     stratProvider,
     requiredCandles: backtestPeriod / PERIODS.minute + PERIODS.hour,
     stakerProvider: getStaker,
+  });
+}
+
+async function autoPickerExample() {
+  await ftxAutoPickerBot.run({
+    subaccount: "bot",
+    resolution: "1min",
+    markets: [
+      "BTC/USD",
+      "ETH/USD",
+      "FTT/USD",
+      "OMG/USD",
+      "SHIB/USD",
+      "SOL/USD",
+      "DOGE/USD",
+      "FTM/USD",
+      "XRP/USD",
+    ],
+    strats: [
+      () =>
+        donchianBreakoutStrategy({
+          channelPeriod: 100,
+          smaPeriod: 100,
+          maxAtrStoploss: 5,
+          maxRelativeStopLoss: 0.02,
+          onlyDirection: "long",
+        }),
+      () =>
+        macdStrat({
+          relativeStopLoss: 0.02,
+          relativeTakeProfit: 0.02,
+        }),
+    ],
+    lookbackPeriod: PERIODS.hour * 12,
+    pickInterval: PERIODS.hour / 2,
+    resultThreshold: 1.02,
+    requiredCandles: PERIODS.day / 60,
   });
 }
