@@ -3,7 +3,7 @@
 Add a file called `properties.json` in the project root.
 To fetch stock and forex market data, set the API key for finnhub.io.
 To work with ftx.com, you need to define API keys and secrets (with a twist) for the subaccounts
-you want to use:
+you want to use. For using Alpaca API, key and secret are also needed.
 
 ```json
 {
@@ -16,7 +16,9 @@ you want to use:
       "peak": 100
     }
   ],
-  "ftx_data_subaccount": "foo"
+  "ftx_data_subaccount": "foo",
+  "alpaca_api_key": "bar",
+  "alpaca_s": "baz"
 }
 ```
 

@@ -5,6 +5,8 @@ export const properties: {
   finnhub_api_key: string;
   ftx: { subaccount: string; api_key: string; s: string; peak?: number }[];
   ftx_data_subaccount: string;
+  alpaca_api_key: string;
+  alpaca_s: string;
 } = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "properties.json"), "utf8")
 );
