@@ -4,6 +4,7 @@ import { FtxResolution } from "../ftx/ftx";
 export type Moment =
   | string
   | number
+  | Date
   | {
       year: number;
       month: number;
@@ -35,9 +36,15 @@ export function toDateTime(input: Moment): DateTime {
     return dateTime;
   } else if (typeof input === "number") {
     return DateTime.fromSeconds(input, options);
+  } else if (input instanceof Date) {
+    return DateTime.fromJSDate(input);
   } else {
     return DateTime.fromObject({ ...input, ...options });
   }
+}
+
+export function toJSDate(input: Moment): Date {
+  return toDateTime(input).toJSDate();
 }
 
 export const getCurrentTimestampInSeconds = () =>
