@@ -52,7 +52,11 @@ async function backtest(args: {
     resolution,
   });
 
-  const result = backtestStrategy(stratProvider, series, true, fromTimestamp);
+  const result = backtestStrategy({
+    stratProvider,
+    series,
+    from: fromTimestamp,
+  });
 
   return { result, market, resolution };
 }

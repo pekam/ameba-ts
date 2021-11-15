@@ -21,12 +21,12 @@ export function autoOptimizer(settings: {
   function optimize({ series }: TradeState): Strategy {
     const withProfits = settings.stratPool.map((stratProvider) => {
       const from = m.last(series).time - settings.optimizePeriod;
-      const result = backtestStrategy(
+      const result = backtestStrategy({
         stratProvider,
-        series.slice(-10000),
-        false,
-        from
-      );
+        series: series.slice(-10000),
+        showProgressBar: false,
+        from,
+      });
       const withTransactionCost = withRelativeTransactionCost(
         result,
         relativeTransactionCost

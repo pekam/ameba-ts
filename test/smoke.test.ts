@@ -47,13 +47,11 @@ it("should get end balance from backtest", async () => {
     to: timestampFromUTC(2020, 3, 4, 6),
   };
 
-  const result: BacktestResult = backtestStrategy(
-    () => strat,
+  const result: BacktestResult = backtestStrategy({
+    stratProvider: () => strat,
     series,
-    true,
-    backtestRange.from,
-    backtestRange.to
-  );
+    ...backtestRange,
+  });
 
   expect(result.stats.result).toBe(0.9997060970954589);
 

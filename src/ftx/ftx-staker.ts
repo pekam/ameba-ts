@@ -39,7 +39,10 @@ function getBacktestStaker(strat: FtxBotStrat) {
 
     if (!lastTimeBacktested || now > lastTimeBacktested + backtestIntervalSec) {
       const result = withRelativeTransactionCost(
-        backtestStrategy(() => getBacktestableStrategy(strat), series),
+        backtestStrategy({
+          stratProvider: () => getBacktestableStrategy(strat),
+          series,
+        }),
         transactionCost
       );
       const trades = result.trades;

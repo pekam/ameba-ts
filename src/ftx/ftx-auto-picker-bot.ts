@@ -70,7 +70,11 @@ async function pickMarketAndStrategy({
           endDate: now,
         });
         return strats.map((stratProvider, i) => {
-          const result = backtestStrategy(stratProvider, series, false);
+          const result = backtestStrategy({
+            stratProvider,
+            series,
+            showProgressBar: false,
+          });
           console.log(
             `Tested ${market} with strategy ${i}, result ${result.stats.result}`
           );

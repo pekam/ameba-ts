@@ -29,13 +29,19 @@ export const usedStrats = new WeakSet<Strategy>();
  * as unix timestamp, exclusive, can be dismissed
  * to test until the end of the series
  */
-export function backtestStrategy(
-  stratProvider: () => Strategy,
-  series: CandleSeries,
-  showProgressBar = true,
-  from?: Moment,
-  to?: Moment
-): BacktestResult {
+export function backtestStrategy(args: {
+  stratProvider: () => Strategy;
+  series: CandleSeries;
+  showProgressBar?: boolean;
+  from?: Moment;
+  to?: Moment;
+}): BacktestResult {
+  const defaults = { showProgressBar: true };
+  const { stratProvider, series, showProgressBar, from, to } = {
+    ...defaults,
+    ...args,
+  };
+
   if (!series.length) {
     throw Error("Can't backtest with empty series");
   }

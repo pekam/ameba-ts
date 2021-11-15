@@ -10,8 +10,8 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   const companiesWithCandles = await Promise.all(
     dataSet.companies.slice(0, 30).map((comp) => comp.withCandleSeries())
   );
-  const result = backtestMultiple(
-    () =>
+  const result = backtestMultiple({
+    stratProvider: () =>
       tradeOnlyRecentlyProfitable(() =>
         donchianBreakoutStrategy({
           channelPeriod: 30,
@@ -19,7 +19,7 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
           onlyDirection: "long",
         })
       ),
-    companiesWithCandles.map((c) => c.candles)
-  );
+    multiSeries: companiesWithCandles.map((c) => c.candles),
+  });
   console.log(result);
 })();

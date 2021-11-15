@@ -66,7 +66,7 @@ async function run() {
       optimizePeriod: PERIODS.day * 2,
     });
 
-  const res = await backtestStrategy(stratProvider, candles);
+  const res = backtestStrategy({ stratProvider, series: candles });
   const withTransCost = withRelativeTransactionCost(res, 0.0007);
   save(
     { res: res.stats, withTransCost: withTransCost.stats },
@@ -80,15 +80,15 @@ async function run() {
       m.range(20).map(() => {
         const channelPeriod = _.random(100, 1000);
         const smaPeriod = _.random(20, 100);
-        const result = backtestStrategy(
-          () =>
+        const result = backtestStrategy({
+          stratProvider: () =>
             donchianBreakoutStrategy({
               channelPeriod,
               smaPeriod,
               onlyDirection: "long",
             }),
-          candles
-        );
+          series: candles,
+        });
         const withCosts = withRelativeTransactionCost(result, 0.0007);
         return {
           ...withCosts.stats,
@@ -151,10 +151,10 @@ async function run() {
     endTime: timestampFromUTC(2021, 3, 4),
   });
 
-  const backtestResult = backtestStrategy(
-    () => getBacktestableStrategy(getEmaStrat(5, 20), true),
-    series
-  );
+  const backtestResult = backtestStrategy({
+    stratProvider: () => getBacktestableStrategy(getEmaStrat(5, 20), true),
+    series,
+  });
 
   console.log(backtestResult.stats);
   const resultWithTransactionCosts = withRelativeTransactionCost(

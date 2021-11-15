@@ -37,11 +37,11 @@ export function tradeOnlyRecentlyProfitable(
       series.length % backtestInterval === 0 &&
       series.length >= backtestCandleCount
     ) {
-      const backtestResult = backtestStrategy(
+      const backtestResult = backtestStrategy({
         stratProvider,
-        series.slice(-backtestCandleCount),
-        false
-      );
+        series: series.slice(-backtestCandleCount),
+        showProgressBar: false,
+      });
       enabled = backtestResult.stats.result > resultThreshold;
     }
   }

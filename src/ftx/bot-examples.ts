@@ -104,7 +104,7 @@ async function botBExample() {
     function backtest(series: CandleSeries) {
       const endTime = m.last(series).time;
       const from = endTime - backtestPeriod;
-      const result = backtestStrategy(stratProvider, series, true, from);
+      const result = backtestStrategy({ stratProvider, series, from });
       lastBacktested = endTime;
       backtestResult = result.stats.result;
       console.log("BACKTEST FINISHED with result " + backtestResult);
