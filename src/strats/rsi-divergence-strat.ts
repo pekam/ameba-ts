@@ -32,6 +32,7 @@ export function rsiDivergenceStrategy() {
           price: limitPrice,
           type: "limit",
           side: "buy",
+          size: state.cash / limitPrice,
         };
         return {
           entryOrder,

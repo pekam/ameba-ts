@@ -60,6 +60,8 @@ async function doRun({
     : (balance) => balance;
 
   let state: TradeState = {
+    cash: (await ftxUtil.getWallet()).usd,
+
     series: [],
     position: null,
 
@@ -86,6 +88,7 @@ async function doRun({
       ftxUtil.getWallet(),
     ]);
     console.log({ now: toDateString(now, "s") });
+    state.cash = wallet.usd;
     state.series = filterIncompleteCandleIfNeeded(series, candlePeriod);
     state.position = getCurrentPosition(wallet);
 
@@ -108,7 +111,7 @@ async function doRun({
             ? target - wallet.coin
             : target + wallet.coin;
 
-        await addOrder(state.entryOrder, size, ftxUtil);
+        await addOrder(state.entryOrder, ftxUtil);
       }
     }
   }
@@ -129,14 +132,14 @@ function filterIncompleteCandleIfNeeded(
   return series;
 }
 
-async function addOrder(order: Order, size: number, ftxUtil: FtxUtil) {
+async function addOrder(order: Order, ftxUtil: FtxUtil) {
   if (order.type === "limit") {
     await ftxUtil.ftx.addOrder({
       market: ftxUtil.market,
       price: order.price,
       type: order.type,
       side: order.side,
-      size,
+      size: order.size,
       postOnly: false,
     });
   } else if (order.type === "stop") {
@@ -144,7 +147,7 @@ async function addOrder(order: Order, size: number, ftxUtil: FtxUtil) {
       market: ftxUtil.market,
       triggerPrice: order.price,
       side: order.side,
-      size,
+      size: order.size,
     });
   } else {
     throw Error("Unhandled order type");
@@ -234,8 +237,9 @@ async function setupExitOrders({
           price: stopLoss,
           side: exitSide,
           type: "stop",
+          size: Math.abs(wallet.coin),
         },
-        Math.abs(wallet.coin),
+
         ftxUtil
       )
     );
@@ -248,8 +252,8 @@ async function setupExitOrders({
           price: takeProfit,
           side: exitSide,
           type: "limit",
+          size: Math.abs(wallet.coin),
         },
-        Math.abs(wallet.coin),
         ftxUtil
       )
     );

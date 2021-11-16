@@ -1,6 +1,6 @@
-import { initTestData } from "./testData";
-import { trailingLowExit } from "../src/strats/trailing-low-exit";
 import { CandleSeries } from "../src/core/types";
+import { trailingLowExit } from "../src/strats/trailing-low-exit";
+import { initTestData } from "./testData";
 
 it("should set stop loss below latest low", () => {
   const series: CandleSeries = initTestData();
@@ -18,6 +18,7 @@ it("should set stop loss below latest low", () => {
 
 function expectResult(series: CandleSeries, stopLoss: number | undefined) {
   const stateUpdate = trailingLowExit({
+    cash: 100,
     series,
     position: "long",
     entryOrder: null,
@@ -33,6 +34,7 @@ it("should should not decrease stop loss", () => {
   const series: CandleSeries = initTestData();
 
   const stateUpdate = trailingLowExit({
+    cash: 100,
     series,
     position: "long",
     entryOrder: null,

@@ -26,11 +26,19 @@ export interface Order {
    * stop price for a stop order.
    */
   price: number;
+  /**
+   * How many units to buy/sell.
+   */
+  size: number;
 }
 
 export type MarketPosition = "long" | "short";
 
 export interface TradeState {
+  /**
+   * The account's cash balance.
+   */
+  cash: number;
   /**
    * The price data up to the current moment.
    */

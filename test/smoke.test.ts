@@ -12,10 +12,12 @@ it("should get end balance from backtest", async () => {
     const newCandle = m.last(state.series);
     if (!state.position) {
       if (newCandle.close > newCandle.open) {
+        const entryPrice = newCandle.high;
         const entryOrder: Order = {
           type: "limit",
-          price: newCandle.high,
+          price: entryPrice,
           side: "buy",
+          size: state.cash / entryPrice,
         };
         return {
           entryOrder,

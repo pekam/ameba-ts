@@ -45,19 +45,23 @@ export function macdStrat(settings: {
 
     if (settings.onlyDirection !== "short" && bullishFilters.every((b) => b)) {
       // Long
+      const entryPrice = candle.high;
       const entryOrder: Order = {
         side: "buy",
         type: "stop",
         price: candle.high,
+        size: state.cash / entryPrice,
       };
       return withRelativeExits({ entryOrder, ...settings });
     }
     if (settings.onlyDirection !== "long" && bullishFilters.every((b) => !b)) {
       // Short
+      const entryPrice = candle.low;
       const entryOrder: Order = {
         side: "sell",
         type: "stop",
-        price: candle.low,
+        price: entryPrice,
+        size: state.cash / entryPrice,
       };
       return withRelativeExits({ entryOrder, ...settings });
     }

@@ -112,21 +112,25 @@ export function getBacktestableStrategy(
     if (!state.position) {
       if (shouldBeLong) {
         updateLastOrder(last, "buy");
+        const price = last.close * 1.1;
         return {
           entryOrder: {
-            price: last.close * 1.1,
+            price,
             type: "limit",
             side: "buy",
+            size: state.cash / price,
           },
         };
       } else {
         updateLastOrder(last, "sell");
+        const price = last.close * 0.9;
         return {
           entryOrder: shortingEnabled
             ? {
                 side: "sell",
-                price: last.close * 0.9,
+                price,
                 type: "limit",
+                size: state.cash / price,
               }
             : null,
         };

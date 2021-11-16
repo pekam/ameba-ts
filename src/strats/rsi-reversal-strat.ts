@@ -26,10 +26,12 @@ export function rsiReversalStrategy() {
 
     if (!state.position) {
       if (adx < 25 && rsi < 30) {
+        const entryPrice = m.last(series).low;
         const entryOrder: Order = {
-          price: m.last(series).low,
+          price: entryPrice,
           type: "limit",
           side: "buy",
+          size: state.cash / entryPrice,
         };
         return {
           entryOrder,

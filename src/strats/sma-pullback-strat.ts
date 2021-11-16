@@ -43,6 +43,7 @@ export function smaPullbackStrategy() {
         price: entryPrice,
         type: "stop",
         side: "buy",
+        size: state.cash / entryPrice,
       };
       return {
         entryOrder,

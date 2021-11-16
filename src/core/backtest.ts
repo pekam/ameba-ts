@@ -32,12 +32,13 @@ export const usedStrats = new WeakSet<Strategy>();
 export function backtestStrategy(args: {
   stratProvider: () => Strategy;
   series: CandleSeries;
+  initialBalance?: number;
   showProgressBar?: boolean;
   from?: Moment;
   to?: Moment;
 }): BacktestResult {
-  const defaults = { showProgressBar: true };
-  const { stratProvider, series, showProgressBar, from, to } = {
+  const defaults = { initialBalance: 10000, showProgressBar: true };
+  const { stratProvider, series, initialBalance, showProgressBar, from, to } = {
     ...defaults,
     ...args,
   };
@@ -61,6 +62,7 @@ export function backtestStrategy(args: {
   const tt = new TimeTraveller(series, from, to);
 
   const initialState: TradeState = {
+    cash: initialBalance,
     series: [],
     entryOrder: null,
     position: null,
@@ -145,10 +147,12 @@ function handleEntryOrder(state: TradeState) {
 
 function handleStopLoss(state: TradeState) {
   if (state.position && state.stopLoss) {
-    const stopLossOrder: Order = createStopLossOrder(
-      state.position,
-      state.stopLoss
-    );
+    const stopLossOrder: Order = {
+      price: state.stopLoss,
+      type: "stop",
+      side: state.position === "long" ? "sell" : "buy",
+      size: state.entryOrder!.size, // entryOrder must exist when in position
+    };
     const price = isOrderFulfilled(stopLossOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillExitOrder(stopLossOrder, state, price);
@@ -160,10 +164,12 @@ function handleStopLoss(state: TradeState) {
 
 function handleTakeProfit(state: TradeState) {
   if (state.position && state.takeProfit) {
-    const takeProfitOrder: Order = createTakeProfitOrder(
-      state.position,
-      state.takeProfit
-    );
+    const takeProfitOrder: Order = {
+      price: state.takeProfit,
+      type: "limit",
+      side: state.position === "long" ? "sell" : "buy",
+      size: state.entryOrder!.size, // entryOrder must exist when in position
+    };
     const price = isOrderFulfilled(takeProfitOrder, m.last(state.series));
     if (price) {
       const mutations = fulfillExitOrder(takeProfitOrder, state, price);
@@ -175,8 +181,11 @@ function handleTakeProfit(state: TradeState) {
 
 function applyStrategy(state: TradeState, strat: Strategy) {
   const mutations = strat(state);
-  if (state.position && mutations && mutations.entryOrder) {
-    throw new Error(
+  if (mutations.entryOrder && mutations.entryOrder.size <= 0) {
+    throw Error("Order size must be positive.");
+  }
+  if (state.position && mutations.entryOrder) {
+    throw Error(
       "Changing entry order while already in a position is not allowed."
     );
   }
@@ -215,12 +224,12 @@ function isOrderFulfilled(order: Order, newCandle: Candle): number | null {
 function fulfillEntryOrder(
   state: TradeState,
   entryOrder: Order,
-  price: number
+  executionPrice: number
 ) {
   const transaction: Transaction = {
     order: entryOrder,
     side: entryOrder.side,
-    price,
+    price: executionPrice,
     time: m.last(state.series).time,
   };
 
@@ -228,37 +237,52 @@ function fulfillEntryOrder(
 
   const position: MarketPosition = entryOrder.side === "buy" ? "long" : "short";
 
-  return { transactions, position };
+  const cash = getCashBalanceAfterOrder({
+    order: entryOrder,
+    executionPrice,
+    cashBefore: state.cash,
+  });
+
+  return { transactions, position, cash };
 }
 
-function createStopLossOrder(position: MarketPosition, price: number): Order {
-  return {
-    price,
-    type: "stop",
-    side: position === "long" ? "sell" : "buy",
-  };
-}
-
-function createTakeProfitOrder(position: MarketPosition, price: number): Order {
-  return {
-    price,
-    type: "limit",
-    side: position === "long" ? "sell" : "buy",
-  };
-}
-
-function fulfillExitOrder(order: Order, state: TradeState, price: number) {
+function fulfillExitOrder(
+  order: Order,
+  state: TradeState,
+  executionPrice: number
+) {
   const transaction: Transaction = {
     order,
     side: order.side,
-    price,
+    price: executionPrice,
     time: m.last(state.series).time,
   };
+  const cash = getCashBalanceAfterOrder({
+    order,
+    executionPrice,
+    cashBefore: state.cash,
+  });
   return {
     transactions: state.transactions.concat(transaction),
     position: null,
     entryOrder: null,
     stopLoss: null,
     takeProfit: null,
+    cash,
   };
+}
+
+function getCashBalanceAfterOrder({
+  order,
+  executionPrice,
+  cashBefore,
+}: {
+  order: Order;
+  executionPrice: number;
+  cashBefore: number;
+}) {
+  const positionSizeUsd = order.size * executionPrice;
+  return order.side === "buy"
+    ? cashBefore - positionSizeUsd
+    : cashBefore + positionSizeUsd;
 }

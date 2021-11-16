@@ -50,6 +50,7 @@ export function donchianBreakoutStrategy(settings: {
             price: entryPrice,
             type: "stop",
             side: "buy",
+            size: state.cash / entryPrice,
           },
           stopLoss: Math.max(...stopLosses),
         };
@@ -69,6 +70,7 @@ export function donchianBreakoutStrategy(settings: {
             price: entryPrice,
             type: "stop",
             side: "sell",
+            size: state.cash / entryPrice,
           },
           stopLoss: Math.min(...stopLosses),
         };

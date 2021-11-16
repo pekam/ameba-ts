@@ -37,6 +37,7 @@ export function volatilityStrategy(settings: {
             type: "stop",
             price: entryPrice,
             side: "buy",
+            size: state.cash / entryPrice,
           },
           stopLoss: entryPrice - avgSize * 2,
         };
@@ -49,6 +50,7 @@ export function volatilityStrategy(settings: {
             type: "stop",
             price: entryPrice,
             side: "sell",
+            size: state.cash / entryPrice,
           },
           stopLoss: entryPrice + avgSize * 2,
         };
