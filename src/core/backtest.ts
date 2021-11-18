@@ -9,6 +9,7 @@ import {
   MarketPosition,
   Order,
   Strategy,
+  Trade,
   TradeState,
   Transaction,
 } from "./types";
@@ -69,6 +70,7 @@ export function backtestStrategy(args: {
     stopLoss: null,
     takeProfit: null,
     transactions: [],
+    trades: [],
   };
 
   const progressBar = startProgressBar(tt.length, showProgressBar);
@@ -81,7 +83,11 @@ export function backtestStrategy(args: {
   }
   progressBar.stop();
 
-  return convertToBacktestResult(state.transactions, series, tt.range);
+  if (state.position) {
+    state = revertLastTransaction(state);
+  }
+
+  return convertToBacktestResult(state, initialBalance, tt.range);
 }
 
 function nextState(state: TradeState, strat: Strategy): TradeState {
@@ -227,8 +233,8 @@ function fulfillEntryOrder(
   executionPrice: number
 ) {
   const transaction: Transaction = {
-    order: entryOrder,
     side: entryOrder.side,
+    size: entryOrder.size,
     price: executionPrice,
     time: m.last(state.series).time,
   };
@@ -237,9 +243,8 @@ function fulfillEntryOrder(
 
   const position: MarketPosition = entryOrder.side === "buy" ? "long" : "short";
 
-  const cash = getCashBalanceAfterOrder({
-    order: entryOrder,
-    executionPrice,
+  const cash = getCashBalanceAfterTransaction({
+    transaction,
     cashBefore: state.cash,
   });
 
@@ -252,18 +257,22 @@ function fulfillExitOrder(
   executionPrice: number
 ) {
   const transaction: Transaction = {
-    order,
     side: order.side,
+    size: order.size,
     price: executionPrice,
     time: m.last(state.series).time,
   };
-  const cash = getCashBalanceAfterOrder({
-    order,
-    executionPrice,
+  const cash = getCashBalanceAfterTransaction({
+    transaction,
     cashBefore: state.cash,
+  });
+  const trade: Trade = convertToTrade({
+    entry: m.last(state.transactions),
+    exit: transaction,
   });
   return {
     transactions: state.transactions.concat(transaction),
+    trades: state.trades.concat(trade),
     position: null,
     entryOrder: null,
     stopLoss: null,
@@ -272,17 +281,67 @@ function fulfillExitOrder(
   };
 }
 
-function getCashBalanceAfterOrder({
-  order,
-  executionPrice,
+function getCashBalanceAfterTransaction({
+  transaction,
   cashBefore,
 }: {
-  order: Order;
-  executionPrice: number;
+  transaction: Transaction;
   cashBefore: number;
 }) {
-  const positionSizeUsd = order.size * executionPrice;
-  return order.side === "buy"
+  const positionSizeUsd = transaction.size * transaction.price;
+  return transaction.side === "buy"
     ? cashBefore - positionSizeUsd
     : cashBefore + positionSizeUsd;
+}
+
+function convertToTrade({
+  entry,
+  exit,
+}: {
+  entry: Transaction;
+  exit: Transaction;
+}): Trade {
+  const position = entry.side === "buy" ? "long" : "short";
+  const size = entry.size;
+  if (exit.size !== size) {
+    throw Error(
+      "Entry and exit orders have different sizes. " +
+        "This indicates a bug in the backtester."
+    );
+  }
+
+  const entryValue = entry.price * size;
+  const exitValue = exit.price * size;
+
+  const absoluteProfit =
+    position === "long" ? exitValue - entryValue : entryValue - exitValue;
+
+  const relativeProfit = absoluteProfit / entryValue;
+  return {
+    entry,
+    exit,
+    position,
+    absoluteProfit,
+    relativeProfit,
+  };
+}
+
+function revertLastTransaction(state: TradeState): TradeState {
+  // NOTE: If/when transaction costs are added to the backtester,
+  // this needs to be updated to revert those as well.
+
+  const transaction = m.last(state.transactions);
+  const oppositeTransaction: Transaction = {
+    ...transaction,
+    side: transaction.side === "buy" ? "sell" : "buy",
+  };
+  const cash = getCashBalanceAfterTransaction({
+    transaction: oppositeTransaction,
+    cashBefore: state.cash,
+  });
+  const transactions = state.transactions.slice(
+    0,
+    state.transactions.length - 1
+  );
+  return { ...state, cash, transactions, position: null };
 }

@@ -71,6 +71,7 @@ export interface TradeState {
    */
   takeProfit: number | null;
   transactions: Transaction[];
+  trades: Trade[];
 }
 
 export interface Transaction {
@@ -79,9 +80,9 @@ export interface Transaction {
    */
   side: "buy" | "sell";
   /**
-   * The order that was fulfilled to create the transaction.
+   * How many units were bought/sold.
    */
-  order: Order;
+  size: number;
   /**
    * The price at which the buy/sell occurred.
    */
@@ -118,13 +119,14 @@ export interface Trade {
   entry: Transaction;
   exit: Transaction;
   position: MarketPosition;
+  absoluteProfit: number;
   /**
    * The relative win/loss in the
    * invested money. For example:
    * - 10% win: profit = 0.10
    * - 0.5% loss: profit = -0.005
    */
-  profit: number;
+  relativeProfit: number;
 }
 
 export interface Range {

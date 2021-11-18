@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { backtestStrategy } from "../core/backtest";
-import { withRelativeTransactionCost } from "../core/backtest-result";
 import { CandleSeries } from "../core/types";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { m } from "../shared/functions";
@@ -67,9 +66,9 @@ async function run() {
     });
 
   const res = backtestStrategy({ stratProvider, series: candles });
-  const withTransCost = withRelativeTransactionCost(res, 0.0007);
+  // const withTransCost = withRelativeTransactionCost(res, 0.0007);
   save(
-    { res: res.stats, withTransCost: withTransCost.stats },
+    { res: res.stats, withTransCost: res.stats },
     "eth-macd-auto-optimized.json"
   );
 
@@ -89,14 +88,14 @@ async function run() {
             }),
           series: candles,
         });
-        const withCosts = withRelativeTransactionCost(result, 0.0007);
+        // const withCosts = withRelativeTransactionCost(result, 0.0007);
         return {
-          ...withCosts.stats,
+          ...result.stats,
           channelPeriod,
           smaPeriod,
         };
       }),
-      (r) => r.averageProfit
+      (r) => r.relativeProfit
     );
     console.log(results);
     /*
@@ -157,11 +156,11 @@ async function run() {
   });
 
   console.log(backtestResult.stats);
-  const resultWithTransactionCosts = withRelativeTransactionCost(
-    backtestResult,
-    0.0005
-  );
-  console.log(resultWithTransactionCosts.stats);
+  // const resultWithTransactionCosts = withRelativeTransactionCost(
+  //   backtestResult,
+  //   0.0005
+  // );
+  // console.log(resultWithTransactionCosts.stats);
   console.log(toDateString(series[0].time), toDateString(m.last(series).time));
 }
 run();

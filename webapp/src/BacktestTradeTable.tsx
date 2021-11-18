@@ -53,7 +53,7 @@ function BacktestTradeTable({
   const data = trades.map((trade) => ({
     trade,
     position: trade.position,
-    profit: trade.profit,
+    profit: trade.relativeProfit,
     entryTime: trade.entry.time,
     exitTime: trade.exit.time,
     duration: trade.exit.time - trade.entry.time,

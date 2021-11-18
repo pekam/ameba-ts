@@ -106,7 +106,7 @@ async function botBExample() {
       const from = endTime - backtestPeriod;
       const result = backtestStrategy({ stratProvider, series, from });
       lastBacktested = endTime;
-      backtestResult = result.stats.result;
+      backtestResult = result.stats.relativeProfit;
       console.log("BACKTEST FINISHED with result " + backtestResult);
     }
 
@@ -118,9 +118,9 @@ async function botBExample() {
         backtest(series);
       }
 
-      if (backtestResult === null || backtestResult < 1.003) {
+      if (backtestResult === null || backtestResult < 0.003) {
         return 0;
-      } else if (backtestResult < 1.005) {
+      } else if (backtestResult < 0.005) {
         return balance;
       } else {
         return balance * 3;
@@ -169,7 +169,7 @@ async function autoPickerExample() {
     ],
     lookbackPeriod: PERIODS.hour * 12,
     pickInterval: PERIODS.hour / 2,
-    resultThreshold: 1.02,
+    resultThreshold: 0.02,
     requiredCandles: PERIODS.day / 60,
   });
 }

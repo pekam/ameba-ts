@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { backtestStrategy } from "../core/backtest";
-import { withRelativeTransactionCost } from "../core/backtest-result";
 import { Strategy, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
@@ -27,12 +26,12 @@ export function autoOptimizer(settings: {
         showProgressBar: false,
         from,
       });
-      const withTransactionCost = withRelativeTransactionCost(
-        result,
-        relativeTransactionCost
-      );
+      // const withTransactionCost = withRelativeTransactionCost(
+      //   result,
+      //   relativeTransactionCost
+      // );
 
-      return { stratProvider, profit: withTransactionCost.stats.profit };
+      return { stratProvider, profit: result.stats.relativeProfit };
     });
 
     const best = _.maxBy(withProfits, (w) => w.profit);

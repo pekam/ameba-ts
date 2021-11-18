@@ -25,6 +25,7 @@ function expectResult(series: CandleSeries, stopLoss: number | undefined) {
     stopLoss: 0,
     takeProfit: 0,
     transactions: [],
+    trades: [],
   });
 
   expect(stateUpdate).toEqual({ stopLoss });
@@ -41,6 +42,7 @@ it("should should not decrease stop loss", () => {
     stopLoss: 2620,
     takeProfit: 0,
     transactions: [],
+    trades: [],
   });
 
   expect(stateUpdate).toEqual({});

@@ -1,5 +1,4 @@
 import { backtestStrategy } from "../core/backtest";
-import { withRelativeTransactionCost } from "../core/backtest-result";
 import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties } from "../properties";
 import { m } from "../shared/functions";
@@ -29,7 +28,7 @@ function getDrawdownMultiplier(
 
 function getBacktestStaker(strat: FtxBotStrat) {
   const backtestIntervalSec = 10 * 60; // 10min
-  const transactionCost = 0.0005;
+  const transactionCost = 0.0005; // TODO use the transaction cost again
 
   let lastTimeBacktested: number;
   let multiplier: number;
@@ -38,19 +37,20 @@ function getBacktestStaker(strat: FtxBotStrat) {
     const now = getCurrentTimestampInSeconds();
 
     if (!lastTimeBacktested || now > lastTimeBacktested + backtestIntervalSec) {
-      const result = withRelativeTransactionCost(
+      const result =
+        // withRelativeTransactionCost(
         backtestStrategy({
           stratProvider: () => getBacktestableStrategy(strat),
           series,
-        }),
-        transactionCost
-      );
+        });
+      //   transactionCost
+      // );
       const trades = result.trades;
       if (trades.length >= 2 && trades[0].entry.time > trades[1].entry.time) {
         throw Error("Expected trades to be in chronological order");
       }
       const profits = trades
-        .map((t) => t.profit)
+        .map((t) => t.relativeProfit)
         .reverse()
         .slice(0, 20);
       const weightedAvg = m.getWeightedAverage(profits);

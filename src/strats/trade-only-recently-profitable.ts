@@ -18,15 +18,15 @@ import { cancelEntry } from "./strat-util";
  * updating the condition to execute the strategy
  * @param backtestCandleCount
  * how many candles to include in the re-optimizing backtest
- * @param resultThreshold
- * the min profit the strategy should have generated in the backtest
- * to enable executing the strategy
+ * @param profitThreshold
+ * the min relative profit the strategy should have generated in the backtest
+ * to enable executing the strategy, e.g. 0.01 for 1% profit
  */
 export function tradeOnlyRecentlyProfitable(
   stratProvider: () => Strategy,
   backtestInterval = 100,
   backtestCandleCount = 100,
-  resultThreshold = 1.005
+  profitThreshold = 0.005
 ) {
   const strat: Strategy = stratProvider();
 
@@ -42,7 +42,7 @@ export function tradeOnlyRecentlyProfitable(
         series: series.slice(-backtestCandleCount),
         showProgressBar: false,
       });
-      enabled = backtestResult.stats.result > resultThreshold;
+      enabled = backtestResult.stats.relativeProfit > profitThreshold;
     }
   }
 

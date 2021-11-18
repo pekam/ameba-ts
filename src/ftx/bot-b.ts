@@ -34,6 +34,8 @@ async function run(args: BotBArgs) {
 /**
  * Runs a Strategy (the same type that can be used with the backtester)
  * in FTX.
+ *
+ * Note that transactions and trades are not updated in TradeState.
  */
 async function doRun({
   stratProvider,
@@ -69,7 +71,9 @@ async function doRun({
     stopLoss: null,
     takeProfit: null,
 
+    // not updated
     transactions: [],
+    trades: [],
   };
 
   while (true) {

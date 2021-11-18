@@ -76,7 +76,7 @@ async function pickMarketAndStrategy({
             showProgressBar: false,
           });
           console.log(
-            `Tested ${market} with strategy ${i}, result ${result.stats.result}`
+            `Tested ${market} with strategy ${i}, profit ${result.stats.relativeProfit}`
           );
           return { market, stratProvider, result };
         });
@@ -85,12 +85,12 @@ async function pickMarketAndStrategy({
   );
   const best = maxBy(allResults, (result) => {
     // TODO improve performance metrics
-    return result.result.stats.result;
+    return result.result.stats.relativeProfit;
   });
   if (!best) {
     return null;
   }
-  const result = best.result.stats.result;
+  const result = best.result.stats.relativeProfit;
   if (result < resultThreshold) {
     console.log(
       `TRADING PAUSED. The best result ${result} is less than the threshold ${resultThreshold}.`
