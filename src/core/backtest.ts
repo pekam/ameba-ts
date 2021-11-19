@@ -14,7 +14,7 @@ import {
   Transaction,
 } from "./types";
 
-export const usedStrats = new WeakSet<Strategy>();
+const usedStrats = new WeakSet<Strategy>();
 
 /**
  * Tests how the given strategy would have performed with
