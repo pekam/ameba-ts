@@ -1,28 +1,26 @@
 import { backtestStrategy } from "../src/core/backtest";
 import { BacktestResult } from "../src/core/backtest-result";
 import { CandleSeries, Order, Strategy, TradeState } from "../src/core/types";
-import { loadCandles } from "../src/data/load-candle-data";
 import { m } from "../src/shared/functions";
 import { PERIODS, timestampFromUTC } from "../src/shared/time-util";
+import { testData } from "./test-data/testData";
 
-it("should get end balance from backtest", async () => {
-  expect.assertions(3);
-
+it("should produce a backtest result", () => {
   const strat: Strategy = (state: TradeState) => {
     const newCandle = m.last(state.series);
     if (!state.position) {
       if (newCandle.close > newCandle.open) {
         const entryPrice = newCandle.high;
         const entryOrder: Order = {
-          type: "limit",
+          type: "stop",
           price: entryPrice,
           side: "buy",
           size: state.cash / entryPrice,
         };
         return {
           entryOrder,
-          stopLoss: newCandle.high * 0.9999,
-          takeProfit: newCandle.high * 1.0001,
+          stopLoss: entryPrice * 0.99,
+          takeProfit: entryPrice * 1.01,
         };
       } else {
         return {
@@ -36,28 +34,25 @@ it("should get end balance from backtest", async () => {
     }
   };
 
-  const series: CandleSeries = await loadCandles({
-    market: "forex",
-    symbol: "OANDA:EUR_USD",
-    resolution: "1",
-    from: timestampFromUTC(2020, 3, 4),
-    to: timestampFromUTC(2020, 3, 5),
-  });
+  const series: CandleSeries = testData.getBtcHourly();
 
   const backtestRange = {
-    from: timestampFromUTC(2020, 3, 4, 5),
-    to: timestampFromUTC(2020, 3, 4, 6),
+    from: timestampFromUTC(2021, 10, 2),
+    to: timestampFromUTC(2021, 10, 8),
   };
 
   const result: BacktestResult = backtestStrategy({
     stratProvider: () => strat,
     series,
     ...backtestRange,
+    initialBalance: 100,
   });
 
-  // TODO update
-  // expect(result.stats.result).toBe(0.9997060970954589);
+  // This is basically a snapshot test
+  expect(result.stats.endBalance).toBe(103.966784092104632);
+  expect(result.stats.relativeProfit).toBe(0.03966784092104632);
+  expect(result.stats.tradeCount).toBe(22);
 
   expect(result.stats.range.from).toBe(backtestRange.from);
-  expect(result.stats.range.to).toBe(backtestRange.to - PERIODS.minute);
+  expect(result.stats.range.to).toBe(backtestRange.to - PERIODS.hour);
 });

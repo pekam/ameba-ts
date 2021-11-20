@@ -1,9 +1,9 @@
 import { CandleSeries } from "../src/core/types";
 import { m } from "../src/shared/functions";
-import { initTestData } from "./testData";
+import { testData } from "./test-data/testData";
 
 it("should find highs (local maximums)", () => {
-  const series: CandleSeries = initTestData();
+  const series: CandleSeries = testData.getAmznDaily();
 
   const highIndices = m.getSwingHighs(series).map(m.indexOf.bind(this, series));
   const expectedHighIndices = [3, 7, 17, 19];
@@ -12,7 +12,7 @@ it("should find highs (local maximums)", () => {
 });
 
 it("should find lows (local minimums)", () => {
-  const series: CandleSeries = initTestData();
+  const series: CandleSeries = testData.getAmznDaily();
 
   const lowIndices = m.getSwingLows(series).map(m.indexOf.bind(this, series));
   const expectedLowIndices = [4, 9, 20];

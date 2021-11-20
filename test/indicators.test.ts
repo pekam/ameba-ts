@@ -1,6 +1,6 @@
 import { Indicators } from "../src/core/indicators";
 import { CandleSeries } from "../src/core/types";
-import { initTestData } from "./testData";
+import { testData } from "./test-data/testData";
 
 it("should calculate SMA", () => {
   const series: CandleSeries = Array.from(Array(5).keys()).map(
@@ -22,7 +22,7 @@ it("should calculate SMA", () => {
 });
 
 it("should calculate RSI", () => {
-  const series: CandleSeries = initTestData();
+  const series: CandleSeries = testData.getAmznDaily();
 
   const indicators = new Indicators({ rsiPeriod: 14 });
 
@@ -30,7 +30,7 @@ it("should calculate RSI", () => {
 });
 
 it("should calculate ADX, -DI and +DI", () => {
-  const series: CandleSeries = initTestData();
+  const series: CandleSeries = testData.getAmznDaily();
 
   const indicators = new Indicators({ adxPeriod: 5 });
 
