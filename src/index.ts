@@ -1,4 +1,5 @@
 import { backtestStrategy } from "./core/backtest";
+import { createStaker, withStaker } from "./core/staker";
 import { getDataSet } from "./data/load-data-set";
 import { donchianBreakoutStrategy } from "./strats/donchian-breakout-strat";
 import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profitable";
@@ -12,11 +13,18 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   );
   const result = backtestStrategy({
     stratProvider: () =>
-      tradeOnlyRecentlyProfitable(() =>
-        donchianBreakoutStrategy({
-          channelPeriod: 30,
-          smaPeriod: 20,
-          onlyDirection: "long",
+      withStaker(
+        tradeOnlyRecentlyProfitable(() =>
+          donchianBreakoutStrategy({
+            channelPeriod: 30,
+            smaPeriod: 20,
+            onlyDirection: "long",
+          })
+        ),
+        createStaker({
+          maxRelativeRisk: 0.01,
+          maxRelativePosition: 1,
+          allowFractions: true,
         })
       ),
     series: companiesWithCandles[0].candles,

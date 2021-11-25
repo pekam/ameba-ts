@@ -94,7 +94,7 @@ export interface Transaction {
 }
 
 /**
- * An update to the orders during a backtest.
+ * An update to the orders during strategy execution.
  *
  * The changes will be applied to the trade state
  * with the spread operator. This means that:
@@ -105,7 +105,7 @@ export interface Transaction {
  *   provide null or undefined as the value.
  *
  * When in a position, changes to entryOrder
- * should not be made, and they will be ignored.
+ * should not be made.
  */
 export interface StrategyUpdate {
   entryOrder?: Order | null;
