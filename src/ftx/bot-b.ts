@@ -21,11 +21,8 @@ interface BotBArgs {
   resolution: FtxResolution;
   ftxUtil: FtxUtil;
   requiredCandles: number;
-  stakerProvider?: () => Staker;
   stopper?: (state: TradeState) => boolean;
 }
-
-type Staker = (balance: number, series: CandleSeries) => number;
 
 async function run(args: BotBArgs) {
   await restartOnError(() => doRun(args), PERIODS.minute * 2);
@@ -42,7 +39,6 @@ async function doRun({
   resolution,
   ftxUtil,
   requiredCandles,
-  stakerProvider,
   stopper,
 }: BotBArgs): Promise<void> {
   /*
@@ -56,10 +52,6 @@ async function doRun({
   const candlePeriod = ftxResolutionToPeriod[resolution];
 
   const strat = stratProvider();
-
-  const staker: Staker = stakerProvider
-    ? stakerProvider()
-    : (balance) => balance;
 
   let state: TradeState = {
     cash: (await ftxUtil.getWallet()).usd,
@@ -106,17 +98,8 @@ async function doRun({
     }
 
     // Entry order
-    if (!state.position && state.entryOrder) {
-      const targetUsdValue = staker(wallet.totalUsdValue, series);
-      if (targetUsdValue !== 0) {
-        const target = targetUsdValue / state.entryOrder.price;
-        const size =
-          state.entryOrder.side === "buy"
-            ? target - wallet.coin
-            : target + wallet.coin;
-
-        await addOrder(state.entryOrder, ftxUtil);
-      }
+    if (!state.position && state.entryOrder && state.entryOrder.size > 0) {
+      await addOrder(state.entryOrder, ftxUtil);
     }
   }
 }

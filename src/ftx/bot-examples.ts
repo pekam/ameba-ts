@@ -1,6 +1,3 @@
-import { backtestStrategy } from "../core/backtest";
-import { CandleSeries } from "../core/types";
-import { m } from "../shared/functions";
 import { PERIODS } from "../shared/time-util";
 import { donchianBreakoutStrategy } from "../strats/donchian-breakout-strat";
 import { macdStrat } from "../strats/macd-strat";
@@ -96,44 +93,11 @@ async function botBExample() {
       maxAtrStoploss: 5,
     });
 
-  function getStaker() {
-    let lastBacktested: number | null = null;
-
-    let backtestResult: number | null = null;
-
-    function backtest(series: CandleSeries) {
-      const endTime = m.last(series).time;
-      const from = endTime - backtestPeriod;
-      const result = backtestStrategy({ stratProvider, series, from });
-      lastBacktested = endTime;
-      backtestResult = result.stats.relativeProfit;
-      console.log("BACKTEST FINISHED with result " + backtestResult);
-    }
-
-    return function (balance: number, series: CandleSeries) {
-      if (
-        !lastBacktested ||
-        m.last(series).time - lastBacktested > backtestInterval
-      ) {
-        backtest(series);
-      }
-
-      if (backtestResult === null || backtestResult < 0.003) {
-        return 0;
-      } else if (backtestResult < 0.005) {
-        return balance;
-      } else {
-        return balance * 3;
-      }
-    };
-  }
-
   await botB.run({
     ftxUtil,
     resolution: "1min",
     stratProvider,
     requiredCandles: backtestPeriod / PERIODS.minute + PERIODS.hour,
-    stakerProvider: getStaker,
   });
 }
 
