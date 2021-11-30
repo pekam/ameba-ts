@@ -1,6 +1,9 @@
 import { flatMap, sortBy } from "lodash";
 import { Moment } from "../shared/time-util";
-import { handleOrders, revertLastTransaction } from "./backtest";
+import {
+  handleOrders,
+  revertLastTransaction,
+} from "./backtest-order-execution";
 import { convertToBacktestResult } from "./backtest-result";
 import {
   CandleSeries,
