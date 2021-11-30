@@ -1,5 +1,5 @@
 import { m } from "../shared/functions";
-import { CandleSeries, Range, Trade, TradeState, Transaction } from "./types";
+import { CandleSeries, Range, Trade } from "./types";
 
 export interface BacktestStatistics {
   initialBalance: number;
@@ -27,14 +27,14 @@ export interface BacktestResult {
 }
 
 export function convertToBacktestResult(
-  finalState: TradeState,
+  trades: Trade[],
+  allSeries: CandleSeries[],
   initialBalance: number,
+  endBalance: number,
   range: Range
 ): BacktestResult {
-  const { trades, series } = finalState;
-  const endBalance = finalState.cash;
   const relativeProfit = (endBalance - initialBalance) / initialBalance;
-  const buyAndHoldProfit = getBuyAndHoldProfit([series], range);
+  const buyAndHoldProfit = getBuyAndHoldProfit(allSeries, range);
   const stats: BacktestStatistics = {
     initialBalance,
     endBalance,
@@ -49,18 +49,32 @@ export function convertToBacktestResult(
 }
 
 function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
-  return m.avg(
-    serieses.map((series) => {
-      if (!series.length) {
-        return 0;
-      }
-      const startCandle =
-        series.find((c) => c.time === range.from) || series[0];
-      const endCandle =
-        series.find((c) => c.time === range.to) || m.last(series);
-      const startPrice = startCandle.open;
-      const endPrice = endCandle.close;
-      return (endPrice - startPrice) / startPrice;
-    })
+  const profitsAndDurations: [number, number][] = serieses.map((series) => {
+    if (!series.length) {
+      return [0, 0];
+    }
+    const startCandle = series.find((c) => c.time >= range.from);
+    if (!startCandle) {
+      return [0, 0];
+    }
+    const endCandle = series.find((c) => c.time <= range.to) || m.last(series);
+    const startPrice = startCandle.open;
+    const endPrice = endCandle.close;
+
+    const profit = (endPrice - startPrice) / startPrice;
+    const duration = endCandle.time - startCandle.time;
+
+    return [profit, duration];
+  });
+
+  const totalWeight = m.sum(
+    profitsAndDurations.map(([profit, duration]) => duration)
   );
+  const weightedAvg = m.sum(
+    profitsAndDurations.map(
+      ([profit, duration]) => (profit * duration) / totalWeight
+    )
+  );
+
+  return weightedAvg;
 }

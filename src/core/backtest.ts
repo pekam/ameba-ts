@@ -87,14 +87,20 @@ export function backtestStrategy(args: {
     state = revertLastTransaction(state);
   }
 
-  return convertToBacktestResult(state, initialBalance, tt.range);
+  return convertToBacktestResult(
+    state.trades,
+    [series],
+    initialBalance,
+    state.cash,
+    tt.range
+  );
 }
 
 function nextState(state: TradeState, strat: Strategy): TradeState {
   return applyStrategy(handleOrders(state), strat);
 }
 
-function handleOrders(state: TradeState) {
+export function handleOrders(state: TradeState) {
   if (!state.position) {
     return handleOrdersOnEntryCandle(handleEntryOrder(state));
   } else {
@@ -326,7 +332,7 @@ function convertToTrade({
   };
 }
 
-function revertLastTransaction(state: TradeState): TradeState {
+export function revertLastTransaction(state: TradeState): TradeState {
   // NOTE: If/when transaction costs are added to the backtester,
   // this needs to be updated to revert those as well.
 
