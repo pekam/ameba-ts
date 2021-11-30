@@ -11,7 +11,6 @@ import {
   CandleSeries,
   MarketPosition,
   Order,
-  Range,
   SeriesMap,
   StrategyUpdate,
   Trade,
@@ -154,28 +153,10 @@ export function backtestMultiple(args: {
   }
   progressBar.stop();
 
-  const range: Range = { from: firstCandleTime, to: state.time };
-
-  state = Object.values(state.assets)
-    .filter((a) => a.position)
-    .reduce((state, asset) => {
-      const nextTradeState = revertLastTransaction({
-        ...asset,
-        cash: state.cash,
-      });
-
-      return {
-        ...state,
-        cash: nextTradeState.cash,
-        assets: {
-          ...state.assets,
-          [asset.symbol]: {
-            ...asset,
-            ...nextTradeState,
-          },
-        },
-      };
-    }, state);
+  // Only finished trades are included in the result. Another option would be to
+  // close all open trades with the current market price, but exiting against
+  // the strategy's logic would skew the result.
+  state = revertUnclosedTrades(state);
 
   const allTrades: Trade[] = sortBy(
     flatMap(state.assets, (a) => a.trades),
@@ -186,7 +167,7 @@ export function backtestMultiple(args: {
     Object.values(multiSeries),
     initialBalance,
     state.cash,
-    range
+    { from: firstCandleTime, to: state.time }
   );
 }
 
@@ -231,18 +212,7 @@ function handleAllOrders(state: MultiAssetTradeState): MultiAssetTradeState {
       cash: state.cash,
     };
     const nextTradeState = handleOrders(tradeState);
-
-    return {
-      ...state,
-      cash: nextTradeState.cash,
-      assets: {
-        ...state.assets,
-        [symbol]: {
-          ...state.assets[symbol],
-          ...nextTradeState,
-        },
-      },
-    };
+    return updateAsset(state, symbol, nextTradeState, nextTradeState.cash);
   }, state);
 }
 
@@ -251,27 +221,62 @@ function applyStrategy(
   strat: MultiAssetStrategy
 ): MultiAssetTradeState {
   const stratUpdates = strat(state);
-  const assets = stratUpdates.reduce((assets, update) => {
-    const assetState = assets[update.symbol];
-    if (update.entryOrder && update.entryOrder.size <= 0) {
-      throw Error("Order size must be positive.");
-    }
-    if (assetState.position && update.entryOrder) {
-      throw Error(
-        "Changing entry order while already in a position is not allowed."
+  const nextState: MultiAssetTradeState = stratUpdates.reduce(
+    (state, update) => {
+      if (update.entryOrder && update.entryOrder.size <= 0) {
+        throw Error("Order size must be positive.");
+      }
+      if (state.assets[update.symbol].position && update.entryOrder) {
+        throw Error(
+          "Changing entry order while already in a position is not allowed."
+        );
+      }
+      return updateAsset(state, update.symbol, update);
+    },
+    state
+  );
+  return nextState;
+}
+
+function revertUnclosedTrades(state: MultiAssetTradeState) {
+  return Object.values(state.assets)
+    .filter((a) => a.position)
+    .reduce((state, asset) => {
+      const nextTradeState = revertLastTransaction({
+        ...asset,
+        cash: state.cash,
+      });
+
+      return updateAsset(
+        state,
+        asset.symbol,
+        nextTradeState,
+        nextTradeState.cash
       );
-    }
-    return {
-      ...assets,
-      [update.symbol]: {
-        ...assetState,
-        ...update,
-      },
-    };
-  }, state.assets);
+    }, state);
+}
+
+/**
+ * Returns a new state after applying {@link update} to the asset with
+ * {@link symbol}. If the update changes also the cash balance, provide the new
+ * value as {@link cash}.
+ */
+function updateAsset(
+  state: MultiAssetTradeState,
+  symbol: string,
+  update: StrategyUpdate,
+  cash?: number
+): MultiAssetTradeState {
   return {
     ...state,
-    assets,
+    cash: cash !== undefined ? cash : state.cash,
+    assets: {
+      ...state.assets,
+      [symbol]: {
+        ...state.assets[symbol],
+        ...update,
+      },
+    },
   };
 }
 
