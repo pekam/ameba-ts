@@ -57,7 +57,7 @@ function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
     if (!startCandle) {
       return [0, 0];
     }
-    const endCandle = series.find((c) => c.time <= range.to) || m.last(series);
+    const endCandle = series.find((c) => c.time >= range.to) || m.last(series);
     const startPrice = startCandle.open;
     const endPrice = endCandle.close;
 
