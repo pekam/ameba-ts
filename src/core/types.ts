@@ -116,6 +116,10 @@ export interface StrategyUpdate {
 export type Strategy = (state: TradeState) => StrategyUpdate;
 
 export interface Trade {
+  /**
+   * The symbol of the traded asset.
+   */
+  symbol: string;
   entry: Transaction;
   exit: Transaction;
   position: MarketPosition;

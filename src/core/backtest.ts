@@ -22,6 +22,9 @@ const usedStrats = new WeakSet<Strategy>();
  * @param to the end of the time range to test
  * as unix timestamp, inclusive, can be dismissed
  * to test until the end of the series
+ * @param symbol the symbol of the traded asset, in case you
+ * want the trades in the backtest result to have the correct
+ * symbol instead of an empty string
  */
 export function backtestStrategy(args: {
   stratProvider: () => Strategy;
@@ -30,6 +33,7 @@ export function backtestStrategy(args: {
   showProgressBar?: boolean;
   from?: Moment;
   to?: Moment;
+  symbol?: string;
 }): BacktestResult {
   // Strategies are stateful, which is why a new instance is needed for each backtest.
   const strat: Strategy = args.stratProvider();
@@ -47,7 +51,7 @@ export function backtestStrategy(args: {
   // with multiple assets, so it's best to convert the single-asset strat to
   // multi-asset and run it through the more powerful backtester, instead of
   // having specific implementations for each.
-  const symbol = "asset"; // could be anything
+  const symbol = args.symbol || "";
   const multiStrat: MultiAssetStrategy = (multiState: MultiAssetTradeState) => [
     {
       ...strat({ ...multiState.assets[symbol], cash: multiState.cash }),

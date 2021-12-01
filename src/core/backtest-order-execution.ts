@@ -174,6 +174,7 @@ function fulfillExitOrder(
     cashBefore: state.cash,
   });
   const trade: Trade = convertToTrade({
+    symbol: state.asset.symbol,
     entry: m.last(transactions),
     exit: transaction,
   });
@@ -205,9 +206,11 @@ function getCashBalanceAfterTransaction({
 }
 
 function convertToTrade({
+  symbol,
   entry,
   exit,
 }: {
+  symbol: string;
   entry: Transaction;
   exit: Transaction;
 }): Trade {
@@ -228,6 +231,7 @@ function convertToTrade({
 
   const relativeProfit = absoluteProfit / entryValue;
   return {
+    symbol,
     entry,
     exit,
     position,
