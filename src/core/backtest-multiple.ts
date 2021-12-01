@@ -222,7 +222,9 @@ function applyStrategy(
   const nextState: MultiAssetTradeState = stratUpdates.reduce(
     (state, update) => {
       if (update.entryOrder && update.entryOrder.size <= 0) {
-        throw Error("Order size must be positive.");
+        throw Error(
+          `Order size must be positive, but was ${update.entryOrder.size}.`
+        );
       }
       if (state.assets[update.symbol].position && update.entryOrder) {
         throw Error(
