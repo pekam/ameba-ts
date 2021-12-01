@@ -14,7 +14,6 @@ import {
   SeriesMap,
   StrategyUpdate,
   Trade,
-  TradeState,
   Transaction,
 } from "./types";
 
@@ -207,12 +206,11 @@ function addNextCandles(state: MultiAssetTradeState): MultiAssetTradeState {
 
 function handleAllOrders(state: MultiAssetTradeState): MultiAssetTradeState {
   return state.updated.reduce((state, symbol) => {
-    const tradeState: TradeState = {
-      ...state.assets[symbol],
+    const { asset, cash } = handleOrders({
+      asset: state.assets[symbol],
       cash: state.cash,
-    };
-    const nextTradeState = handleOrders(tradeState);
-    return updateAsset(state, symbol, nextTradeState, nextTradeState.cash);
+    });
+    return updateAsset(state, symbol, asset, cash);
   }, state);
 }
 
@@ -242,17 +240,12 @@ function revertUnclosedTrades(state: MultiAssetTradeState) {
   return Object.values(state.assets)
     .filter((a) => a.position)
     .reduce((state, asset) => {
-      const nextTradeState = revertLastTransaction({
-        ...asset,
+      const { asset: nextAssetState, cash } = revertLastTransaction({
+        asset,
         cash: state.cash,
       });
 
-      return updateAsset(
-        state,
-        asset.symbol,
-        nextTradeState,
-        nextTradeState.cash
-      );
+      return updateAsset(state, asset.symbol, nextAssetState, cash);
     }, state);
 }
 

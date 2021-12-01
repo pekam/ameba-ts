@@ -1,19 +1,20 @@
 import { m } from "../shared/functions";
-import {
-  Candle,
-  MarketPosition,
-  Order,
-  Trade,
-  TradeState,
-  Transaction,
-} from "./types";
+import { AssetState } from "./backtest-multiple";
+import { Candle, MarketPosition, Order, Trade, Transaction } from "./types";
+
+// This module deals with the combination of a single asset's state (position,
+// orders, candles, etc.) and the account's cash balance.
+interface State {
+  asset: AssetState;
+  cash: number;
+}
 
 /**
  * Takes the latest candle in the series and executes orders in the state based
- * on those price changes. Returns the updated state.
+ * on those price changes. Returns the updated asset state and cash balance.
  */
-export function handleOrders(state: TradeState): TradeState {
-  if (!state.position) {
+export function handleOrders(state: State): State {
+  if (!state.asset.position) {
     return handleOrdersOnEntryCandle(handleEntryOrder(state));
   } else {
     // Could be executed in an order based on candle direction, instead of
@@ -24,17 +25,17 @@ export function handleOrders(state: TradeState): TradeState {
 
 // Stop loss and take profit need to be handled differently on the candle where
 // entry was triggered.
-function handleOrdersOnEntryCandle(state: TradeState): TradeState {
-  if (!state.position) {
+function handleOrdersOnEntryCandle(state: State): State {
+  const { position, takeProfit, stopLoss } = state.asset;
+  if (!position) {
     // Entry not triggered.
     return state;
   }
   return m.applyIf(
-    !!state.takeProfit &&
-      shouldHandleOrderOnEntryCandle(state, state.takeProfit),
+    !!takeProfit && shouldHandleOrderOnEntryCandle(state, takeProfit),
     handleTakeProfit,
     m.applyIf(
-      !!state.stopLoss && shouldHandleOrderOnEntryCandle(state, state.stopLoss),
+      !!stopLoss && shouldHandleOrderOnEntryCandle(state, stopLoss),
       handleStopLoss,
       state
     )
@@ -42,15 +43,15 @@ function handleOrdersOnEntryCandle(state: TradeState): TradeState {
 }
 
 function shouldHandleOrderOnEntryCandle(
-  state: TradeState,
+  state: State,
   orderPrice: number
 ): boolean {
+  const { series, entryOrder } = state.asset;
   // If the candle was green, assume that only prices above the entry price are
   // covered after the entry, and vice versa.
-  const priceMovedUp: boolean =
-    m.last(state.series).close > m.last(state.series).open;
+  const priceMovedUp: boolean = m.last(series).close > m.last(series).open;
   // entryOrder is definitely non-null right after entering
-  const entryPrice = (state.entryOrder as Order).price;
+  const entryPrice = entryOrder!.price;
 
   return (
     (priceMovedUp && orderPrice > entryPrice) ||
@@ -58,46 +59,46 @@ function shouldHandleOrderOnEntryCandle(
   );
 }
 
-function handleEntryOrder(state: TradeState) {
-  if (!state.position && state.entryOrder) {
-    const price = isOrderFulfilled(state.entryOrder, m.last(state.series));
+function handleEntryOrder(state: State): State {
+  const { position, entryOrder, series } = state.asset;
+  if (!position && entryOrder) {
+    const price = isOrderFulfilled(entryOrder, m.last(series));
     if (price) {
-      const mutations = fulfillEntryOrder(state, state.entryOrder, price);
-      return { ...state, ...mutations };
+      return fulfillEntryOrder(state, entryOrder, price);
     }
   }
   return state;
 }
 
-function handleStopLoss(state: TradeState) {
-  if (state.position && state.stopLoss) {
+function handleStopLoss(state: State): State {
+  const { position, entryOrder, stopLoss, series } = state.asset;
+  if (position && stopLoss) {
     const stopLossOrder: Order = {
-      price: state.stopLoss,
+      price: stopLoss,
       type: "stop",
-      side: state.position === "long" ? "sell" : "buy",
-      size: state.entryOrder!.size, // entryOrder must exist when in position
+      side: position === "long" ? "sell" : "buy",
+      size: entryOrder!.size, // entryOrder must exist when in position
     };
-    const price = isOrderFulfilled(stopLossOrder, m.last(state.series));
+    const price = isOrderFulfilled(stopLossOrder, m.last(series));
     if (price) {
-      const mutations = fulfillExitOrder(stopLossOrder, state, price);
-      return { ...state, ...mutations };
+      return fulfillExitOrder(state, stopLossOrder, price);
     }
   }
   return state;
 }
 
-function handleTakeProfit(state: TradeState) {
-  if (state.position && state.takeProfit) {
+function handleTakeProfit(state: State): State {
+  const { position, entryOrder, takeProfit, series } = state.asset;
+  if (position && takeProfit) {
     const takeProfitOrder: Order = {
-      price: state.takeProfit,
+      price: takeProfit,
       type: "limit",
-      side: state.position === "long" ? "sell" : "buy",
-      size: state.entryOrder!.size, // entryOrder must exist when in position
+      side: position === "long" ? "sell" : "buy",
+      size: entryOrder!.size, // entryOrder must exist when in position
     };
-    const price = isOrderFulfilled(takeProfitOrder, m.last(state.series));
+    const price = isOrderFulfilled(takeProfitOrder, m.last(series));
     if (price) {
-      const mutations = fulfillExitOrder(takeProfitOrder, state, price);
-      return { ...state, ...mutations };
+      return fulfillExitOrder(state, takeProfitOrder, price);
     }
   }
   return state;
@@ -133,18 +134,18 @@ function isOrderFulfilled(order: Order, newCandle: Candle): number | null {
 }
 
 function fulfillEntryOrder(
-  state: TradeState,
+  state: State,
   entryOrder: Order,
   executionPrice: number
-) {
+): State {
   const transaction: Transaction = {
     side: entryOrder.side,
     size: entryOrder.size,
     price: executionPrice,
-    time: m.last(state.series).time,
+    time: m.last(state.asset.series).time,
   };
 
-  const transactions = state.transactions.concat(transaction);
+  const transactions = state.asset.transactions.concat(transaction);
 
   const position: MarketPosition = entryOrder.side === "buy" ? "long" : "short";
 
@@ -153,35 +154,39 @@ function fulfillEntryOrder(
     cashBefore: state.cash,
   });
 
-  return { transactions, position, cash };
+  return { asset: { ...state.asset, transactions, position }, cash };
 }
 
 function fulfillExitOrder(
+  state: State,
   order: Order,
-  state: TradeState,
   executionPrice: number
-) {
+): State {
+  const { series, transactions, trades } = state.asset;
   const transaction: Transaction = {
     side: order.side,
     size: order.size,
     price: executionPrice,
-    time: m.last(state.series).time,
+    time: m.last(series).time,
   };
   const cash = getCashBalanceAfterTransaction({
     transaction,
     cashBefore: state.cash,
   });
   const trade: Trade = convertToTrade({
-    entry: m.last(state.transactions),
+    entry: m.last(transactions),
     exit: transaction,
   });
   return {
-    transactions: state.transactions.concat(transaction),
-    trades: state.trades.concat(trade),
-    position: null,
-    entryOrder: null,
-    stopLoss: null,
-    takeProfit: null,
+    asset: {
+      ...state.asset,
+      transactions: transactions.concat(transaction),
+      trades: trades.concat(trade),
+      position: null,
+      entryOrder: null,
+      stopLoss: null,
+      takeProfit: null,
+    },
     cash,
   };
 }
@@ -234,24 +239,29 @@ function convertToTrade({
 /**
  * Use to revert the effect of un-closed trade after the backtest finishes.
  * Removes the last transaction and reverts the cash balance to the value before
- * the transaction. Returns the updated state.
+ * the transaction. Returns the updated asset state and cash balance.
  */
-export function revertLastTransaction(state: TradeState): TradeState {
+export function revertLastTransaction(state: State): State {
   // NOTE: If/when transaction costs are added to the backtester, this needs to
   // be updated to revert those as well.
 
-  const transaction = m.last(state.transactions);
+  const transactions = state.asset.transactions;
+  const lastTransaction = m.last(transactions);
+
   const oppositeTransaction: Transaction = {
-    ...transaction,
-    side: transaction.side === "buy" ? "sell" : "buy",
+    ...lastTransaction,
+    side: lastTransaction.side === "buy" ? "sell" : "buy",
   };
   const cash = getCashBalanceAfterTransaction({
     transaction: oppositeTransaction,
     cashBefore: state.cash,
   });
-  const transactions = state.transactions.slice(
-    0,
-    state.transactions.length - 1
-  );
-  return { ...state, cash, transactions, position: null };
+  return {
+    asset: {
+      ...state.asset,
+      transactions: transactions.slice(0, transactions.length - 1),
+      position: null,
+    },
+    cash,
+  };
 }
