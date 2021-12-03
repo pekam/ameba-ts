@@ -1,11 +1,12 @@
 import { Indicators } from "../core/indicators";
-import { CandleSeries, Strategy, TradeState } from "../core/types";
+import { SizelessStrategy } from "../core/staker";
+import { CandleSeries, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
 /**
  */
-function donchianReversionStrategy(channelPeriod: number): Strategy {
+function donchianReversionStrategy(channelPeriod: number): SizelessStrategy {
   const indicators = new Indicators({
     donchianChannelPeriod: channelPeriod,
   });
@@ -52,7 +53,6 @@ function donchianReversionStrategy(channelPeriod: number): Strategy {
             price: lastSwingHigh,
             side: "buy",
             type: "stop",
-            size: state.cash / lastSwingHigh,
           },
           stopLoss: lastSwingLow,
           takeProfit: middle,
@@ -68,7 +68,6 @@ function donchianReversionStrategy(channelPeriod: number): Strategy {
             price: lastSwingLow,
             side: "sell",
             type: "stop",
-            size: state.cash / lastSwingLow,
           },
           stopLoss: lastSwingHigh,
           takeProfit: middle,

@@ -1,17 +1,17 @@
-import { MarketPosition, StrategyUpdate, TradeState } from "../core/types";
+import { SizelessStrategyUpdate } from "../core/staker";
+import { MarketPosition, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
 /**
- * (needs a better name...)
- * Enters when there's a big one-directional move relative to the
- * current volatility (average range/candlesize).
+ * (needs a better name...) Enters when there's a big one-directional move
+ * relative to the current volatility (average range/candlesize).
  */
 export function volatilityStrategy(settings: {
   period: number;
   onlyDirection?: MarketPosition;
 }) {
-  return function (state: TradeState): StrategyUpdate {
+  return function (state: TradeState): SizelessStrategyUpdate {
     const series = state.series;
 
     const avgRangePeriod = 20;
@@ -37,7 +37,6 @@ export function volatilityStrategy(settings: {
             type: "stop",
             price: entryPrice,
             side: "buy",
-            size: state.cash / entryPrice,
           },
           stopLoss: entryPrice - avgSize * 2,
         };
@@ -50,7 +49,6 @@ export function volatilityStrategy(settings: {
             type: "stop",
             price: entryPrice,
             side: "sell",
-            size: state.cash / entryPrice,
           },
           stopLoss: entryPrice + avgSize * 2,
         };

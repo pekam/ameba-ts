@@ -1,34 +1,36 @@
 import { backtestStrategy } from "../core/backtest";
 import {
-  CandleSeries,
-  Strategy,
-  StrategyUpdate,
-  TradeState,
-} from "../core/types";
+  allInStaker,
+  SizelessStrategy,
+  SizelessStrategyUpdate,
+  withStaker,
+} from "../core/staker";
+import { CandleSeries, TradeState } from "../core/types";
 import { cancelEntry } from "./strat-util";
 
 /**
- * Trades with the provided strategy only if it was profitable
- * in the near past.
+ * Trades with the provided strategy only if it was profitable in the near past.
  *
- * @param stratProvider
- * provider for the strategy to use
- * @param backtestInterval
- * how many candles between the backtest runs and thus
+ * NOTE: Staking is based on cash balance which might cause unexpected behavior
+ * if used with the multi-asset backtester, especially when having short
+ * positions on other assets.
+ *
+ * @param stratProvider provider for the strategy to use
+ * @param backtestInterval how many candles between the backtest runs and thus
  * updating the condition to execute the strategy
- * @param backtestCandleCount
- * how many candles to include in the re-optimizing backtest
- * @param profitThreshold
- * the min relative profit the strategy should have generated in the backtest
- * to enable executing the strategy, e.g. 0.01 for 1% profit
+ * @param backtestCandleCount how many candles to include in the re-optimizing
+ * backtest
+ * @param profitThreshold the min relative profit the strategy should have
+ * generated in the backtest to enable executing the strategy, e.g. 0.01 for 1%
+ * profit
  */
 export function tradeOnlyRecentlyProfitable(
-  stratProvider: () => Strategy,
+  stratProvider: () => SizelessStrategy,
   backtestInterval = 100,
   backtestCandleCount = 100,
   profitThreshold = 0.005
 ) {
-  const strat: Strategy = stratProvider();
+  const strat: SizelessStrategy = stratProvider();
 
   let enabled = false;
 
@@ -38,7 +40,7 @@ export function tradeOnlyRecentlyProfitable(
       series.length >= backtestCandleCount
     ) {
       const backtestResult = backtestStrategy({
-        stratProvider,
+        stratProvider: () => withStaker(stratProvider(), allInStaker),
         series: series.slice(-backtestCandleCount),
         showProgressBar: false,
       });
@@ -46,7 +48,7 @@ export function tradeOnlyRecentlyProfitable(
     }
   }
 
-  return function (state: TradeState): StrategyUpdate {
+  return function (state: TradeState): SizelessStrategyUpdate {
     updateEnabled(state.series);
 
     // Need to update indicators in all cases

@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { backtestStrategy } from "../core/backtest";
+import { allInStaker, withStaker } from "../core/staker";
 import { CandleSeries } from "../core/types";
 import { readDataFromFile, writeDataToFile } from "../data/data-caching";
 import { m } from "../shared/functions";
@@ -59,11 +60,14 @@ async function run() {
   ];
 
   const stratProvider = () =>
-    autoOptimizer({
-      stratPool,
-      optimizeInterval: PERIODS.day * 2,
-      optimizePeriod: PERIODS.day * 2,
-    });
+    withStaker(
+      autoOptimizer({
+        stratPool,
+        optimizeInterval: PERIODS.day * 2,
+        optimizePeriod: PERIODS.day * 2,
+      }),
+      allInStaker
+    );
 
   const res = backtestStrategy({ stratProvider, series: candles });
   // const withTransCost = withRelativeTransactionCost(res, 0.0007);
@@ -81,11 +85,14 @@ async function run() {
         const smaPeriod = _.random(20, 100);
         const result = backtestStrategy({
           stratProvider: () =>
-            donchianBreakoutStrategy({
-              channelPeriod,
-              smaPeriod,
-              onlyDirection: "long",
-            }),
+            withStaker(
+              donchianBreakoutStrategy({
+                channelPeriod,
+                smaPeriod,
+                onlyDirection: "long",
+              }),
+              allInStaker
+            ),
           series: candles,
         });
         // const withCosts = withRelativeTransactionCost(result, 0.0007);

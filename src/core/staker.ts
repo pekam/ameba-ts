@@ -151,3 +151,6 @@ export function createStaker({
     return allowFractions ? size : Math.floor(size);
   };
 }
+
+export const allInStaker: Staker = (state, update) =>
+  state.cash / update.entryOrder!.price;

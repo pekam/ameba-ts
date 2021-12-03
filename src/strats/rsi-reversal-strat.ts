@@ -1,5 +1,6 @@
 import { Indicators } from "../core/indicators";
-import { Order, StrategyUpdate, TradeState } from "../core/types";
+import { SizelessOrder, SizelessStrategyUpdate } from "../core/staker";
+import { TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
@@ -12,7 +13,7 @@ const adxPeriod = 20;
 export function rsiReversalStrategy() {
   const indicators = new Indicators({ rsiPeriod, adxPeriod });
 
-  return function (state: TradeState): StrategyUpdate {
+  return function (state: TradeState): SizelessStrategyUpdate {
     const series = state.series;
 
     const { rsi, adx } = indicators.update(series) as {
@@ -27,11 +28,10 @@ export function rsiReversalStrategy() {
     if (!state.position) {
       if (adx < 25 && rsi < 30) {
         const entryPrice = m.last(series).low;
-        const entryOrder: Order = {
+        const entryOrder: SizelessOrder = {
           price: entryPrice,
           type: "limit",
           side: "buy",
-          size: state.cash / entryPrice,
         };
         return {
           entryOrder,

@@ -1,10 +1,5 @@
-import {
-  CandleSeries,
-  MarketPosition,
-  Order,
-  Strategy,
-  TradeState,
-} from "../core/types";
+import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
+import { CandleSeries, MarketPosition, Order, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import {
   ftxResolutionToPeriod,
@@ -17,7 +12,7 @@ import { FtxResolution } from "./ftx";
 import { FtxUtil, FtxWallet } from "./ftx-util";
 
 interface BotBArgs {
-  stratProvider: () => Strategy;
+  stratProvider: () => SizelessStrategy;
   resolution: FtxResolution;
   ftxUtil: FtxUtil;
   requiredCandles: number;
@@ -51,7 +46,8 @@ async function doRun({
 
   const candlePeriod = ftxResolutionToPeriod[resolution];
 
-  const strat = stratProvider();
+  // TODO Staker is hard-coded here
+  const strat = withStaker(stratProvider(), allInStaker);
 
   let state: TradeState = {
     cash: (await ftxUtil.getWallet()).usd,

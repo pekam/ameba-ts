@@ -1,6 +1,6 @@
 import { flatten, maxBy } from "lodash";
 import { backtestStrategy } from "../core/backtest";
-import { Strategy } from "../core/types";
+import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
 import { getCurrentTimestampInSeconds } from "../shared/time-util";
 import { sleep } from "../util";
 import { botB } from "./bot-b";
@@ -17,7 +17,7 @@ interface AutoPickerArgs {
   subaccount: string;
   resolution: FtxResolution;
   markets: FtxMarket[];
-  strats: (() => Strategy)[];
+  strats: (() => SizelessStrategy)[];
   pickInterval: number;
   lookbackPeriod: number;
   resultThreshold: number;
@@ -71,7 +71,7 @@ async function pickMarketAndStrategy({
         });
         return strats.map((stratProvider, i) => {
           const result = backtestStrategy({
-            stratProvider,
+            stratProvider: () => withStaker(stratProvider(), allInStaker),
             series,
             showProgressBar: false,
           });

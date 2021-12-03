@@ -1,19 +1,20 @@
-import { Order, StrategyUpdate, TradeState } from "../core/types";
+import { SizelessOrder } from "../core/staker";
+import { StrategyUpdate, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 
 export const cancelEntry: StrategyUpdate = {
   entryOrder: null,
 } as const;
 
-export function withRelativeExits({
+export function withRelativeExits<O extends SizelessOrder>({
   entryOrder,
   relativeTakeProfit,
   relativeStopLoss,
 }: {
-  entryOrder: Order;
+  entryOrder: O;
   relativeTakeProfit: number;
   relativeStopLoss: number;
-}): { entryOrder: Order; takeProfit: number; stopLoss: number } {
+}): { entryOrder: O; takeProfit: number; stopLoss: number } {
   if (entryOrder.side === "buy") {
     return {
       entryOrder,

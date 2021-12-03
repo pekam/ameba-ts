@@ -1,10 +1,10 @@
 import { Indicators } from "../core/indicators";
 import {
-  MarketPosition,
-  Order,
-  StrategyUpdate,
-  TradeState,
-} from "../core/types";
+  SizelessOrder,
+  SizelessStrategy,
+  SizelessStrategyUpdate,
+} from "../core/staker";
+import { MarketPosition, TradeState } from "../core/types";
 import { m } from "../shared/functions";
 import { withRelativeExits } from "./strat-util";
 
@@ -12,12 +12,12 @@ export function macdStrat(settings: {
   relativeTakeProfit: number;
   relativeStopLoss: number;
   onlyDirection?: MarketPosition;
-}) {
+}): SizelessStrategy {
   const indicators = new Indicators({
     macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
   });
 
-  return function (state: TradeState): StrategyUpdate {
+  return function (state: TradeState): SizelessStrategyUpdate {
     const series = state.series;
     const candle = m.last(series);
 
@@ -46,22 +46,20 @@ export function macdStrat(settings: {
     if (settings.onlyDirection !== "short" && bullishFilters.every((b) => b)) {
       // Long
       const entryPrice = candle.high;
-      const entryOrder: Order = {
+      const entryOrder: SizelessOrder = {
         side: "buy",
         type: "stop",
-        price: candle.high,
-        size: state.cash / entryPrice,
+        price: entryPrice,
       };
       return withRelativeExits({ entryOrder, ...settings });
     }
     if (settings.onlyDirection !== "long" && bullishFilters.every((b) => !b)) {
       // Short
       const entryPrice = candle.low;
-      const entryOrder: Order = {
+      const entryOrder: SizelessOrder = {
         side: "sell",
         type: "stop",
         price: entryPrice,
-        size: state.cash / entryPrice,
       };
       return withRelativeExits({ entryOrder, ...settings });
     }
