@@ -1,4 +1,4 @@
-import { flatMap, flatten, sortBy, takeWhile } from "lodash";
+import { flatMap, flatten, sortBy } from "lodash";
 import { Moment } from "../shared/time-util";
 import { startProgressBar } from "../util";
 import {
@@ -17,6 +17,15 @@ import {
   Transaction,
 } from "./types";
 
+interface BacktestMultipleArgs {
+  stratProvider: () => MultiAssetStrategy;
+  multiSeries: SeriesMap;
+  initialBalance?: number;
+  showProgressBar?: boolean;
+  from?: Moment;
+  to?: Moment;
+}
+
 export type AssetMap = { [symbol: string]: AssetState };
 
 export interface MultiAssetTradeState {
@@ -26,6 +35,11 @@ export interface MultiAssetTradeState {
   updated: string[];
 
   time: number;
+}
+
+// Additional props that should not be visible to the Strategy implementor
+interface InternalTradeState extends MultiAssetTradeState {
+  args: Required<BacktestMultipleArgs>;
 }
 
 export interface AssetState {
@@ -39,8 +53,6 @@ export interface AssetState {
 
   transactions: Transaction[];
   trades: Trade[];
-
-  _fullSeries: CandleSeries;
 }
 
 export type MultiAssetStrategyUpdate = (StrategyUpdate & { symbol: string })[];
@@ -49,53 +61,35 @@ export type MultiAssetStrategy = (
   state: MultiAssetTradeState
 ) => MultiAssetStrategyUpdate;
 
-export function backtestMultiple(args: {
-  stratProvider: () => MultiAssetStrategy;
-  multiSeries: SeriesMap;
-  initialBalance?: number;
-  showProgressBar?: boolean;
-  from?: Moment;
-  to?: Moment;
-}) {
-  const defaults = { initialBalance: 10000, showProgressBar: true };
-  const {
-    stratProvider,
-    multiSeries,
-    initialBalance,
-    showProgressBar,
-    from,
-    to,
-  } = {
-    ...defaults,
-    ...args,
+export function backtestMultiple(args: BacktestMultipleArgs) {
+  const defaults = {
+    initialBalance: 10000,
+    showProgressBar: true,
+    from: 0,
+    to: Infinity,
   };
+  return doBacktestMultiple({ ...defaults, ...args });
+}
+
+function doBacktestMultiple(args: Required<BacktestMultipleArgs>) {
+  const { stratProvider, multiSeries, initialBalance, showProgressBar } = args;
 
   const strat: MultiAssetStrategy = stratProvider();
 
-  function isWithinRange(candle: Candle) {
-    return (
-      candle.time >= (from || -Infinity) && candle.time <= (to || Infinity)
-    );
-  }
-
-  const initialState: MultiAssetTradeState = {
+  let state: InternalTradeState = {
     cash: initialBalance,
     assets: Object.entries(multiSeries).reduce<AssetMap>(
       (assets, [symbol, series]) => {
         // Candles before 'from' are still included, to allow using historical
         // price data before the first new candle added during the backtest.
         const initialSeries = (() => {
-          const firstCandleIndex = series.findIndex(isWithinRange);
+          const firstCandleIndex = series.findIndex((c) =>
+            isWithinRange(args, c)
+          );
           return firstCandleIndex === -1
             ? []
             : series.slice(0, firstCandleIndex);
         })();
-
-        // Note that _fullSeries won't necessarily contain all candles provided
-        // by the user, since this is where 'to' is enforced.
-        const _fullSeries = to
-          ? takeWhile(series, (candle) => candle.time <= to)
-          : series;
 
         assets[symbol] = {
           symbol,
@@ -106,7 +100,6 @@ export function backtestMultiple(args: {
           stopLoss: null,
           transactions: [],
           trades: [],
-          _fullSeries,
         };
         return assets;
       },
@@ -114,11 +107,12 @@ export function backtestMultiple(args: {
     ),
     updated: [],
     time: 0,
+    args,
   };
 
   const assetsWithBacktestableCandles = Object.values(
-    initialState.assets
-  ).filter(hasNext);
+    state.assets
+  ).filter((a) => getNextCandle(state, a));
 
   if (!assetsWithBacktestableCandles.length) {
     throw Error(
@@ -128,18 +122,16 @@ export function backtestMultiple(args: {
   }
 
   const firstCandleTime = Math.min(
-    ...assetsWithBacktestableCandles.map(getNextTime)
+    ...assetsWithBacktestableCandles.map((a) => getNextCandle(state, a)!.time)
   );
 
   const iterationCount = new Set(
-    flatten(Object.values(initialState.assets).map((a) => a._fullSeries))
-      .filter(isWithinRange)
+    flatten(Object.values(multiSeries))
+      .filter((c) => isWithinRange(args, c))
       .map((c) => c.time)
   ).size;
 
   const progressBar = startProgressBar(iterationCount, showProgressBar);
-
-  let state = initialState;
 
   while (true) {
     state = addNextCandles(state);
@@ -170,31 +162,31 @@ export function backtestMultiple(args: {
   );
 }
 
-function addNextCandles(state: MultiAssetTradeState): MultiAssetTradeState {
+function addNextCandles(state: InternalTradeState): InternalTradeState {
   const assets = Object.values(state.assets);
 
   // Collect all assets which will include a new candle
   // in the next update
-  const [nextAssets, nextTime] = assets
-    .filter(hasNext)
-    .reduce<[AssetState[], number?]>(
-      ([nextAssets, minTime], asset) => {
-        const currentTime = getNextTime(asset);
-        if (currentTime < (minTime || Infinity)) {
-          return [[asset], currentTime];
-        } else if (currentTime === minTime) {
-          // Mutating for performance
-          nextAssets.push(asset);
-        }
+  const [nextAssets, nextTime] = assets.reduce<[AssetState[], number?]>(
+    ([nextAssets, minTime], asset) => {
+      const candle = getNextCandle(state, asset);
+      if (!candle) {
+        // This asset doesn't have further candles
         return [nextAssets, minTime];
-      },
-      [[], undefined]
-    );
+      } else if (candle.time < (minTime || Infinity)) {
+        return [[asset], candle.time];
+      } else if (candle.time === minTime) {
+        nextAssets.push(asset); // Mutating for performance
+        return [nextAssets, minTime];
+      } else return [nextAssets, minTime];
+    },
+    [[], undefined]
+  );
 
   // Mutating the candle arrays for performance; slice() has O(N)
   // complexity which is a real issue when backtesting big datasets.
   nextAssets.forEach((asset) => {
-    asset.series.push(getNextCandle(asset));
+    asset.series.push(getNextCandle(state, asset)!);
   });
 
   return {
@@ -204,7 +196,7 @@ function addNextCandles(state: MultiAssetTradeState): MultiAssetTradeState {
   };
 }
 
-function handleAllOrders(state: MultiAssetTradeState): MultiAssetTradeState {
+function handleAllOrders(state: InternalTradeState): InternalTradeState {
   return state.updated.reduce((state, symbol) => {
     const { asset, cash } = handleOrders({
       asset: state.assets[symbol],
@@ -215,30 +207,27 @@ function handleAllOrders(state: MultiAssetTradeState): MultiAssetTradeState {
 }
 
 function applyStrategy(
-  state: MultiAssetTradeState,
+  state: InternalTradeState,
   strat: MultiAssetStrategy
-): MultiAssetTradeState {
+): InternalTradeState {
   const stratUpdates = strat(state);
-  const nextState: MultiAssetTradeState = stratUpdates.reduce(
-    (state, update) => {
-      if (update.entryOrder && update.entryOrder.size <= 0) {
-        throw Error(
-          `Order size must be positive, but was ${update.entryOrder.size}.`
-        );
-      }
-      if (state.assets[update.symbol].position && update.entryOrder) {
-        throw Error(
-          "Changing entry order while already in a position is not allowed."
-        );
-      }
-      return updateAsset(state, update.symbol, update);
-    },
-    state
-  );
+  const nextState: InternalTradeState = stratUpdates.reduce((state, update) => {
+    if (update.entryOrder && update.entryOrder.size <= 0) {
+      throw Error(
+        `Order size must be positive, but was ${update.entryOrder.size}.`
+      );
+    }
+    if (state.assets[update.symbol].position && update.entryOrder) {
+      throw Error(
+        "Changing entry order while already in a position is not allowed."
+      );
+    }
+    return updateAsset(state, update.symbol, update);
+  }, state);
   return nextState;
 }
 
-function revertUnclosedTrades(state: MultiAssetTradeState) {
+function revertUnclosedTrades(state: InternalTradeState) {
   return Object.values(state.assets)
     .filter((a) => a.position)
     .reduce((state, asset) => {
@@ -257,11 +246,11 @@ function revertUnclosedTrades(state: MultiAssetTradeState) {
  * value as {@link cash}.
  */
 function updateAsset(
-  state: MultiAssetTradeState,
+  state: InternalTradeState,
   symbol: string,
   update: StrategyUpdate,
   cash?: number
-): MultiAssetTradeState {
+): InternalTradeState {
   return {
     ...state,
     cash: cash !== undefined ? cash : state.cash,
@@ -275,14 +264,14 @@ function updateAsset(
   };
 }
 
-function hasNext(assetState: AssetState) {
-  return assetState.series.length < assetState._fullSeries.length;
+function isWithinRange(args: Required<BacktestMultipleArgs>, candle: Candle) {
+  return candle.time >= args.from && candle.time <= args.to;
 }
 
-function getNextCandle(assetState: AssetState) {
-  return assetState._fullSeries[assetState.series.length];
-}
-
-function getNextTime(assetState: AssetState) {
-  return getNextCandle(assetState).time;
+function getNextCandle(state: InternalTradeState, asset: AssetState) {
+  const next =
+    state.args.multiSeries[asset.symbol][
+      state.assets[asset.symbol].series.length
+    ];
+  return next && next.time <= state.args.to ? next : null;
 }
