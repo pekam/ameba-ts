@@ -1,4 +1,6 @@
+import { flatMap, sortBy } from "lodash";
 import { m } from "../shared/functions";
+import { InternalTradeState } from "./backtest-multiple";
 import { CandleSeries, Range, Trade } from "./types";
 
 export interface BacktestStatistics {
@@ -27,25 +29,41 @@ export interface BacktestResult {
 }
 
 export function convertToBacktestResult(
-  trades: Trade[],
-  allSeries: CandleSeries[],
-  initialBalance: number,
-  endBalance: number,
-  range: Range
+  finalState: InternalTradeState
 ): BacktestResult {
-  const relativeProfit = (endBalance - initialBalance) / initialBalance;
-  const buyAndHoldProfit = getBuyAndHoldProfit(allSeries, range);
+  const {
+    range: { from, to },
+    cash: endBalance,
+  } = finalState;
+  const initialBalance = finalState.args.initialBalance;
+  const trades = getTradesInOrder(finalState);
+
+  if (!from || !to) {
+    throw Error("There were no candles to backtest with.");
+  }
+  const range = { from, to };
+
   const stats: BacktestStatistics = {
     initialBalance,
     endBalance,
-    relativeProfit,
+    relativeProfit: (endBalance - initialBalance) / initialBalance,
     tradeCount: trades.length,
     successRate:
       trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
-    buyAndHoldProfit,
+    buyAndHoldProfit: getBuyAndHoldProfit(
+      Object.values(finalState.args.multiSeries),
+      range
+    ),
     range,
   };
   return { trades, stats };
+}
+
+function getTradesInOrder(state: InternalTradeState) {
+  return sortBy(
+    flatMap(state.assets, (a) => a.trades),
+    (t) => t.entry.time
+  );
 }
 
 function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
