@@ -1,4 +1,4 @@
-import { backtestStrategy } from "./core/backtest";
+import { backtestMultiple } from "./core/backtest-multiple";
 import { createStaker, withStaker } from "./core/staker";
 import { getDataSet } from "./data/load-data-set";
 import { donchianBreakoutStrategy } from "./strats/donchian-breakout-strat";
@@ -11,7 +11,8 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   const companiesWithCandles = await Promise.all(
     dataSet.companies.slice(0, 30).map((comp) => comp.withCandleSeries())
   );
-  const result = backtestStrategy({
+  const company = companiesWithCandles[0];
+  const result = backtestMultiple({
     stratProvider: () =>
       withStaker(
         tradeOnlyRecentlyProfitable(() =>
@@ -27,7 +28,7 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
           allowFractions: true,
         })
       ),
-    series: companiesWithCandles[0].candles,
+    multiSeries: { [company.symbol]: company.candles },
   });
   console.log(result);
 })();

@@ -1,4 +1,11 @@
-import { Order, Strategy, StrategyUpdate, TradeState } from "./types";
+import { m } from "../shared/functions";
+import {
+  AssetState,
+  MultiAssetStrategy,
+  MultiAssetStrategyUpdate,
+  MultiAssetTradeState,
+} from "./backtest-multiple";
+import { Order, StrategyUpdate } from "./types";
 
 /**
  * A function that implements a position sizing strategy.
@@ -11,9 +18,9 @@ import { Order, Strategy, StrategyUpdate, TradeState } from "./types";
  * the backtester or on a real broker.
  */
 export type Staker = (
-  state: TradeState,
-  update: SizelessStrategyUpdate
-) => number;
+  state: MultiAssetTradeState,
+  update: (SizelessStrategyUpdate & { symbol: string })[]
+) => { symbol: string; size: number }[];
 
 /**
  * An {@link Order} which doens't have the 'size' property yet, as it
@@ -53,42 +60,56 @@ export interface SizelessStrategyUpdate
  * broker, you need to combine it with a separate {@link Staker} which
  * handles the position sizing, by using {@link withStaker}.
  */
-export type SizelessStrategy = (state: TradeState) => SizelessStrategyUpdate;
+export type SizelessStrategy = (state: AssetState) => SizelessStrategyUpdate;
 
 /**
  * Combines a strategy which doesn't include positions sizing with a staker,
  * forming a full strategy that can be backtested or executed on a broker.
  */
 export function withStaker(
-  strategy: SizelessStrategy,
+  stratProvider: () => SizelessStrategy,
   staker: Staker
-): Strategy {
-  return (state: TradeState) => {
-    const sizelessUpdate = strategy(state);
+): MultiAssetStrategy {
+  const individualStrats: { [symbol: string]: SizelessStrategy } = {};
 
-    if (!sizelessUpdate.entryOrder) {
-      return sizelessUpdate as StrategyUpdate;
-    }
+  return function (state: MultiAssetTradeState): MultiAssetStrategyUpdate {
+    const sizelessUpdates = state.updated
+      .map((symbol) => state.assets[symbol])
+      .map((asset) => {
+        if (!individualStrats[asset.symbol]) {
+          individualStrats[asset.symbol] = stratProvider();
+        }
+        const strat = individualStrats[asset.symbol];
 
-    const size = staker(state, sizelessUpdate);
+        const update = strat(state.assets[asset.symbol]);
 
-    if (size < 0) {
-      throw Error(
-        `The order size must be non-negative, but staker returned ${size}.`
-      );
-    }
+        return { symbol: asset.symbol, ...update };
+      });
+    const stakes = staker(state, sizelessUpdates);
 
-    if (size === 0) {
-      return { entryOrder: null };
-    }
-
-    return {
-      ...sizelessUpdate,
-      entryOrder: {
-        ...sizelessUpdate.entryOrder,
-        size,
-      },
-    };
+    return sizelessUpdates.map((update) => {
+      if (!update.entryOrder) {
+        return update as StrategyUpdate & { symbol: string };
+      }
+      const size = stakes.find((s) => s.symbol === update.symbol)?.size;
+      if (size === undefined) {
+        throw Error(
+          `Staker did not return an order size for an updated symbol ${update.symbol}.`
+        );
+      }
+      if (size < 0) {
+        throw Error(
+          `Staker returned a negative order size ${size} for symbol ${update.symbol}.`
+        );
+      }
+      return {
+        ...update,
+        entryOrder: {
+          ...update.entryOrder,
+          size,
+        },
+      };
+    });
   };
 }
 
@@ -104,7 +125,7 @@ export function withStaker(
  */
 export function createStaker({
   maxRelativeRisk,
-  maxRelativePosition,
+  maxRelativePosition, // TODO rename to maxRelativeExposure
   allowFractions,
 }: {
   /**
@@ -127,30 +148,92 @@ export function createStaker({
    */
   allowFractions: boolean;
 }): Staker {
-  return (state: TradeState, update: SizelessStrategyUpdate) => {
-    const { entryOrder, stopLoss } = update;
-    if (!entryOrder || !stopLoss) {
-      throw Error(
-        "Entry order and stoploss should be defined for the used staker."
-      );
-    }
-    const risk = Math.abs(entryOrder.price - stopLoss) / entryOrder.price;
-    // NOTE: This assumes that only one asset is traded at a time,
-    // so the full account balance is in cash when not in a position.
-    // This might change when introducing multi-asset strategies.
-    const accountBalance = state.cash;
-    const maxAbsoluteRiskPerTrade = accountBalance * maxRelativeRisk;
-
-    const positionSizeInCash = Math.min(
-      maxAbsoluteRiskPerTrade / risk,
-      maxRelativePosition * accountBalance
+  return (
+    state: MultiAssetTradeState,
+    updates: (SizelessStrategyUpdate & { symbol: string })[]
+  ) => {
+    const { accountBalance, exposure, pendingExposure } = getAccountStats(
+      state
     );
+    const maxExposure = maxRelativePosition * accountBalance;
 
-    const size = positionSizeInCash / entryOrder.price;
+    return updates
+      .filter((update) => update.entryOrder)
+      .reduce<{
+        sizes: { size: number; symbol: string }[];
+        pendingExposure: number;
+      }>(
+        (acc, update) => {
+          const { entryOrder, stopLoss } = update;
+          if (!entryOrder || !stopLoss) {
+            throw Error(
+              "Entry order and stoploss should be defined for the used staker."
+            );
+          }
+          const risk = Math.abs(entryOrder.price - stopLoss) / entryOrder.price;
+          const maxAbsoluteRiskPerTrade = accountBalance * maxRelativeRisk;
 
-    return allowFractions ? size : Math.floor(size);
+          const potentialExposure = exposure + pendingExposure;
+
+          const positionSizeInCash = Math.min(
+            maxAbsoluteRiskPerTrade / risk,
+            maxRelativePosition * accountBalance,
+            Math.max(0, maxExposure - potentialExposure)
+          );
+
+          const sizeWithFractions = positionSizeInCash / entryOrder.price;
+          const size = allowFractions
+            ? sizeWithFractions
+            : Math.floor(sizeWithFractions);
+
+          return {
+            sizes: [...acc.sizes, { size, symbol: update.symbol }],
+            pendingExposure: pendingExposure + positionSizeInCash,
+          };
+        },
+        {
+          sizes: [],
+          pendingExposure,
+        }
+      ).sizes;
   };
 }
 
-export const allInStaker: Staker = (state, update) =>
-  state.cash / update.entryOrder!.price;
+function getAccountStats(
+  state: MultiAssetTradeState
+): { accountBalance: number; exposure: number; pendingExposure: number } {
+  return Object.values(state.assets).reduce(
+    (acc, asset) => {
+      if (asset.position) {
+        const positionSize =
+          asset.entryOrder!.size * m.last(asset.series).close;
+        return {
+          ...acc,
+          accountBalance:
+            acc.accountBalance +
+            (asset.position === "long" ? positionSize : -positionSize),
+          exposure: acc.exposure + positionSize,
+        };
+      } else if (asset.entryOrder) {
+        const pendingPosition = asset.entryOrder.price * asset.entryOrder.size;
+        return {
+          ...acc,
+          pendingExposure: acc.pendingExposure + pendingPosition,
+        };
+      } else {
+        return acc;
+      }
+    },
+    { accountBalance: state.cash, exposure: 0, pendingExposure: 0 }
+  );
+}
+
+/**
+ * Places the entire account balance on one trade, holding max one position at
+ * any time. Allows fractions.
+ */
+export const allInStaker: Staker = createStaker({
+  maxRelativeRisk: 1,
+  maxRelativePosition: 1,
+  allowFractions: true,
+});
