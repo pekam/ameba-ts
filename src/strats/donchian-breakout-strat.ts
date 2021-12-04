@@ -1,6 +1,7 @@
+import { AssetState } from "../core/backtest-multiple";
 import { Indicators } from "../core/indicators";
 import { SizelessStrategy, SizelessStrategyUpdate } from "../core/staker";
-import { MarketPosition, TradeState } from "../core/types";
+import { MarketPosition } from "../core/types";
 import { m } from "../shared/functions";
 
 /**
@@ -21,7 +22,7 @@ export function donchianBreakoutStrategy(settings: {
     atrPeriod: 20,
   });
 
-  return (state: TradeState) => {
+  return (state: AssetState) => {
     const series = state.series;
     const currentPrice = m.last(state.series).close;
 

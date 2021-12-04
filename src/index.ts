@@ -15,13 +15,14 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   const result = backtestMultiple({
     stratProvider: () =>
       withStaker(
-        tradeOnlyRecentlyProfitable(() =>
-          donchianBreakoutStrategy({
-            channelPeriod: 30,
-            smaPeriod: 20,
-            onlyDirection: "long",
-          })
-        ),
+        () =>
+          tradeOnlyRecentlyProfitable(() =>
+            donchianBreakoutStrategy({
+              channelPeriod: 30,
+              smaPeriod: 20,
+              onlyDirection: "long",
+            })
+          ),
         createStaker({
           maxRelativeRisk: 0.01,
           maxRelativePosition: 1,

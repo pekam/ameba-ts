@@ -1,11 +1,12 @@
 import { backtestStrategy } from "../core/backtest";
+import { AssetState } from "../core/backtest-multiple";
 import {
   allInStaker,
   SizelessStrategy,
   SizelessStrategyUpdate,
   withStaker,
 } from "../core/staker";
-import { CandleSeries, TradeState } from "../core/types";
+import { CandleSeries } from "../core/types";
 import { cancelEntry } from "./strat-util";
 
 /**
@@ -40,7 +41,7 @@ export function tradeOnlyRecentlyProfitable(
       series.length >= backtestCandleCount
     ) {
       const backtestResult = backtestStrategy({
-        stratProvider: () => withStaker(stratProvider(), allInStaker),
+        stratProvider: () => withStaker(stratProvider, allInStaker),
         series: series.slice(-backtestCandleCount),
         showProgressBar: false,
       });
@@ -48,7 +49,7 @@ export function tradeOnlyRecentlyProfitable(
     }
   }
 
-  return function (state: TradeState): SizelessStrategyUpdate {
+  return function (state: AssetState): SizelessStrategyUpdate {
     updateEnabled(state.series);
 
     // Need to update indicators in all cases

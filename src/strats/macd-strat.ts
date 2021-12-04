@@ -1,10 +1,11 @@
+import { AssetState } from "../core/backtest-multiple";
 import { Indicators } from "../core/indicators";
 import {
   SizelessOrder,
   SizelessStrategy,
   SizelessStrategyUpdate,
 } from "../core/staker";
-import { MarketPosition, TradeState } from "../core/types";
+import { MarketPosition } from "../core/types";
 import { m } from "../shared/functions";
 import { withRelativeExits } from "./strat-util";
 
@@ -17,7 +18,7 @@ export function macdStrat(settings: {
     macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
   });
 
-  return function (state: TradeState): SizelessStrategyUpdate {
+  return function (state: AssetState): SizelessStrategyUpdate {
     const series = state.series;
     const candle = m.last(series);
 

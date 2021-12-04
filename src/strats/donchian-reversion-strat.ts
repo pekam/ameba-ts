@@ -1,6 +1,7 @@
+import { AssetState } from "../core/backtest-multiple";
 import { Indicators } from "../core/indicators";
 import { SizelessStrategy } from "../core/staker";
-import { CandleSeries, TradeState } from "../core/types";
+import { CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
@@ -11,7 +12,7 @@ function donchianReversionStrategy(channelPeriod: number): SizelessStrategy {
     donchianChannelPeriod: channelPeriod,
   });
 
-  return (state: TradeState) => {
+  return (state: AssetState) => {
     const series = state.series;
 
     const { donchianChannel } = indicators.update(series);

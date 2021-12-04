@@ -1,5 +1,6 @@
+import { AssetState } from "../core/backtest-multiple";
 import { SizelessOrder } from "../core/staker";
-import { StrategyUpdate, TradeState } from "../core/types";
+import { StrategyUpdate } from "../core/types";
 import { m } from "../shared/functions";
 
 export const cancelEntry: StrategyUpdate = {
@@ -35,7 +36,7 @@ export function nonIncresingStopLoss({
   stopLossValue,
   stopLossType,
 }: {
-  state: TradeState;
+  state: AssetState;
   stopLossValue: number;
   stopLossType: "absolute" | "diff";
 }): { stopLoss: number } {

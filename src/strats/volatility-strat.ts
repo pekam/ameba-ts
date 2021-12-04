@@ -1,5 +1,6 @@
+import { AssetState } from "../core/backtest-multiple";
 import { SizelessStrategyUpdate } from "../core/staker";
-import { MarketPosition, TradeState } from "../core/types";
+import { MarketPosition } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
@@ -11,7 +12,7 @@ export function volatilityStrategy(settings: {
   period: number;
   onlyDirection?: MarketPosition;
 }) {
-  return function (state: TradeState): SizelessStrategyUpdate {
+  return function (state: AssetState): SizelessStrategyUpdate {
     const series = state.series;
 
     const avgRangePeriod = 20;

@@ -1,13 +1,9 @@
 import { Moment } from "../shared/time-util";
-import {
-  backtestMultiple,
-  MultiAssetStrategy,
-  MultiAssetTradeState,
-} from "./backtest-multiple";
+import { backtestMultiple, MultiAssetStrategy } from "./backtest-multiple";
 import { BacktestResult } from "./backtest-result";
-import { CandleSeries, Strategy } from "./types";
+import { CandleSeries } from "./types";
 
-const usedStrats = new WeakSet<Strategy>();
+const usedStrats = new WeakSet<MultiAssetStrategy>();
 
 /**
  * Tests how the given strategy would have performed with
@@ -27,7 +23,7 @@ const usedStrats = new WeakSet<Strategy>();
  * symbol instead of an empty string
  */
 export function backtestStrategy(args: {
-  stratProvider: () => Strategy;
+  stratProvider: () => MultiAssetStrategy;
   series: CandleSeries;
   initialBalance?: number;
   showProgressBar?: boolean;
@@ -35,8 +31,8 @@ export function backtestStrategy(args: {
   to?: Moment;
   symbol?: string;
 }): BacktestResult {
-  // Strategies are stateful, which is why a new instance is needed for each backtest.
-  const strat: Strategy = args.stratProvider();
+  // Strategies are often stateful, which is why a new instance is needed for each backtest.
+  const strat: MultiAssetStrategy = args.stratProvider();
   if (usedStrats.has(strat)) {
     // In case the stratProvider returns the same instance many times.
     throw Error(
@@ -52,15 +48,9 @@ export function backtestStrategy(args: {
   // multi-asset and run it through the more powerful backtester, instead of
   // having specific implementations for each.
   const symbol = args.symbol || "";
-  const multiStrat: MultiAssetStrategy = (multiState: MultiAssetTradeState) => [
-    {
-      ...strat({ ...multiState.assets[symbol], cash: multiState.cash }),
-      symbol,
-    },
-  ];
   return backtestMultiple({
     ...args,
-    stratProvider: () => multiStrat,
+    stratProvider: () => strat,
     multiSeries: { [symbol]: args.series },
   });
 }

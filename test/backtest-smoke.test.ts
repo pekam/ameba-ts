@@ -1,6 +1,8 @@
 import { backtestStrategy } from "../src/core/backtest";
+import { AssetState } from "../src/core/backtest-multiple";
 import { BacktestResult } from "../src/core/backtest-result";
-import { CandleSeries, Order, Strategy, TradeState } from "../src/core/types";
+import { allInStaker, SizelessStrategy, withStaker } from "../src/core/staker";
+import { CandleSeries } from "../src/core/types";
 import { m } from "../src/shared/functions";
 import { timestampFromUTC } from "../src/shared/time-util";
 import { testData } from "./test-data/testData";
@@ -8,19 +10,17 @@ import { testData } from "./test-data/testData";
 it("should produce a backtest result", () => {
   const series: CandleSeries = testData.getBtcHourly();
 
-  const strat: Strategy = (state: TradeState) => {
+  const strat: SizelessStrategy = (state: AssetState) => {
     const newCandle = m.last(state.series);
     if (!state.position) {
       if (newCandle.close > newCandle.open) {
         const entryPrice = newCandle.high;
-        const entryOrder: Order = {
-          type: "stop",
-          price: entryPrice,
-          side: "buy",
-          size: state.cash / entryPrice,
-        };
         return {
-          entryOrder,
+          entryOrder: {
+            type: "stop",
+            price: entryPrice,
+            side: "buy",
+          },
           stopLoss: entryPrice * 0.99,
           takeProfit: entryPrice * 1.01,
         };
@@ -42,7 +42,7 @@ it("should produce a backtest result", () => {
   };
 
   const result: BacktestResult = backtestStrategy({
-    stratProvider: () => strat,
+    stratProvider: () => withStaker(() => strat, allInStaker),
     series,
     ...backtestRange,
     initialBalance: 100,

@@ -47,7 +47,7 @@ async function doRun({
   const candlePeriod = ftxResolutionToPeriod[resolution];
 
   // TODO Staker is hard-coded here
-  const strat = withStaker(stratProvider(), allInStaker);
+  const strat = withStaker(stratProvider, allInStaker);
 
   let state: TradeState = {
     cash: (await ftxUtil.getWallet()).usd,
