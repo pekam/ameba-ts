@@ -1,5 +1,6 @@
+import { AssetState, MultiAssetTradeState } from "../core/backtest-multiple";
 import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
-import { CandleSeries, MarketPosition, Order, TradeState } from "../core/types";
+import { CandleSeries, MarketPosition, Order } from "../core/types";
 import { m } from "../shared/functions";
 import {
   ftxResolutionToPeriod,
@@ -16,7 +17,7 @@ interface BotBArgs {
   resolution: FtxResolution;
   ftxUtil: FtxUtil;
   requiredCandles: number;
-  stopper?: (state: TradeState) => boolean;
+  stopper?: (state: AssetState) => boolean;
 }
 
 async function run(args: BotBArgs) {
@@ -49,23 +50,37 @@ async function doRun({
   // TODO Staker is hard-coded here
   const strat = withStaker(stratProvider, allInStaker);
 
-  let state: TradeState = {
+  const symbol = ftxUtil.market;
+
+  let state: MultiAssetTradeState = {
     cash: (await ftxUtil.getWallet()).usd,
+    updated: [],
+    time: 0,
 
-    series: [],
-    position: null,
+    assets: {
+      [symbol]: {
+        symbol: symbol,
 
-    entryOrder: null,
-    stopLoss: null,
-    takeProfit: null,
+        series: [],
+        position: null,
 
-    // not updated
-    transactions: [],
-    trades: [],
+        entryOrder: null,
+        stopLoss: null,
+        takeProfit: null,
+
+        // not updated
+        transactions: [],
+        trades: [],
+      },
+    },
   };
 
   while (true) {
-    await sleepAndUpdateExitsUntilNextCandle(state, candlePeriod, ftxUtil);
+    await sleepAndUpdateExitsUntilNextCandle(
+      state.assets[symbol],
+      candlePeriod,
+      ftxUtil
+    );
 
     // Just reset by cancelling all orders and setting them later if needed
     await ftxUtil.ftx.cancelAllOrders(ftxUtil.market);
@@ -81,21 +96,37 @@ async function doRun({
     ]);
     console.log({ now: toDateString(now, "s") });
     state.cash = wallet.usd;
-    state.series = filterIncompleteCandleIfNeeded(series, candlePeriod);
-    state.position = getCurrentPosition(wallet);
+    state.time = m.last(series).time;
+    state.updated = [symbol];
 
-    const updates = strat(state);
-    state = { ...state, ...updates };
-    console.log({ updates, state: { ...state, series: null } });
+    state.assets[symbol] = {
+      ...state.assets[symbol],
+      series: filterIncompleteCandleIfNeeded(series, candlePeriod),
+      position: getCurrentPosition(wallet),
+    };
 
-    if (stopper && stopper(state)) {
+    const update = strat(state).find((update) => update.symbol === symbol);
+    if (update) {
+      state.assets[symbol] = {
+        ...state.assets[symbol],
+        ...update,
+      };
+    }
+    console.log({ update, state: { ...state.assets[symbol], series: null } });
+
+    if (stopper && stopper(state.assets[symbol])) {
       console.log("!STOP! exiting bot-b");
       break;
     }
 
     // Entry order
-    if (!state.position && state.entryOrder && state.entryOrder.size > 0) {
-      await addOrder(state.entryOrder, ftxUtil);
+    const assetState = state.assets[symbol];
+    if (
+      !assetState.position &&
+      assetState.entryOrder &&
+      assetState.entryOrder.size > 0
+    ) {
+      await addOrder(assetState.entryOrder, ftxUtil);
     }
   }
 }

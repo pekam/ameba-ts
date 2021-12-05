@@ -1,10 +1,6 @@
-import {
-  Candle,
-  CandleSeries,
-  Strategy,
-  StrategyUpdate,
-  TradeState,
-} from "../core/types";
+import { AssetState } from "../core/backtest-multiple";
+import { SizelessStrategy, SizelessStrategyUpdate } from "../core/staker";
+import { Candle, CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { indicators } from "../shared/indicators";
 import { FtxBotStrat } from "./bot";
@@ -90,7 +86,7 @@ function getEmas(series: CandleSeries, period: number, limit: number) {
 export function getBacktestableStrategy(
   ftxStrat: FtxBotStrat,
   shortingEnabled: boolean = false
-): Strategy {
+): SizelessStrategy {
   let lastOrder: FtxBotOrder | undefined = undefined;
 
   const updateLastOrder = (lastCandle: Candle, side: "buy" | "sell") => {
@@ -103,7 +99,7 @@ export function getBacktestableStrategy(
     };
   };
 
-  return function (state: TradeState): StrategyUpdate {
+  return function (state: AssetState): SizelessStrategyUpdate {
     const series = state.series;
     const last = m.last(series);
 
@@ -118,7 +114,6 @@ export function getBacktestableStrategy(
             price,
             type: "limit",
             side: "buy",
-            size: state.cash / price,
           },
         };
       } else {
@@ -130,7 +125,6 @@ export function getBacktestableStrategy(
                 side: "sell",
                 price,
                 type: "limit",
-                size: state.cash / price,
               }
             : null,
         };

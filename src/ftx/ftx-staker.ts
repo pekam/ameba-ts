@@ -1,4 +1,5 @@
 import { backtestStrategy } from "../core/backtest";
+import { allInStaker, withStaker } from "../core/staker";
 import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties } from "../properties";
 import { m } from "../shared/functions";
@@ -40,7 +41,8 @@ function getBacktestStaker(strat: FtxBotStrat) {
       const result =
         // withRelativeTransactionCost(
         backtestStrategy({
-          stratProvider: () => getBacktestableStrategy(strat),
+          stratProvider: () =>
+            withStaker(() => getBacktestableStrategy(strat), allInStaker),
           series,
         });
       //   transactionCost
