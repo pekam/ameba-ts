@@ -34,46 +34,6 @@ export interface Order {
 
 export type MarketPosition = "long" | "short";
 
-export interface TradeState {
-  /**
-   * The account's cash balance.
-   */
-  cash: number;
-  /**
-   * The price data up to the current moment.
-   */
-  series: CandleSeries;
-  /**
-   * The order that is placed to enter the trade.
-   */
-  entryOrder: Order | null;
-  /**
-   * After the entry order has been fulfilled, this defines
-   * if we're in a long position (after a buy order) or a
-   * short position (after a sell order).
-   *
-   * When we don't have an active position, this is falsy.
-   */
-  position: MarketPosition | null;
-  /**
-   * The price of the stop loss order that should be
-   * placed after the entry order has been activated,
-   * or that is currently active.
-   */
-  stopLoss: number | null;
-  /**
-   * The price of the profit taking order that should be
-   * placed after the entry order has been activated, or
-   * that is currently active.
-   *
-   * This can be left out, eg. when using a trailing
-   * stop loss.
-   */
-  takeProfit: number | null;
-  transactions: Transaction[];
-  trades: Trade[];
-}
-
 export interface Transaction {
   /**
    * Defines if this is a buy or a sell transaction.
@@ -112,8 +72,6 @@ export interface StrategyUpdate {
   stopLoss?: number | null;
   takeProfit?: number | null;
 }
-
-export type Strategy = (state: TradeState) => StrategyUpdate;
 
 export interface Trade {
   /**
