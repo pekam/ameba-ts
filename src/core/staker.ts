@@ -158,18 +158,35 @@ export function createStaker({
     state: MultiAssetTradeState,
     updates: (SizelessStrategyUpdate & { symbol: string })[]
   ) => {
-    const { accountBalance, exposure, pendingExposure } = getAccountStats(
-      state
-    );
+    const accountStats = getAccountStats(state);
+    const { accountBalance, exposure } = accountStats;
+
+    // Some of the pending exposure will be reduced, because the old entry
+    // orders won't be there after this update.
+    const exposureToBeCancelled = updates
+      .filter((update) => {
+        const prop: keyof SizelessStrategyUpdate = "entryOrder"; // Just for type safety
+        // Entry either cancelled or overridden with new order.
+        return update.hasOwnProperty(prop);
+      })
+      .map((update) => state.assets[update.symbol].entryOrder)
+      .reduce(
+        (exp, previousEntryOrder) =>
+          previousEntryOrder ? getExpectedExposure(previousEntryOrder) : exp,
+        0
+      );
+
     const maxExposure = maxRelativePosition * accountBalance;
 
     return updates
       .filter((update) => update.entryOrder)
       .reduce<{
         sizes: { size: number; symbol: string }[];
-        pendingExposure: number;
+        potentialExposure: number;
       }>(
-        (acc, update) => {
+        // potentialExposure is the total value of all positions if all of the
+        // entries would trigger
+        ({ sizes, potentialExposure }, update) => {
           const { entryOrder, stopLoss } = update;
           if (!entryOrder || !stopLoss) {
             throw Error(
@@ -178,8 +195,6 @@ export function createStaker({
           }
           const risk = Math.abs(entryOrder.price - stopLoss) / entryOrder.price;
           const maxAbsoluteRiskPerTrade = accountBalance * maxRelativeRisk;
-
-          const potentialExposure = exposure + pendingExposure;
 
           const positionSizeInCash = Math.min(
             maxAbsoluteRiskPerTrade / risk,
@@ -193,13 +208,15 @@ export function createStaker({
             : Math.floor(sizeWithFractions);
 
           return {
-            sizes: [...acc.sizes, { size, symbol: update.symbol }],
-            pendingExposure: pendingExposure + positionSizeInCash,
+            sizes: [...sizes, { size, symbol: update.symbol }],
+            potentialExposure:
+              potentialExposure + getExpectedExposure({ ...entryOrder, size }),
           };
         },
         {
           sizes: [],
-          pendingExposure,
+          potentialExposure:
+            exposure + accountStats.pendingExposure - exposureToBeCancelled,
         }
       ).sizes;
   };
@@ -221,7 +238,7 @@ function getAccountStats(
           exposure: acc.exposure + positionSize,
         };
       } else if (asset.entryOrder) {
-        const pendingPosition = asset.entryOrder.price * asset.entryOrder.size;
+        const pendingPosition = getExpectedExposure(asset.entryOrder);
         return {
           ...acc,
           pendingExposure: acc.pendingExposure + pendingPosition,
@@ -232,6 +249,13 @@ function getAccountStats(
     },
     { accountBalance: state.cash, exposure: 0, pendingExposure: 0 }
   );
+}
+
+function getExpectedExposure(order: Order) {
+  // This can be updated to add some safety margin to account for slippage. Note
+  // that the same margin should then be separately added to position size
+  // calculation.
+  return order.size * order.price;
 }
 
 /**
