@@ -102,6 +102,12 @@ export function withStaker(
           `Staker returned a negative order size ${size} for symbol ${update.symbol}.`
         );
       }
+      if (size === 0) {
+        return {
+          ...update,
+          entryOrder: null,
+        };
+      }
       return {
         ...update,
         entryOrder: {
