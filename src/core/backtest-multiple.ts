@@ -231,7 +231,7 @@ function revertUnclosedTrades(state: InternalTradeState) {
 function updateAsset(
   state: InternalTradeState,
   symbol: string,
-  update: StrategyUpdate,
+  update: Partial<AssetState>,
   cash?: number
 ): InternalTradeState {
   return {
