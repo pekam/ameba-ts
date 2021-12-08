@@ -105,7 +105,7 @@ async function doRun({
       position: getCurrentPosition(wallet),
     };
 
-    const update = strat(state).find((update) => update.symbol === symbol);
+    const update = strat(state)[symbol];
     if (update) {
       state.assets[symbol] = {
         ...state.assets[symbol],

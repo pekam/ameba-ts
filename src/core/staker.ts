@@ -1,9 +1,9 @@
 import { m } from "../shared/functions";
 import {
   AssetState,
-  FullTradingStrategy,
   FullStrategyUpdate,
   FullTradeState,
+  FullTradingStrategy,
 } from "./backtest";
 import { Order, SingleAssetStrategyUpdate } from "./types";
 
@@ -19,8 +19,8 @@ import { Order, SingleAssetStrategyUpdate } from "./types";
  */
 export type Staker = (
   state: FullTradeState,
-  update: (StrategyUpdate & { symbol: string })[]
-) => { symbol: string; size: number }[];
+  update: { [symbol: string]: StrategyUpdate }
+) => { [symbol: string]: number };
 
 /**
  * An {@link Order} which doens't have the 'size' property yet, as it
@@ -75,7 +75,7 @@ export function withStaker(
   return function (state: FullTradeState): FullStrategyUpdate {
     const sizelessUpdates = state.updated
       .map((symbol) => state.assets[symbol])
-      .map((asset) => {
+      .reduce<{ [symbol: string]: StrategyUpdate }>((updates, asset) => {
         if (!individualStrats[asset.symbol]) {
           individualStrats[asset.symbol] = stratProvider();
         }
@@ -83,39 +83,49 @@ export function withStaker(
 
         const update = strat(state.assets[asset.symbol]);
 
-        return { symbol: asset.symbol, ...update };
-      });
+        return { ...updates, [asset.symbol]: update };
+      }, {});
+
     const stakes = staker(state, sizelessUpdates);
 
-    return sizelessUpdates.map((update) => {
-      if (!update.entryOrder) {
-        return update as SingleAssetStrategyUpdate & { symbol: string };
-      }
-      const size = stakes.find((s) => s.symbol === update.symbol)?.size;
-      if (size === undefined) {
-        throw Error(
-          `Staker did not return an order size for an updated symbol ${update.symbol}.`
-        );
-      }
-      if (size < 0) {
-        throw Error(
-          `Staker returned a negative order size ${size} for symbol ${update.symbol}.`
-        );
-      }
-      if (size === 0) {
+    return Object.entries(sizelessUpdates).reduce(
+      (sizedUpdates, [symbol, update]) => {
+        if (!update.entryOrder) {
+          return { ...sizedUpdates, [symbol]: update };
+        }
+        const size = stakes[symbol];
+        if (size === undefined) {
+          throw Error(
+            `Staker did not return an order size for an updated symbol ${symbol}.`
+          );
+        }
+        if (size < 0) {
+          throw Error(
+            `Staker returned a negative order size ${size} for symbol ${symbol}.`
+          );
+        }
+        if (size === 0) {
+          return {
+            ...sizedUpdates,
+            [symbol]: {
+              ...update,
+              entryOrder: null,
+            },
+          };
+        }
         return {
-          ...update,
-          entryOrder: null,
+          ...sizedUpdates,
+          [symbol]: {
+            ...update,
+            entryOrder: {
+              ...update.entryOrder,
+              size,
+            },
+          },
         };
-      }
-      return {
-        ...update,
-        entryOrder: {
-          ...update.entryOrder,
-          size,
-        },
-      };
-    });
+      },
+      {}
+    );
   };
 }
 
@@ -159,20 +169,20 @@ export function createStaker({
 }): Staker {
   return (
     state: FullTradeState,
-    updates: (StrategyUpdate & { symbol: string })[]
+    updates: { [symbol: string]: StrategyUpdate }
   ) => {
     const accountStats = getAccountStats(state);
     const { accountBalance, exposure } = accountStats;
 
     // Some of the pending exposure will be reduced, because the old entry
     // orders won't be there after this update.
-    const exposureToBeCancelled = updates
-      .filter((update) => {
+    const exposureToBeCancelled = Object.entries(updates)
+      .filter(([symbol, update]) => {
         const prop: keyof StrategyUpdate = "entryOrder"; // Just for type safety
         // Entry either cancelled or overridden with new order.
         return update.hasOwnProperty(prop);
       })
-      .map((update) => state.assets[update.symbol].entryOrder)
+      .map(([symbol, update]) => state.assets[symbol].entryOrder)
       .reduce(
         (exp, previousEntryOrder) =>
           previousEntryOrder ? getExpectedExposure(previousEntryOrder) : exp,
@@ -181,15 +191,15 @@ export function createStaker({
 
     const maxExposure = maxRelativeExposure * accountBalance;
 
-    return updates
-      .filter((update) => update.entryOrder)
+    return Object.entries(updates)
+      .filter(([symbol, update]) => update.entryOrder)
       .reduce<{
-        sizes: { size: number; symbol: string }[];
+        sizes: { [symbol: string]: number };
         potentialExposure: number;
       }>(
         // potentialExposure is the total value of all positions if all of the
         // entries would trigger
-        ({ sizes, potentialExposure }, update) => {
+        ({ sizes, potentialExposure }, [symbol, update]) => {
           const { entryOrder, stopLoss } = update;
           if (!entryOrder || !stopLoss) {
             throw Error(
@@ -220,13 +230,13 @@ export function createStaker({
           })();
 
           return {
-            sizes: [...sizes, { size, symbol: update.symbol }],
+            sizes: { ...sizes, [symbol]: size },
             potentialExposure:
               potentialExposure + getExpectedExposure({ ...entryOrder, size }),
           };
         },
         {
-          sizes: [],
+          sizes: {},
           potentialExposure:
             exposure + accountStats.pendingExposure - exposureToBeCancelled,
         }

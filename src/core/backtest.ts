@@ -60,11 +60,11 @@ export interface AssetState {
   trades: Trade[];
 }
 
-export type FullStrategyUpdate = (SingleAssetStrategyUpdate & { symbol: string })[];
+export type FullStrategyUpdate = {
+  [symbol: string]: SingleAssetStrategyUpdate;
+};
 
-export type FullTradingStrategy = (
-  state: FullTradeState
-) => FullStrategyUpdate;
+export type FullTradingStrategy = (state: FullTradeState) => FullStrategyUpdate;
 
 export function backtest(args: BacktestArgs): BacktestResult {
   const defaults = {
@@ -192,19 +192,22 @@ function applyStrategy(
   strat: FullTradingStrategy
 ): InternalTradeState {
   const stratUpdates = strat(state);
-  const nextState: InternalTradeState = stratUpdates.reduce((state, update) => {
-    if (update.entryOrder && update.entryOrder.size <= 0) {
-      throw Error(
-        `Order size must be positive, but was ${update.entryOrder.size}.`
-      );
-    }
-    if (state.assets[update.symbol].position && update.entryOrder) {
-      throw Error(
-        "Changing entry order while already in a position is not allowed."
-      );
-    }
-    return updateAsset(state, update.symbol, update);
-  }, state);
+  const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
+    (state, [symbol, update]) => {
+      if (update.entryOrder && update.entryOrder.size <= 0) {
+        throw Error(
+          `Order size must be positive, but was ${update.entryOrder.size}.`
+        );
+      }
+      if (state.assets[symbol].position && update.entryOrder) {
+        throw Error(
+          "Changing entry order while already in a position is not allowed."
+        );
+      }
+      return updateAsset(state, symbol, update);
+    },
+    state
+  );
   return nextState;
 }
 
