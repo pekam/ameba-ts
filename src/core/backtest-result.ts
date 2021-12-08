@@ -51,7 +51,7 @@ export function convertToBacktestResult(
     successRate:
       trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
     buyAndHoldProfit: getBuyAndHoldProfit(
-      Object.values(finalState.args.multiSeries),
+      Object.values(finalState.args.series),
       range
     ),
     range,

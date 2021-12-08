@@ -20,7 +20,7 @@ import {
 
 interface BacktestMultipleArgs {
   stratProvider: () => MultiAssetStrategy;
-  multiSeries: SeriesMap;
+  series: SeriesMap;
   initialBalance?: number;
   showProgressBar?: boolean;
   from?: Moment;
@@ -109,7 +109,7 @@ function createInitialState(
 ): InternalTradeState {
   return {
     cash: args.initialBalance,
-    assets: Object.entries(args.multiSeries).reduce<AssetMap>(
+    assets: Object.entries(args.series).reduce<AssetMap>(
       (assets, [symbol, series]) => {
         const initialSeries = (() => {
           const firstCandleIndex = series.findIndex((candle) =>
@@ -249,7 +249,7 @@ function updateAsset(
 
 function getIterationCount(args: Required<BacktestMultipleArgs>) {
   return new Set(
-    flatten(Object.values(args.multiSeries))
+    flatten(Object.values(args.series))
       .filter((candle) => isWithinRange(args, candle))
       .map((candle) => candle.time)
   ).size;
@@ -260,7 +260,7 @@ function isWithinRange(args: Required<BacktestMultipleArgs>, candle: Candle) {
 }
 
 function getNextCandle(state: InternalTradeState, asset: AssetState) {
-  const fullSeries = state.args.multiSeries[asset.symbol];
+  const fullSeries = state.args.series[asset.symbol];
   const nextIndex = state.assets[asset.symbol].series.length;
   const next = fullSeries[nextIndex];
   return next && isWithinRange(state.args, next) ? next : null;

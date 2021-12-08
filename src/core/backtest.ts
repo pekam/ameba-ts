@@ -51,6 +51,6 @@ export function backtestStrategy(args: {
   return backtestMultiple({
     ...args,
     stratProvider: () => strat,
-    multiSeries: { [symbol]: args.series },
+    series: { [symbol]: args.series },
   });
 }

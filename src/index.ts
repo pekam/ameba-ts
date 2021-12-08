@@ -29,7 +29,7 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
           allowFractions: true,
         })
       ),
-    multiSeries: { [company.symbol]: company.candles },
+    series: { [company.symbol]: company.candles },
   });
   console.log(result);
 })();
