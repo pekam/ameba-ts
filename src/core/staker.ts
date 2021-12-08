@@ -120,18 +120,18 @@ export function withStaker(
 }
 
 /**
- * Implementation of a common position sizing strategy, where the max risk
- * of one trade is a proportion of the account value.
+ * Implementation of a common position sizing strategy, where the max risk of
+ * one trade is a proportion of the account value.
  *
  * For example: "I want to risk max 2% of my account balance per trade."
  *
- * In addition, the max position size relative to account balance can be
- * defined, as well as whether to allow fractioned positions (e.g. buying
- * 2.25 units on a forex or crypto market) or not (more common in stocks).
+ * In addition, the max exposure relative to account balance can be defined, as
+ * well as whether to allow fractioned positions (e.g. buying 2.25 units on a
+ * forex or crypto market) or not (more common in stocks).
  */
 export function createStaker({
   maxRelativeRisk,
-  maxRelativePosition, // TODO rename to maxRelativeExposure
+  maxRelativeExposure,
   allowFractions,
 }: {
   /**
@@ -140,10 +140,13 @@ export function createStaker({
    */
   maxRelativeRisk: number;
   /**
-   * What is the max position size relative to the account balance.
-   * For example 1 to prevent using leverage, 3 to use max 3x leverage.
+   * What is the max combined position size relative to the account balance. For
+   * example 1 to prevent using leverage, 3 to use max 3x leverage. This will
+   * prevent setting new entry orders (or limit it's size) when the sum of
+   * current exposure (value of open positions) and potential exposure (added
+   * exposure if the all the open entry orders would trigger) reaches the limit.
    */
-  maxRelativePosition: number;
+  maxRelativeExposure: number;
   /**
    * Whether or not fractional positions are allowed. In general, fractional
    * positions are okay when trading currencies and cryptos, but not when
@@ -176,7 +179,7 @@ export function createStaker({
         0
       );
 
-    const maxExposure = maxRelativePosition * accountBalance;
+    const maxExposure = maxRelativeExposure * accountBalance;
 
     return updates
       .filter((update) => update.entryOrder)
@@ -198,7 +201,7 @@ export function createStaker({
 
           const positionSizeInCash = Math.min(
             maxAbsoluteRiskPerTrade / risk,
-            maxRelativePosition * accountBalance,
+            maxRelativeExposure * accountBalance,
             Math.max(0, maxExposure - potentialExposure)
           );
 
@@ -264,6 +267,6 @@ function getExpectedExposure(order: Order) {
  */
 export const allInStaker: Staker = createStaker({
   maxRelativeRisk: 1,
-  maxRelativePosition: 1,
+  maxRelativeExposure: 1,
   allowFractions: true,
 });

@@ -25,7 +25,7 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
           ),
         createStaker({
           maxRelativeRisk: 0.01,
-          maxRelativePosition: 1,
+          maxRelativeExposure: 1,
           allowFractions: true,
         })
       ),
