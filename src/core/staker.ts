@@ -196,19 +196,28 @@ export function createStaker({
               "Entry order and stoploss should be defined for the used staker."
             );
           }
-          const risk = Math.abs(entryOrder.price - stopLoss) / entryOrder.price;
-          const maxAbsoluteRiskPerTrade = accountBalance * maxRelativeRisk;
+          const entryPrice = entryOrder.price;
 
-          const positionSizeInCash = Math.min(
-            maxAbsoluteRiskPerTrade / risk,
-            maxRelativeExposure * accountBalance,
-            Math.max(0, maxExposure - potentialExposure)
-          );
+          function getMaxPositionByRisk() {
+            const risk = Math.abs(entryPrice - stopLoss!) / entryPrice;
+            const maxAbsoluteRiskPerTrade = accountBalance * maxRelativeRisk;
+            return maxAbsoluteRiskPerTrade / risk;
+          }
 
-          const sizeWithFractions = positionSizeInCash / entryOrder.price;
-          const size = allowFractions
-            ? sizeWithFractions
-            : Math.floor(sizeWithFractions);
+          function getMaxPositionByExposure() {
+            return Math.max(0, maxExposure - potentialExposure);
+          }
+
+          const size = (() => {
+            const positionSizeInCash = Math.min(
+              getMaxPositionByRisk(),
+              getMaxPositionByExposure()
+            );
+            const sizeWithFractions = positionSizeInCash / entryPrice;
+            return allowFractions
+              ? sizeWithFractions
+              : Math.floor(sizeWithFractions);
+          })();
 
           return {
             sizes: [...sizes, { size, symbol: update.symbol }],
