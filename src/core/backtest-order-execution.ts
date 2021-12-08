@@ -1,5 +1,5 @@
 import { m } from "../shared/functions";
-import { AssetState } from "./backtest-multiple";
+import { AssetState } from "./backtest";
 import { Candle, MarketPosition, Order, Trade, Transaction } from "./types";
 
 // This module deals with the combination of a single asset's state (position,

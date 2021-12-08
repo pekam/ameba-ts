@@ -1,6 +1,6 @@
 import { flatMap, sortBy } from "lodash";
 import { m } from "../shared/functions";
-import { InternalTradeState } from "./backtest-multiple";
+import { InternalTradeState } from "./backtest";
 import { CandleSeries, Range, Trade } from "./types";
 
 export interface BacktestStatistics {

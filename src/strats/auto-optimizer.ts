@@ -1,6 +1,5 @@
 import _ from "lodash";
-import { backtestStrategy } from "../core/backtest";
-import { AssetState } from "../core/backtest-multiple";
+import { AssetState, backtest } from "../core/backtest";
 import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
 import { m } from "../shared/functions";
 
@@ -21,9 +20,9 @@ export function autoOptimizer(settings: {
   function optimize({ series }: AssetState): SizelessStrategy {
     const withProfits = settings.stratPool.map((stratProvider) => {
       const from = m.last(series).time - settings.optimizePeriod;
-      const result = backtestStrategy({
+      const result = backtest({
         stratProvider: () => withStaker(stratProvider, allInStaker),
-        series: series.slice(-10000),
+        series: { _: series.slice(-10000) },
         showProgressBar: false,
         from,
       });

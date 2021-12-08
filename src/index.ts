@@ -1,4 +1,4 @@
-import { backtestMultiple } from "./core/backtest-multiple";
+import { backtest } from "./core/backtest";
 import { createStaker, withStaker } from "./core/staker";
 import { getDataSet } from "./data/load-data-set";
 import { donchianBreakoutStrategy } from "./strats/donchian-breakout-strat";
@@ -12,7 +12,7 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
     dataSet.companies.slice(0, 30).map((comp) => comp.withCandleSeries())
   );
   const company = companiesWithCandles[0];
-  const result = backtestMultiple({
+  const result = backtest({
     stratProvider: () =>
       withStaker(
         () =>

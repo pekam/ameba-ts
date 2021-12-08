@@ -1,4 +1,4 @@
-import { backtestStrategy } from "../core/backtest";
+import { backtest } from "../core/backtest";
 import { allInStaker, withStaker } from "../core/staker";
 import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties } from "../properties";
@@ -40,10 +40,10 @@ function getBacktestStaker(strat: FtxBotStrat) {
     if (!lastTimeBacktested || now > lastTimeBacktested + backtestIntervalSec) {
       const result =
         // withRelativeTransactionCost(
-        backtestStrategy({
+        backtest({
           stratProvider: () =>
             withStaker(() => getBacktestableStrategy(strat), allInStaker),
-          series,
+          series: { _: series },
         });
       //   transactionCost
       // );

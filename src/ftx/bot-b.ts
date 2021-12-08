@@ -1,4 +1,4 @@
-import { AssetState, MultiAssetTradeState } from "../core/backtest-multiple";
+import { AssetState, MultiAssetTradeState } from "../core/backtest";
 import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
 import { CandleSeries, MarketPosition, Order } from "../core/types";
 import { m } from "../shared/functions";

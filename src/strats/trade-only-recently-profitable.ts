@@ -1,5 +1,4 @@
-import { backtestStrategy } from "../core/backtest";
-import { AssetState } from "../core/backtest-multiple";
+import { AssetState, backtest } from "../core/backtest";
 import {
   allInStaker,
   SizelessStrategy,
@@ -40,9 +39,9 @@ export function tradeOnlyRecentlyProfitable(
       series.length % backtestInterval === 0 &&
       series.length >= backtestCandleCount
     ) {
-      const backtestResult = backtestStrategy({
+      const backtestResult = backtest({
         stratProvider: () => withStaker(stratProvider, allInStaker),
-        series: series.slice(-backtestCandleCount),
+        series: { _: series.slice(-backtestCandleCount) },
         showProgressBar: false,
       });
       enabled = backtestResult.stats.relativeProfit > profitThreshold;

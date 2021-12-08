@@ -1,5 +1,4 @@
-import { backtestStrategy } from "../src/core/backtest";
-import { AssetState } from "../src/core/backtest-multiple";
+import { AssetState, backtest } from "../src/core/backtest";
 import { BacktestResult } from "../src/core/backtest-result";
 import { allInStaker, SizelessStrategy, withStaker } from "../src/core/staker";
 import { CandleSeries } from "../src/core/types";
@@ -41,9 +40,11 @@ it("should produce a backtest result", () => {
     to: timestampFromUTC(2021, 10, 8),
   };
 
-  const result: BacktestResult = backtestStrategy({
+  const result: BacktestResult = backtest({
     stratProvider: () => withStaker(() => strat, allInStaker),
-    series,
+    series: {
+      btc: series,
+    },
     ...backtestRange,
     initialBalance: 100,
   });

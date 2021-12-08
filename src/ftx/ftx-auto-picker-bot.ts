@@ -1,5 +1,5 @@
 import { flatten, maxBy } from "lodash";
-import { backtestStrategy } from "../core/backtest";
+import { backtest } from "../core/backtest";
 import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
 import { getCurrentTimestampInSeconds } from "../shared/time-util";
 import { sleep } from "../util";
@@ -70,9 +70,9 @@ async function pickMarketAndStrategy({
           endDate: now,
         });
         return strats.map((stratProvider, i) => {
-          const result = backtestStrategy({
+          const result = backtest({
             stratProvider: () => withStaker(stratProvider, allInStaker),
-            series,
+            series: { _: series },
             showProgressBar: false,
           });
           console.log(

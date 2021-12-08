@@ -1,4 +1,4 @@
-import { AssetState } from "../core/backtest-multiple";
+import { AssetState } from "../core/backtest";
 import { SizelessOrder } from "../core/staker";
 import { StrategyUpdate } from "../core/types";
 import { m } from "../shared/functions";

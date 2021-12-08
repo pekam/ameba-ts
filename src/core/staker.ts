@@ -4,7 +4,7 @@ import {
   MultiAssetStrategy,
   MultiAssetStrategyUpdate,
   MultiAssetTradeState,
-} from "./backtest-multiple";
+} from "./backtest";
 import { Order, StrategyUpdate } from "./types";
 
 /**
