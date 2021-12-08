@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "./build",
-    "target": "ES5",
+    "target": "ES6",
+    "lib": ["ES2021"],
+    "moduleResolution": "node",
     "sourceMap": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
