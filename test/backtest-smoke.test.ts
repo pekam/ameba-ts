@@ -1,6 +1,6 @@
 import { AssetState, backtest } from "../src/core/backtest";
 import { BacktestResult } from "../src/core/backtest-result";
-import { allInStaker, SizelessStrategy, withStaker } from "../src/core/staker";
+import { allInStaker, TradingStrategy, withStaker } from "../src/core/staker";
 import { CandleSeries } from "../src/core/types";
 import { m } from "../src/shared/functions";
 import { timestampFromUTC } from "../src/shared/time-util";
@@ -9,7 +9,7 @@ import { testData } from "./test-data/testData";
 it("should produce a backtest result", () => {
   const series: CandleSeries = testData.getBtcHourly();
 
-  const strat: SizelessStrategy = (state: AssetState) => {
+  const strat: TradingStrategy = (state: AssetState) => {
     const newCandle = m.last(state.series);
     if (!state.position) {
       if (newCandle.close > newCandle.open) {

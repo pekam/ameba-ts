@@ -1,11 +1,11 @@
 import { m } from "../shared/functions";
 import {
   AssetState,
-  MultiAssetStrategy,
-  MultiAssetStrategyUpdate,
-  MultiAssetTradeState,
+  FullTradingStrategy,
+  FullStrategyUpdate,
+  FullTradeState,
 } from "./backtest";
-import { Order, StrategyUpdate } from "./types";
+import { Order, SingleAssetStrategyUpdate } from "./types";
 
 /**
  * A function that implements a position sizing strategy.
@@ -13,13 +13,13 @@ import { Order, StrategyUpdate } from "./types";
  * (which doesn't have size on the entry order) and returns
  * the position size that should be applied to the entry order.
  *
- * Use {@link withStaker} to combine a {@link SizelessStrategy}
+ * Use {@link withStaker} to combine a {@link TradingStrategy}
  * with a Staker to form a full strategy that can be executed on
  * the backtester or on a real broker.
  */
 export type Staker = (
-  state: MultiAssetTradeState,
-  update: (SizelessStrategyUpdate & { symbol: string })[]
+  state: FullTradeState,
+  update: (StrategyUpdate & { symbol: string })[]
 ) => { symbol: string; size: number }[];
 
 /**
@@ -45,8 +45,8 @@ export type SizelessOrder = Omit<Order, "size">;
  */
 // NOTE: JSDoc needs to be manually kept in sync with StrategyUpdate
 // (for the relevant parts), because the docs can't be inherited.
-export interface SizelessStrategyUpdate
-  extends Omit<StrategyUpdate, "entryOrder"> {
+export interface StrategyUpdate
+  extends Omit<SingleAssetStrategyUpdate, "entryOrder"> {
   entryOrder?: SizelessOrder | null;
 }
 
@@ -60,19 +60,19 @@ export interface SizelessStrategyUpdate
  * broker, you need to combine it with a separate {@link Staker} which
  * handles the position sizing, by using {@link withStaker}.
  */
-export type SizelessStrategy = (state: AssetState) => SizelessStrategyUpdate;
+export type TradingStrategy = (state: AssetState) => StrategyUpdate;
 
 /**
  * Combines a strategy which doesn't include positions sizing with a staker,
  * forming a full strategy that can be backtested or executed on a broker.
  */
 export function withStaker(
-  stratProvider: () => SizelessStrategy,
+  stratProvider: () => TradingStrategy,
   staker: Staker
-): MultiAssetStrategy {
-  const individualStrats: { [symbol: string]: SizelessStrategy } = {};
+): FullTradingStrategy {
+  const individualStrats: { [symbol: string]: TradingStrategy } = {};
 
-  return function (state: MultiAssetTradeState): MultiAssetStrategyUpdate {
+  return function (state: FullTradeState): FullStrategyUpdate {
     const sizelessUpdates = state.updated
       .map((symbol) => state.assets[symbol])
       .map((asset) => {
@@ -89,7 +89,7 @@ export function withStaker(
 
     return sizelessUpdates.map((update) => {
       if (!update.entryOrder) {
-        return update as StrategyUpdate & { symbol: string };
+        return update as SingleAssetStrategyUpdate & { symbol: string };
       }
       const size = stakes.find((s) => s.symbol === update.symbol)?.size;
       if (size === undefined) {
@@ -158,8 +158,8 @@ export function createStaker({
   allowFractions: boolean;
 }): Staker {
   return (
-    state: MultiAssetTradeState,
-    updates: (SizelessStrategyUpdate & { symbol: string })[]
+    state: FullTradeState,
+    updates: (StrategyUpdate & { symbol: string })[]
   ) => {
     const accountStats = getAccountStats(state);
     const { accountBalance, exposure } = accountStats;
@@ -168,7 +168,7 @@ export function createStaker({
     // orders won't be there after this update.
     const exposureToBeCancelled = updates
       .filter((update) => {
-        const prop: keyof SizelessStrategyUpdate = "entryOrder"; // Just for type safety
+        const prop: keyof StrategyUpdate = "entryOrder"; // Just for type safety
         // Entry either cancelled or overridden with new order.
         return update.hasOwnProperty(prop);
       })
@@ -235,7 +235,7 @@ export function createStaker({
 }
 
 function getAccountStats(
-  state: MultiAssetTradeState
+  state: FullTradeState
 ): { accountBalance: number; exposure: number; pendingExposure: number } {
   return Object.values(state.assets).reduce(
     (acc, asset) => {

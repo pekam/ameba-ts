@@ -1,4 +1,4 @@
-import { backtest, MultiAssetStrategy } from "../core/backtest";
+import { backtest, FullTradingStrategy } from "../core/backtest";
 import { BacktestResult } from "../core/backtest-result";
 import { db } from "../data/mongo";
 import { ftxResolutionToPeriod, toTimestamp } from "../shared/time-util";
@@ -31,7 +31,7 @@ async function loadBacktestResult(
 }
 
 async function backtestWithFtxData(args: {
-  stratProvider: () => MultiAssetStrategy;
+  stratProvider: () => FullTradingStrategy;
   market: FtxMarket;
   resolution: FtxResolution;
   from: string;
@@ -61,7 +61,7 @@ async function backtestWithFtxData(args: {
 }
 
 async function backtestAndSave(args: {
-  stratProvider: () => MultiAssetStrategy;
+  stratProvider: () => FullTradingStrategy;
   market: FtxMarket;
   resolution: FtxResolution;
   from: string;

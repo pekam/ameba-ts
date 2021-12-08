@@ -1,6 +1,6 @@
 import { AssetState } from "../core/backtest";
 import { Indicators } from "../core/indicators";
-import { SizelessOrder, SizelessStrategyUpdate } from "../core/staker";
+import { SizelessOrder, StrategyUpdate } from "../core/staker";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
@@ -13,7 +13,7 @@ const adxPeriod = 20;
 export function rsiReversalStrategy() {
   const indicators = new Indicators({ rsiPeriod, adxPeriod });
 
-  return function (state: AssetState): SizelessStrategyUpdate {
+  return function (state: AssetState): StrategyUpdate {
     const series = state.series;
 
     const { rsi, adx } = indicators.update(series) as {

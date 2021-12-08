@@ -13,13 +13,13 @@ import {
   Order,
   Range,
   SeriesMap,
-  StrategyUpdate,
+  SingleAssetStrategyUpdate,
   Trade,
   Transaction,
 } from "./types";
 
-interface BacktestMultipleArgs {
-  stratProvider: () => MultiAssetStrategy;
+interface BacktestArgs {
+  stratProvider: () => FullTradingStrategy;
   series: SeriesMap;
   initialBalance?: number;
   showProgressBar?: boolean;
@@ -29,7 +29,7 @@ interface BacktestMultipleArgs {
 
 export type AssetMap = { [symbol: string]: AssetState };
 
-export interface MultiAssetTradeState {
+export interface FullTradeState {
   cash: number;
 
   assets: AssetMap;
@@ -39,8 +39,8 @@ export interface MultiAssetTradeState {
 }
 
 // Additional props that should not be visible to the Strategy implementor
-export interface InternalTradeState extends MultiAssetTradeState {
-  args: Required<BacktestMultipleArgs>;
+export interface InternalTradeState extends FullTradeState {
+  args: Required<BacktestArgs>;
   /**
    * The time range of candles used in the backtest so far.
    */
@@ -60,13 +60,13 @@ export interface AssetState {
   trades: Trade[];
 }
 
-export type MultiAssetStrategyUpdate = (StrategyUpdate & { symbol: string })[];
+export type FullStrategyUpdate = (SingleAssetStrategyUpdate & { symbol: string })[];
 
-export type MultiAssetStrategy = (
-  state: MultiAssetTradeState
-) => MultiAssetStrategyUpdate;
+export type FullTradingStrategy = (
+  state: FullTradeState
+) => FullStrategyUpdate;
 
-export function backtest(args: BacktestMultipleArgs): BacktestResult {
+export function backtest(args: BacktestArgs): BacktestResult {
   const defaults = {
     initialBalance: 10000,
     showProgressBar: true,
@@ -76,8 +76,8 @@ export function backtest(args: BacktestMultipleArgs): BacktestResult {
   return doBacktest({ ...defaults, ...args });
 }
 
-function doBacktest(args: Required<BacktestMultipleArgs>) {
-  const strat: MultiAssetStrategy = args.stratProvider();
+function doBacktest(args: Required<BacktestArgs>) {
+  const strat: FullTradingStrategy = args.stratProvider();
   let state: InternalTradeState = createInitialState(args);
 
   const progressBar = startProgressBar(
@@ -104,9 +104,7 @@ function doBacktest(args: Required<BacktestMultipleArgs>) {
   return convertToBacktestResult(revertUnclosedTrades(state));
 }
 
-function createInitialState(
-  args: Required<BacktestMultipleArgs>
-): InternalTradeState {
+function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
   return {
     cash: args.initialBalance,
     assets: Object.entries(args.series).reduce<AssetMap>(
@@ -191,7 +189,7 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
 
 function applyStrategy(
   state: InternalTradeState,
-  strat: MultiAssetStrategy
+  strat: FullTradingStrategy
 ): InternalTradeState {
   const stratUpdates = strat(state);
   const nextState: InternalTradeState = stratUpdates.reduce((state, update) => {
@@ -247,7 +245,7 @@ function updateAsset(
   };
 }
 
-function getIterationCount(args: Required<BacktestMultipleArgs>) {
+function getIterationCount(args: Required<BacktestArgs>) {
   return new Set(
     flatten(Object.values(args.series))
       .filter((candle) => isWithinRange(args, candle))
@@ -255,7 +253,7 @@ function getIterationCount(args: Required<BacktestMultipleArgs>) {
   ).size;
 }
 
-function isWithinRange(args: Required<BacktestMultipleArgs>, candle: Candle) {
+function isWithinRange(args: Required<BacktestArgs>, candle: Candle) {
   return candle.time >= args.from && candle.time <= args.to;
 }
 

@@ -1,9 +1,9 @@
 import { AssetState } from "../core/backtest";
 import { SizelessOrder } from "../core/staker";
-import { StrategyUpdate } from "../core/types";
+import { SingleAssetStrategyUpdate } from "../core/types";
 import { m } from "../shared/functions";
 
-export const cancelEntry: StrategyUpdate = {
+export const cancelEntry: SingleAssetStrategyUpdate = {
   entryOrder: null,
 } as const;
 

@@ -1,5 +1,5 @@
-import { AssetState, MultiAssetTradeState } from "../core/backtest";
-import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
+import { AssetState, FullTradeState } from "../core/backtest";
+import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
 import { CandleSeries, MarketPosition, Order } from "../core/types";
 import { m } from "../shared/functions";
 import {
@@ -13,7 +13,7 @@ import { FtxResolution } from "./ftx";
 import { FtxUtil, FtxWallet } from "./ftx-util";
 
 interface BotBArgs {
-  stratProvider: () => SizelessStrategy;
+  stratProvider: () => TradingStrategy;
   resolution: FtxResolution;
   ftxUtil: FtxUtil;
   requiredCandles: number;
@@ -52,7 +52,7 @@ async function doRun({
 
   const symbol = ftxUtil.market;
 
-  let state: MultiAssetTradeState = {
+  let state: FullTradeState = {
     cash: (await ftxUtil.getWallet()).usd,
     updated: [],
     time: 0,

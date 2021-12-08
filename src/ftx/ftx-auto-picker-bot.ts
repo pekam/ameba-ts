@@ -1,6 +1,6 @@
 import { flatten, maxBy } from "lodash";
 import { backtest } from "../core/backtest";
-import { allInStaker, SizelessStrategy, withStaker } from "../core/staker";
+import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
 import { getCurrentTimestampInSeconds } from "../shared/time-util";
 import { sleep } from "../util";
 import { botB } from "./bot-b";
@@ -17,7 +17,7 @@ interface AutoPickerArgs {
   subaccount: string;
   resolution: FtxResolution;
   markets: FtxMarket[];
-  strats: (() => SizelessStrategy)[];
+  strats: (() => TradingStrategy)[];
   pickInterval: number;
   lookbackPeriod: number;
   resultThreshold: number;

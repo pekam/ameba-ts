@@ -67,7 +67,7 @@ export interface Transaction {
  * When in a position, changes to entryOrder
  * should not be made.
  */
-export interface StrategyUpdate {
+export interface SingleAssetStrategyUpdate {
   entryOrder?: Order | null;
   stopLoss?: number | null;
   takeProfit?: number | null;

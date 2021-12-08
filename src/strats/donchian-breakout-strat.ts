@@ -1,6 +1,6 @@
 import { AssetState } from "../core/backtest";
 import { Indicators } from "../core/indicators";
-import { SizelessStrategy, SizelessStrategyUpdate } from "../core/staker";
+import { TradingStrategy, StrategyUpdate } from "../core/staker";
 import { MarketPosition } from "../core/types";
 import { m } from "../shared/functions";
 
@@ -15,7 +15,7 @@ export function donchianBreakoutStrategy(settings: {
   onlyDirection?: MarketPosition;
   maxRelativeStopLoss?: number;
   maxAtrStoploss?: number;
-}): SizelessStrategy {
+}): TradingStrategy {
   const indicators = new Indicators({
     donchianChannelPeriod: settings.channelPeriod,
     smaPeriod: settings.smaPeriod,
@@ -33,7 +33,7 @@ export function donchianBreakoutStrategy(settings: {
     }
 
     if (!state.position) {
-      const longEntry: () => SizelessStrategyUpdate = () => {
+      const longEntry: () => StrategyUpdate = () => {
         const entryPrice = donchianChannel.upper + atr / 5;
         const stopLosses = [sma];
         if (settings.maxRelativeStopLoss) {
@@ -52,7 +52,7 @@ export function donchianBreakoutStrategy(settings: {
         };
       };
 
-      const shortEntry: () => SizelessStrategyUpdate = () => {
+      const shortEntry: () => StrategyUpdate = () => {
         const entryPrice = donchianChannel.lower - atr / 5;
         const stopLosses = [sma];
         if (settings.maxRelativeStopLoss) {
