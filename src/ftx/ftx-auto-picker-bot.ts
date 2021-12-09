@@ -71,7 +71,7 @@ async function pickMarketAndStrategy({
         });
         return strats.map((stratProvider, i) => {
           const result = backtest({
-            stratProvider: () => withStaker(stratProvider, allInStaker),
+            strategy: withStaker(stratProvider, allInStaker),
             series: { _: series },
             showProgressBar: false,
           });

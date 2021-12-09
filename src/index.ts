@@ -13,22 +13,21 @@ import { tradeOnlyRecentlyProfitable } from "./strats/trade-only-recently-profit
   );
   const company = companiesWithCandles[0];
   const result = backtest({
-    stratProvider: () =>
-      withStaker(
-        () =>
-          tradeOnlyRecentlyProfitable(() =>
-            donchianBreakoutStrategy({
-              channelPeriod: 30,
-              smaPeriod: 20,
-              onlyDirection: "long",
-            })
-          ),
-        createStaker({
-          maxRelativeRisk: 0.01,
-          maxRelativeExposure: 1,
-          allowFractions: true,
-        })
-      ),
+    strategy: withStaker(
+      () =>
+        tradeOnlyRecentlyProfitable(() =>
+          donchianBreakoutStrategy({
+            channelPeriod: 30,
+            smaPeriod: 20,
+            onlyDirection: "long",
+          })
+        ),
+      createStaker({
+        maxRelativeRisk: 0.01,
+        maxRelativeExposure: 1,
+        allowFractions: true,
+      })
+    ),
     series: { [company.symbol]: company.candles },
   });
   console.log(result);

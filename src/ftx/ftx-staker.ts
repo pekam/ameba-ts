@@ -41,8 +41,10 @@ function getBacktestStaker(strat: FtxBotStrat) {
       const result =
         // withRelativeTransactionCost(
         backtest({
-          stratProvider: () =>
-            withStaker(() => getBacktestableStrategy(strat), allInStaker),
+          strategy: withStaker(
+            () => getBacktestableStrategy(strat),
+            allInStaker
+          ),
           series: { _: series },
         });
       //   transactionCost

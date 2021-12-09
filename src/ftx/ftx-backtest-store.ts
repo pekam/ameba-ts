@@ -31,14 +31,14 @@ async function loadBacktestResult(
 }
 
 async function backtestWithFtxData(args: {
-  stratProvider: () => FullTradingStrategy;
+  strategy: FullTradingStrategy;
   market: FtxMarket;
   resolution: FtxResolution;
   from: string;
   to: string;
   candlesBefore?: number;
 }): Promise<FtxBacktestResult> {
-  const { market, stratProvider, resolution, from, to } = args;
+  const { market, strategy, resolution, from, to } = args;
   const candlesBefore = args.candlesBefore || 50;
 
   const fromTimestamp = toTimestamp(from);
@@ -52,7 +52,7 @@ async function backtestWithFtxData(args: {
   });
 
   const result = backtest({
-    stratProvider,
+    strategy: strategy,
     series: { _: series },
     from: fromTimestamp,
   });
@@ -61,7 +61,7 @@ async function backtestWithFtxData(args: {
 }
 
 async function backtestAndSave(args: {
-  stratProvider: () => FullTradingStrategy;
+  strategy: FullTradingStrategy;
   market: FtxMarket;
   resolution: FtxResolution;
   from: string;

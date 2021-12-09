@@ -21,7 +21,7 @@ export function autoOptimizer(settings: {
     const withProfits = settings.stratPool.map((stratProvider) => {
       const from = m.last(series).time - settings.optimizePeriod;
       const result = backtest({
-        stratProvider: () => withStaker(stratProvider, allInStaker),
+        strategy: withStaker(stratProvider, allInStaker),
         series: { _: series.slice(-10000) },
         showProgressBar: false,
         from,

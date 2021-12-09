@@ -1,8 +1,8 @@
 import { AssetState, backtest } from "../core/backtest";
 import {
   allInStaker,
-  TradingStrategy,
   StrategyUpdate,
+  TradingStrategy,
   withStaker,
 } from "../core/staker";
 import { CandleSeries } from "../core/types";
@@ -40,7 +40,7 @@ export function tradeOnlyRecentlyProfitable(
       series.length >= backtestCandleCount
     ) {
       const backtestResult = backtest({
-        stratProvider: () => withStaker(stratProvider, allInStaker),
+        strategy: withStaker(stratProvider, allInStaker),
         series: { _: series.slice(-backtestCandleCount) },
         showProgressBar: false,
       });

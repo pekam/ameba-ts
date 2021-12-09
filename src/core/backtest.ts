@@ -19,7 +19,7 @@ import {
 } from "./types";
 
 interface BacktestArgs {
-  stratProvider: () => FullTradingStrategy;
+  strategy: FullTradingStrategy;
   series: SeriesMap;
   initialBalance?: number;
   showProgressBar?: boolean;
@@ -77,7 +77,6 @@ export function backtest(args: BacktestArgs): BacktestResult {
 }
 
 function doBacktest(args: Required<BacktestArgs>) {
-  const strat: FullTradingStrategy = args.stratProvider();
   let state: InternalTradeState = createInitialState(args);
 
   const progressBar = startProgressBar(
@@ -93,7 +92,7 @@ function doBacktest(args: Required<BacktestArgs>) {
       // All candle series finished.
       break;
     }
-    state = applyStrategy(handleAllOrders(state), strat);
+    state = applyStrategy(handleAllOrders(state), args.strategy);
     progressBar.increment();
   }
   progressBar.stop();
