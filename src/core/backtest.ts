@@ -7,15 +7,13 @@ import {
 } from "./backtest-order-execution";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import {
+  AssetMap,
+  AssetState,
   Candle,
-  CandleSeries,
-  MarketPosition,
-  Order,
+  FullTradeState,
+  FullTradingStrategy,
   Range,
   SeriesMap,
-  SingleAssetStrategyUpdate,
-  Trade,
-  Transaction,
 } from "./types";
 
 interface BacktestArgs {
@@ -27,17 +25,6 @@ interface BacktestArgs {
   to?: Moment;
 }
 
-export type AssetMap = { [symbol: string]: AssetState };
-
-export interface FullTradeState {
-  cash: number;
-
-  assets: AssetMap;
-  updated: string[];
-
-  time: number;
-}
-
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
   args: Required<BacktestArgs>;
@@ -46,25 +33,6 @@ export interface InternalTradeState extends FullTradeState {
    */
   range: Partial<Range>;
 }
-
-export interface AssetState {
-  symbol: string;
-  series: CandleSeries;
-
-  entryOrder: Order | null;
-  position: MarketPosition | null;
-  takeProfit: number | null;
-  stopLoss: number | null;
-
-  transactions: Transaction[];
-  trades: Trade[];
-}
-
-export type FullStrategyUpdate = {
-  [symbol: string]: SingleAssetStrategyUpdate;
-};
-
-export type FullTradingStrategy = (state: FullTradeState) => FullStrategyUpdate;
 
 export function backtest(args: BacktestArgs): BacktestResult {
   const defaults = {

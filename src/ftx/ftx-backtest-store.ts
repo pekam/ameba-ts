@@ -1,5 +1,6 @@
-import { backtest, FullTradingStrategy } from "../core/backtest";
+import { backtest } from "../core/backtest";
 import { BacktestResult } from "../core/backtest-result";
+import { FullTradingStrategy } from "../core/types";
 import { db } from "../data/mongo";
 import { ftxResolutionToPeriod, toTimestamp } from "../shared/time-util";
 import { FtxMarket, FtxResolution } from "./ftx";

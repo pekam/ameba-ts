@@ -1,6 +1,7 @@
 import _ from "lodash";
-import { AssetState, backtest } from "../core/backtest";
+import { backtest } from "../core/backtest";
 import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
+import { AssetState } from "../core/types";
 import { m } from "../shared/functions";
 
 const relativeTransactionCost = 0.0007;

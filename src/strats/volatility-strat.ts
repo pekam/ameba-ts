@@ -1,6 +1,5 @@
-import { AssetState } from "../core/backtest";
 import { StrategyUpdate } from "../core/staker";
-import { MarketPosition } from "../core/types";
+import { AssetState, MarketPosition } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 

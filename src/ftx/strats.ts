@@ -1,6 +1,5 @@
-import { AssetState } from "../core/backtest";
-import { TradingStrategy, StrategyUpdate } from "../core/staker";
-import { Candle, CandleSeries } from "../core/types";
+import { StrategyUpdate, TradingStrategy } from "../core/staker";
+import { AssetState, Candle, CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { indicators } from "../shared/indicators";
 import { FtxBotStrat } from "./bot";

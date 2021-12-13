@@ -1,6 +1,11 @@
-import { AssetState, FullTradeState } from "../core/backtest";
 import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
-import { CandleSeries, MarketPosition, Order } from "../core/types";
+import {
+  AssetState,
+  CandleSeries,
+  FullTradeState,
+  MarketPosition,
+  Order,
+} from "../core/types";
 import { m } from "../shared/functions";
 import {
   ftxResolutionToPeriod,

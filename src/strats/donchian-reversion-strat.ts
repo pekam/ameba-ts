@@ -1,7 +1,6 @@
-import { AssetState } from "../core/backtest";
 import { Indicators } from "../core/indicators";
 import { TradingStrategy } from "../core/staker";
-import { CandleSeries } from "../core/types";
+import { AssetState, CandleSeries } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 

@@ -1,11 +1,13 @@
 import { m } from "../shared/functions";
+import {} from "./backtest";
 import {
   AssetState,
   FullStrategyUpdate,
   FullTradeState,
   FullTradingStrategy,
-} from "./backtest";
-import { Order, SingleAssetStrategyUpdate } from "./types";
+  Order,
+  SingleAssetStrategyUpdate,
+} from "./types";
 
 /**
  * A function that implements a position sizing strategy.

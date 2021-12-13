@@ -1,7 +1,6 @@
-import { AssetState } from "../core/backtest";
 import { Indicators } from "../core/indicators";
-import { TradingStrategy, StrategyUpdate } from "../core/staker";
-import { MarketPosition } from "../core/types";
+import { StrategyUpdate, TradingStrategy } from "../core/staker";
+import { AssetState, MarketPosition } from "../core/types";
 import { m } from "../shared/functions";
 
 /**

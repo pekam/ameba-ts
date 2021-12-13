@@ -53,26 +53,6 @@ export interface Transaction {
   time: number;
 }
 
-/**
- * An update to the orders during strategy execution.
- *
- * The changes will be applied to the trade state
- * with the spread operator. This means that:
- * - You can skip a property to not change it.
- *   An empty object can be used to not make any
- *   changes to the trade state.
- * - To cancel an order, you need to explicitly
- *   provide null or undefined as the value.
- *
- * When in a position, changes to entryOrder
- * should not be made.
- */
-export interface SingleAssetStrategyUpdate {
-  entryOrder?: Order | null;
-  stopLoss?: number | null;
-  takeProfit?: number | null;
-}
-
 export interface Trade {
   /**
    * The symbol of the traded asset.
@@ -95,6 +75,56 @@ export interface Range {
   readonly from: number;
   readonly to: number;
 }
+
+export interface AssetState {
+  symbol: string;
+  series: CandleSeries;
+
+  entryOrder: Order | null;
+  position: MarketPosition | null;
+  takeProfit: number | null;
+  stopLoss: number | null;
+
+  transactions: Transaction[];
+  trades: Trade[];
+}
+
+/**
+ * An update to the orders during strategy execution.
+ *
+ * The changes will be applied to the trade state
+ * with the spread operator. This means that:
+ * - You can skip a property to not change it.
+ *   An empty object can be used to not make any
+ *   changes to the trade state.
+ * - To cancel an order, you need to explicitly
+ *   provide null or undefined as the value.
+ *
+ * When in a position, changes to entryOrder
+ * should not be made.
+ */
+export interface SingleAssetStrategyUpdate {
+  entryOrder?: Order | null;
+  stopLoss?: number | null;
+  takeProfit?: number | null;
+}
+
+export type FullStrategyUpdate = {
+  [symbol: string]: SingleAssetStrategyUpdate;
+};
+
+export type FullTradingStrategy = (state: FullTradeState) => FullStrategyUpdate;
+
+export interface FullTradeState {
+  cash: number;
+
+  assets: AssetMap;
+  updated: string[];
+
+  time: number;
+}
+
+export type AssetMap = { [symbol: string]: AssetState };
 
 /**
  * Mapping from a symbol to the corresponding candle series.

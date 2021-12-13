@@ -1,11 +1,11 @@
-import { AssetState, backtest } from "../core/backtest";
+import { backtest } from "../core/backtest";
 import {
   allInStaker,
   StrategyUpdate,
   TradingStrategy,
   withStaker,
 } from "../core/staker";
-import { CandleSeries } from "../core/types";
+import { AssetState, CandleSeries } from "../core/types";
 import { cancelEntry } from "./strat-util";
 
 /**

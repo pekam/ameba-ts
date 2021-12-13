@@ -1,7 +1,7 @@
-import { AssetState, backtest } from "../src/core/backtest";
+import { backtest } from "../src/core/backtest";
 import { BacktestResult } from "../src/core/backtest-result";
 import { allInStaker, TradingStrategy, withStaker } from "../src/core/staker";
-import { CandleSeries } from "../src/core/types";
+import { AssetState, CandleSeries } from "../src/core/types";
 import { m } from "../src/shared/functions";
 import { timestampFromUTC } from "../src/shared/time-util";
 import { testData } from "./test-data/testData";

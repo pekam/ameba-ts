@@ -1,6 +1,6 @@
-import { AssetState } from "../core/backtest";
 import { Indicators } from "../core/indicators";
 import { SizelessOrder, StrategyUpdate } from "../core/staker";
+import { AssetState } from "../core/types";
 import { m } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
