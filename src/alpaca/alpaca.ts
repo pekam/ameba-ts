@@ -6,7 +6,7 @@ import { Moment, toJSDate, toTimestamp } from "../shared/time-util";
 
 const credentials = {
   key: properties.alpaca_api_key,
-  secret: properties.alpaca_s,
+  secret: properties.alpaca_secret,
   paper: true,
 };
 

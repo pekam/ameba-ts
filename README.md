@@ -1,9 +1,17 @@
 ## Dev instructions
 
-Add a file called `properties.json` in the project root.
-To fetch stock and forex market data, set the API key for finnhub.io.
-To work with ftx.com, you need to define API keys and secrets (with a twist) for the subaccounts
-you want to use. For using Alpaca API, key and secret are also needed.
+### Working with external APIs
+
+Various parts of this project rely on external APIs to fetch market data
+and execute trades:
+
+- [Finnhub](https://finnhub.io/) to fetch stock and forex data
+- [FTX](https://ftx.com/) for crypto data and trading
+- [Alpaca](https://alpaca.markets/) for US stock data and trading
+
+For these features to work, you must create accounts for these services and
+provide API keys for this project in a file called `properties.json`
+(which is git ignored) in the project root:
 
 ```json
 {
@@ -11,29 +19,48 @@ you want to use. For using Alpaca API, key and secret are also needed.
   "ftx": [
     {
       "subaccount": "foo",
-      "api_key": "bar",
-      "s": "baz",
+      "api_key": "your_key_here",
+      "secret": "your_key_here",
       "peak": 100
     }
   ],
   "ftx_data_subaccount": "foo",
-  "alpaca_api_key": "bar",
-  "alpaca_s": "baz"
+  "alpaca_api_key": "your_key_here",
+  "alpaca_secret": "your_key_here"
 }
 ```
 
-- `peak` is the account's peak value, an optional property to trigger risk management.
-- `ftx_data_subaccount` specifies the name of a subaccount that can be used for fetching data.
-  It can be used by some services without the caller explicitly defining the subaccount to use.
+Note:
 
-Starting all the services:
+- FTX supports multiple subaccounts with separate account balances,
+  margin settings etc. This is useful for running multiple bots simultaneously,
+  or just to reduce the bot's buying power instead of having access to your
+  full account balance.
+- `peak` is the subaccount's peak value, a manually updated optional property used for risk management in FTX trading bots.
+- `ftx_data_subaccount` specifies the name of a subaccount that can be used for fetching data.
+  This removes the need to specify the subaccount's name when just fetching data
+  instead of executing trades.
+
+### Caching data in a local database
+
+Some features use MongoDB to cache the fetched market data locally,
+in a DB named as "trade".
+For these features to work, you must have MongoDB installed and running
+in the default port 27017.
+
+Start command on Ubuntu:
 
 ```
 sudo systemctl start mongod
+```
+
+### Web app
+
+The project also includes a web app which is used for data visualization,
+mainly for rendering candlestick charts. To start the backend service as well
+as the frontend React app (located in `./webapp`), run the following commands:
+
+```
 npm run server
 npm run client
 ```
-
-MongoDB is used to cache data loaded from Finnhub.
-The command to start it depends on the OS.
-The web app is used to render candlestick charts.

@@ -125,7 +125,7 @@ export function getFtxClient({
 
   const api = new FtxRest({
     key: keys.api_key,
-    secret: keys.s.substr(1),
+    secret: keys.secret,
     subaccount,
   });
 
