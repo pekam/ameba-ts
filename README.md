@@ -1,3 +1,8 @@
+## Backtest example
+
+See [example.ts](src/example.ts) for an example of writing a trading strategy
+and testing it with historical price data.
+
 ## Dev instructions
 
 ### Working with external APIs
