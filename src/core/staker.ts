@@ -10,14 +10,15 @@ import {
 } from "./types";
 
 /**
- * A function that implements a position sizing strategy.
- * It takes the previous trade state and the upcoming update
- * (which doesn't have size on the entry order) and returns
- * the position size that should be applied to the entry order.
+ * A function that implements a position sizing strategy. It takes the previous
+ * state and the upcoming update (which doesn't have sizes on the entry orders)
+ * and returns the position sizes which should be applied to the entry orders.
+ * The return value is a mapping from an asset's symbol to the position size,
+ * and it should include all the assets which have an `entryOrder` in the
+ * upcoming update.
  *
- * Use {@link withStaker} to combine a {@link TradingStrategy}
- * with a Staker to form a full strategy that can be executed on
- * the backtester or on a real broker.
+ * Use {@link withStaker} to combine a {@link TradingStrategy} with a staker to
+ * form a full strategy that can be executed with a backtester or a real broker.
  */
 export type Staker = (
   state: FullTradeState,
@@ -25,27 +26,25 @@ export type Staker = (
 ) => { [symbol: string]: number };
 
 /**
- * An {@link Order} which doens't have the 'size' property yet, as it
- * is expected to be provided later by a {@link Staker} function.
+ * An {@link Order} which doens't have the 'size' property yet, as it is
+ * expected to be provided later by a {@link Staker} function.
  */
 export type SizelessOrder = Omit<Order, "size">;
 
 /**
- * An update to the orders during strategy execution,
- * excluding position sizing.
+ * An update that a {@link TradingStrategy} wishes to make to the orders of an
+ * asset. Refer to {@link AssetState} docs for details of the properties.
  *
- * The changes will be applied to the trade state
- * with the spread operator. This means that:
- * - You can skip a property to not change it.
- *   An empty object can be used to not make any
- *   changes to the trade state.
- * - To cancel an order, you need to explicitly
- *   provide null or undefined as the value.
+ * The changes will be applied to the asset state with the spread operator. This
+ * means that:
+ * - You can skip a property to not change it. An empty object can be returned
+ *   to not make any changes to the asset state.
+ * - To cancel an order, you need to explicitly provide `null` or `undefined` as
+ *   the value.
  *
- * When in a position, changes to entryOrder
- * should not be made.
+ * When in a position, changes to `entryOrder` should not be made.
  */
-// NOTE: JSDoc needs to be manually kept in sync with StrategyUpdate
+// NOTE: JSDoc needs to be manually kept in sync with SingleAssetStrategyUpdate
 // (for the relevant parts), because the docs can't be inherited.
 export interface StrategyUpdate
   extends Omit<SingleAssetStrategyUpdate, "entryOrder"> {
@@ -53,20 +52,26 @@ export interface StrategyUpdate
 }
 
 /**
- * A trading strategy similar to {@link Strategy}, but without
- * position sizing. In practice this means that when setting an
- * entry order, it does not include the 'size' property to decide
- * how many units to buy or sell.
+ * A single-asset trading strategy without position sizing. It decides when to
+ * enter and exit long or short positions on one asset.
  *
- * To actually run this type of strategy on a backtester or a real
- * broker, you need to combine it with a separate {@link Staker} which
- * handles the position sizing, by using {@link withStaker}.
+ * To actually run this strategy with a backtester or a real broker, you need to
+ * combine it with a separate {@link Staker} which handles the position sizing,
+ * by using {@link withStaker}. That will create a {@link FullTradingStrategy},
+ * which can also trade multiple assets simultaneously, using signals provided
+ * by this trading strategy and position sizes provided by the staker.
  */
 export type TradingStrategy = (state: AssetState) => StrategyUpdate;
 
 /**
- * Combines a strategy which doesn't include positions sizing with a staker,
- * forming a full strategy that can be backtested or executed on a broker.
+ * Combines a single-asset trading strategy with a staker that handles position
+ * sizing, forming a full strategy that can trade multiple assets
+ * simultaneously. This {@link FullTradingStrategy} can then be backtested or
+ * executed with a broker.
+ *
+ * @param stratProvider should return new instances of the same strategy, if the
+ * strategy is stateful (e.g. keeping track of previous indicator values such as
+ * moving averages in a closure, for performance reasons)
  */
 export function withStaker(
   stratProvider: () => TradingStrategy,
@@ -135,11 +140,12 @@ export function withStaker(
  * Implementation of a common position sizing strategy, where the max risk of
  * one trade is a proportion of the account value.
  *
- * For example: "I want to risk max 2% of my account balance per trade."
- *
  * In addition, the max exposure relative to account balance can be defined, as
  * well as whether to allow fractioned positions (e.g. buying 2.25 units on a
  * forex or crypto market) or not (more common in stocks).
+ *
+ * Example use case: "I want to risk max 2% of my account balance per trade, and
+ * use max 50% leverage."
  */
 export function createStaker({
   maxRelativeRisk,
@@ -147,14 +153,14 @@ export function createStaker({
   allowFractions,
 }: {
   /**
-   * How much of the current account balance can be lost in one trade.
-   * For example 0.01 if you want to risk max 1% of your account per trade.
+   * How much of the current account balance can be lost in one trade. For
+   * example 0.01 if you want to risk max 1% of your account per trade.
    */
   maxRelativeRisk: number;
   /**
    * What is the max combined position size relative to the account balance. For
    * example 1 to prevent using leverage, 3 to use max 3x leverage. This will
-   * prevent setting new entry orders (or limit it's size) when the sum of
+   * prevent activating a new entry order (or limit it's size) when the sum of
    * current exposure (value of open positions) and potential exposure (added
    * exposure if the all the open entry orders would trigger) reaches the limit.
    */

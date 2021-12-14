@@ -17,11 +17,43 @@ import {
 } from "./types";
 
 interface BacktestArgs {
+  /**
+   * The strategy to backtest.
+   */
   strategy: FullTradingStrategy;
+  /**
+   * The historical price data used to simulate what trades the strategy would
+   * have made. The keys of this object should be the symbols identifying the
+   * particular asset.
+   *
+   * The object can contain only one entry for trading only a single asset, or
+   * many for multi-asset trading.
+   */
   series: SeriesMap;
+  /**
+   * The initial cash balance of the account. Defaults to 10000.
+   */
   initialBalance?: number;
+  /**
+   * Whether to render a progress bar in the console while the backtest is
+   * running. Defaults to `true`.
+   */
   showProgressBar?: boolean;
+  /**
+   * If provided, the strategy will first be called with a series including all
+   * the candles up to and including the first candle which has a timestamp
+   * greater or equal to `from`.
+   *
+   * This can be useful if your strategy needs some amount of data before making
+   * decisions (e.g. a strategy using a 20-period moving average needs 20
+   * candles before acting), and you want the backtest result to have correct
+   * values for `range` and `buyAndHoldProfit`.
+   */
   from?: Moment;
+  /**
+   * If provided, the backtest won't include candles with timestamps greater
+   * than `to`.
+   */
   to?: Moment;
 }
 
@@ -34,6 +66,10 @@ export interface InternalTradeState extends FullTradeState {
   range: Partial<Range>;
 }
 
+/**
+ * Tests how the given trading strategy would have performed with the provided
+ * historical price data.
+ */
 export function backtest(args: BacktestArgs): BacktestResult {
   const defaults = {
     initialBalance: 10000,
