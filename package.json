@@ -2,9 +2,7 @@
   "name": "trade-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
   "scripts": {
-    "start": "tsc && node build/index.js",
     "test": "jest",
     "server": "ts-node src/server.ts",
     "client": "cd webapp && npm run start",
