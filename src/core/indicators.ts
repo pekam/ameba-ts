@@ -25,21 +25,23 @@ export interface IndicatorSettings {
    * For example, to check how many of the past 20 candles are above the SMA:
    *
    * {
-   *   predicate: (candle, { sma }) => !!sma && candles.low > sma,
+   *   predicate: (candle, { sma }) => !!sma && candle.low > sma,
    *   period: 20,
    * }
    *
    * The result is the proportion, e.g. 0.25 if 5 of the past 20 candles are above sma.
    */
-  readonly predicateCounterSettings?: {
-    predicate: (candle: Candle, indicatorValues: IndicatorValues) => boolean;
-    period: number;
-  };
+  readonly predicateCounterSettings?: PredicateCounterSettings;
   readonly avgVolPeriod?: number;
   /**
    * Simple moving average of `(high-low)/low`.
    */
   readonly avgRelativeRangePeriod?: number;
+}
+
+interface PredicateCounterSettings {
+  predicate: (candle: Candle, indicatorValues: IndicatorValues) => boolean;
+  period: number;
 }
 
 export interface IndicatorChannel {
@@ -85,7 +87,8 @@ export class Indicators {
   private readonly donchianChannel: DonchianChannel;
   private readonly atr: ATR;
   private readonly predicateCounterFunc: (
-    condition: boolean
+    candle: Candle,
+    indicatorValues: IndicatorValues
   ) => number | undefined;
   private readonly avgVol: SMA;
   private readonly avgRelativeRange: SMA;
@@ -142,7 +145,7 @@ export class Indicators {
     }
     if (settings.predicateCounterSettings) {
       this.predicateCounterFunc = getPredicateCounter(
-        settings.predicateCounterSettings.period
+        settings.predicateCounterSettings
       );
     }
     if (settings.avgVolPeriod) {
@@ -202,13 +205,10 @@ export class Indicators {
     };
 
     if (this.predicateCounterFunc) {
-      const predicateCounter = this.predicateCounterFunc(
-        this.settings.predicateCounterSettings!.predicate(
-          candle,
-          indicatorValues
-        )
+      indicatorValues.predicateCounter = this.predicateCounterFunc(
+        candle,
+        indicatorValues
       );
-      indicatorValues.predicateCounter = predicateCounter;
     }
 
     this.candleToIndicators.set(candle, indicatorValues);
@@ -268,14 +268,15 @@ function getDonchianChannel(period: number): DonchianChannel {
   };
 }
 
-function getPredicateCounter(period: number) {
+function getPredicateCounter({ period, predicate }: PredicateCounterSettings) {
   if (period < 1) {
     throw Error("Period must be >=1");
   }
   const results: boolean[] = [];
   let counter = 0;
 
-  return (result: boolean) => {
+  return (candle: Candle, indicatorValues: IndicatorValues) => {
+    const result = predicate(candle, indicatorValues);
     results.push(result);
     if (result) {
       counter++;
