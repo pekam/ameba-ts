@@ -1,4 +1,4 @@
-import { flatten } from "lodash";
+import { flatten, uniqBy } from "lodash";
 import { m } from "../shared/functions";
 import { Moment } from "../shared/time-util";
 import { startProgressBar } from "../util";
@@ -255,12 +255,11 @@ function updateAsset(
   };
 }
 
-function getIterationCount(args: Required<BacktestArgs>) {
-  return new Set(
-    flatten(Object.values(args.series))
-      .filter((candle) => isWithinRange(args, candle))
-      .map((candle) => candle.time)
-  ).size;
+function getIterationCount(args: Required<BacktestArgs>): number {
+  const allIncludedCandles = flatten(
+    Object.values(args.series)
+  ).filter((candle) => isWithinRange(args, candle));
+  return uniqBy(allIncludedCandles, (candle) => candle.time).length;
 }
 
 function isWithinRange(args: Required<BacktestArgs>, candle: Candle) {
