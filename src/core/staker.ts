@@ -185,11 +185,8 @@ export function createStaker({
     // Some of the pending exposure will be reduced, because the old entry
     // orders won't be there after this update.
     const exposureToBeCancelled = Object.entries(updates)
-      .filter(([symbol, update]) => {
-        const prop: keyof StrategyUpdate = "entryOrder"; // Just for type safety
-        // Entry either cancelled or overridden with new order.
-        return update.hasOwnProperty(prop);
-      })
+      // Entry either cancelled or overridden with new order.
+      .filter(([symbol, update]) => m.hasOwnProperty(update, "entryOrder"))
       .map(([symbol, update]) => state.assets[symbol].entryOrder)
       .reduce(
         (exp, previousEntryOrder) =>

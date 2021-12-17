@@ -1,4 +1,5 @@
 import { flatten } from "lodash";
+import { m } from "../shared/functions";
 import { Moment } from "../shared/time-util";
 import { startProgressBar } from "../util";
 import {
@@ -202,7 +203,10 @@ function applyStrategy(
           `Order size must be positive, but was ${update.entryOrder.size}.`
         );
       }
-      if (state.assets[symbol].position && update.entryOrder) {
+      if (
+        state.assets[symbol].position &&
+        m.hasOwnProperty(update, "entryOrder")
+      ) {
         throw Error(
           "Changing entry order while already in a position is not allowed."
         );

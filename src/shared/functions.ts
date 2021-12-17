@@ -224,6 +224,13 @@ function seriesWithSymbolsToMap(
 }
 
 /**
+ * Type safe way to check if an optional property is present.
+ */
+function hasOwnProperty<T extends object>(obj: T, key: keyof T) {
+  return obj.hasOwnProperty(key);
+}
+
+/**
  * Collection of utility functions.
  */
 export const m = {
@@ -254,6 +261,7 @@ export const m = {
   formatPercentage,
   combineRanges,
   seriesWithSymbolsToMap,
+  hasOwnProperty,
 
   getSwingHighs,
   getSwingLows,
