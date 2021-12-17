@@ -36,6 +36,10 @@ export interface IndicatorSettings {
     period: number;
   };
   readonly avgVolPeriod?: number;
+  /**
+   * Simple moving average of `(high-low)/low`.
+   */
+  readonly avgRelativeRangePeriod?: number;
 }
 
 export interface IndicatorChannel {
@@ -60,6 +64,10 @@ export interface IndicatorValues {
    */
   predicateCounter?: number;
   avgVol?: number;
+  /**
+   * Simple moving average of `(high-low)/low`.
+   */
+  avgRelativeRange?: number;
 }
 
 export interface MacdResult {
@@ -80,6 +88,7 @@ export class Indicators {
     condition: boolean
   ) => number | undefined;
   private readonly avgVol: SMA;
+  private readonly avgRelativeRange: SMA;
 
   private readonly candleToIndicators: WeakMap<
     Candle,
@@ -139,6 +148,12 @@ export class Indicators {
     if (settings.avgVolPeriod) {
       this.avgVol = new SMA({ period: settings.avgVolPeriod, values: [] });
     }
+    if (settings.avgRelativeRangePeriod) {
+      this.avgRelativeRange = new SMA({
+        period: settings.avgRelativeRangePeriod,
+        values: [],
+      });
+    }
   }
 
   private addIndicatorsForNextCandle(candle: Candle) {
@@ -179,6 +194,11 @@ export class Indicators {
         this.avgVol && candle.volume !== undefined
           ? this.avgVol.nextValue(candle.volume)
           : undefined,
+      avgRelativeRange:
+        this.avgRelativeRange &&
+        this.avgRelativeRange.nextValue(
+          (candle.high - candle.low) / candle.low
+        ),
     };
 
     if (this.predicateCounterFunc) {
