@@ -1,4 +1,4 @@
-import { flatten, uniqBy } from "lodash";
+import { flatten, mapValues, uniqBy } from "lodash";
 import { m } from "../shared/functions";
 import { Moment } from "../shared/time-util";
 import { startProgressBar } from "../util";
@@ -109,33 +109,28 @@ function doBacktest(args: Required<BacktestArgs>) {
 }
 
 function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
+  const assets: AssetMap = mapValues(args.series, (series, symbol) => {
+    const initialSeries = (() => {
+      const firstCandleIndex = series.findIndex((candle) =>
+        isWithinRange(args, candle)
+      );
+      return firstCandleIndex === -1 ? [] : series.slice(0, firstCandleIndex);
+    })();
+    return {
+      symbol,
+      series: initialSeries,
+      position: null,
+      entryOrder: null,
+      takeProfit: null,
+      stopLoss: null,
+      transactions: [],
+      trades: [],
+    };
+  });
+
   return {
     cash: args.initialBalance,
-    assets: Object.entries(args.series).reduce<AssetMap>(
-      (assets, [symbol, series]) => {
-        const initialSeries = (() => {
-          const firstCandleIndex = series.findIndex((candle) =>
-            isWithinRange(args, candle)
-          );
-          return firstCandleIndex === -1
-            ? []
-            : series.slice(0, firstCandleIndex);
-        })();
-
-        assets[symbol] = {
-          symbol,
-          series: initialSeries,
-          position: null,
-          entryOrder: null,
-          takeProfit: null,
-          stopLoss: null,
-          transactions: [],
-          trades: [],
-        };
-        return assets;
-      },
-      {}
-    ),
+    assets,
     updated: [],
     time: 0,
     args,
