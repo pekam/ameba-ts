@@ -1,6 +1,7 @@
 import { backtest } from "./core/backtest";
 import { Indicators } from "./core/indicators";
-import { createStaker, TradingStrategy, withStaker } from "./core/staker";
+import { TradingStrategy, withStaker } from "./core/staker";
+import { createStaker } from "./core/stakers/common-staker";
 import { AssetState } from "./core/types";
 import { ftxDataStore } from "./ftx/ftx-data-store";
 

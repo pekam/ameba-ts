@@ -1,5 +1,6 @@
 import { backtest } from "../core/backtest";
-import { allInStaker, withStaker } from "../core/staker";
+import { withStaker } from "../core/staker";
+import { allInStaker } from "../core/stakers/all-in-staker";
 import { CandleSeries } from "../core/types";
 import { getFtxSubAccountProperties } from "../properties";
 import { m } from "../shared/functions";

@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { backtest } from "../core/backtest";
-import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
+import {  TradingStrategy, withStaker } from "../core/staker";
+import { allInStaker } from "../core/stakers/all-in-staker";
 import { AssetState } from "../core/types";
 import { m } from "../shared/functions";
 

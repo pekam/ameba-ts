@@ -1,4 +1,5 @@
-import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
+import { TradingStrategy, withStaker } from "../core/staker";
+import { allInStaker } from "../core/stakers/all-in-staker";
 import {
   AssetState,
   CandleSeries,

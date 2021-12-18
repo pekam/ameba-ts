@@ -1,6 +1,7 @@
 import { flatten, maxBy } from "lodash";
 import { backtest } from "../core/backtest";
-import { allInStaker, TradingStrategy, withStaker } from "../core/staker";
+import { TradingStrategy, withStaker } from "../core/staker";
+import { allInStaker } from "../core/stakers/all-in-staker";
 import { getCurrentTimestampInSeconds } from "../shared/time-util";
 import { sleep } from "../util";
 import { botB } from "./bot-b";
