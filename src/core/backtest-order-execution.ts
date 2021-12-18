@@ -68,9 +68,9 @@ function shouldHandleOrderOnEntryCandle(
 function handleEntryOrder(state: State): State {
   const { position, entryOrder, series } = state.asset;
   if (!position && entryOrder) {
-    const price = isOrderFulfilled(entryOrder, m.last(series));
-    if (price) {
-      return fulfillEntryOrder(state, entryOrder, price);
+    const fillPrice = getFillPrice(entryOrder, m.last(series));
+    if (fillPrice) {
+      return fulfillEntryOrder(state, entryOrder, fillPrice);
     }
   }
   return state;
@@ -85,7 +85,7 @@ function handleStopLoss(state: State): State {
       side: position === "long" ? "sell" : "buy",
       size: entryOrder!.size, // entryOrder must exist when in position
     };
-    const price = isOrderFulfilled(stopLossOrder, m.last(series));
+    const price = getFillPrice(stopLossOrder, m.last(series));
     if (price) {
       return fulfillExitOrder(state, stopLossOrder, price);
     }
@@ -102,9 +102,9 @@ function handleTakeProfit(state: State): State {
       side: position === "long" ? "sell" : "buy",
       size: entryOrder!.size, // entryOrder must exist when in position
     };
-    const price = isOrderFulfilled(takeProfitOrder, m.last(series));
-    if (price) {
-      return fulfillExitOrder(state, takeProfitOrder, price);
+    const fillPrice = getFillPrice(takeProfitOrder, m.last(series));
+    if (fillPrice) {
+      return fulfillExitOrder(state, takeProfitOrder, fillPrice);
     }
   }
   return state;
@@ -117,7 +117,7 @@ function handleTakeProfit(state: State): State {
  * The price ignores slippage except that caused by gaps between previous
  * candle's close and current candle's open.
  */
-function isOrderFulfilled(order: Order, newCandle: Candle): number | null {
+function getFillPrice(order: Order, newCandle: Candle): number | null {
   const priceBelowOrder = newCandle.low <= order.price;
   if (priceBelowOrder) {
     const buyPriceCrossed = order.side === "buy" && order.type === "limit";
@@ -142,12 +142,12 @@ function isOrderFulfilled(order: Order, newCandle: Candle): number | null {
 function fulfillEntryOrder(
   state: State,
   entryOrder: Order,
-  executionPrice: number
+  fillPrice: number
 ): State {
   const transaction: Transaction = {
     side: entryOrder.side,
     size: entryOrder.size,
-    price: executionPrice,
+    price: fillPrice,
     time: m.last(state.asset.series).time,
   };
 
@@ -166,13 +166,13 @@ function fulfillEntryOrder(
 function fulfillExitOrder(
   state: State,
   order: Order,
-  executionPrice: number
+  fillPrice: number
 ): State {
   const { series, transactions, trades } = state.asset;
   const transaction: Transaction = {
     side: order.side,
     size: order.size,
-    price: executionPrice,
+    price: fillPrice,
     time: m.last(series).time,
   };
   const cash = getCashBalanceAfterTransaction({
