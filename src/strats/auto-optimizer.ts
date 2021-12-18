@@ -24,7 +24,7 @@ export function autoOptimizer(settings: {
       const result = backtest({
         strategy: withStaker(stratProvider, allInStaker),
         series: { _: series.slice(-10000) },
-        showProgressBar: false,
+        progressHandler: null,
         from,
       });
       // const withTransactionCost = withRelativeTransactionCost(

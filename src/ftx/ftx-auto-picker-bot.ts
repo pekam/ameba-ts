@@ -73,7 +73,7 @@ async function pickMarketAndStrategy({
           const result = backtest({
             strategy: withStaker(stratProvider, allInStaker),
             series: { _: series },
-            showProgressBar: false,
+            progressHandler: null,
           });
           console.log(
             `Tested ${market} with strategy ${i}, profit ${result.stats.relativeProfit}`

@@ -1,12 +1,12 @@
 import { flatten, mapValues, uniqBy } from "lodash";
 import { m } from "../shared/functions";
 import { Moment } from "../shared/time-util";
-import { startProgressBar } from "../util";
 import {
   handleOrders,
   revertLastTransaction,
 } from "./backtest-order-execution";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
+import { createProgressBar } from "./progress-bar";
 import {
   AssetMap,
   AssetState,
@@ -36,10 +36,14 @@ interface BacktestArgs {
    */
   initialBalance?: number;
   /**
-   * Whether to render a progress bar in the console while the backtest is
-   * running. Defaults to `true`.
+   * A collection of callbacks that are called during backtest execution,
+   * enabling reporting/visualizing the backtest's progress.
+   *
+   * Defaults to a handler that renders a progress bar in the console. This
+   * default behavior can be disabled by explicitly passing `null` or
+   * `undefined`.
    */
-  showProgressBar?: boolean;
+  progressHandler?: ProgressHandler | null;
   /**
    * If provided, the strategy will first be called with a series including all
    * the candles up to and including the first candle which has a timestamp
@@ -68,13 +72,23 @@ export interface InternalTradeState extends FullTradeState {
 }
 
 /**
+ * A collection of callbacks that are called during backtest execution, enabling
+ * reporting/visualizing the backtest's progress.
+ */
+export interface ProgressHandler {
+  onStart: (iterationCount: number) => void;
+  afterIteration: () => void;
+  onFinish: () => void;
+}
+
+/**
  * Tests how the given trading strategy would have performed with the provided
  * historical price data.
  */
 export function backtest(args: BacktestArgs): BacktestResult {
   const defaults = {
     initialBalance: 10000,
-    showProgressBar: true,
+    progressHandler: createProgressBar(),
     from: 0,
     to: Infinity,
   };
@@ -84,10 +98,7 @@ export function backtest(args: BacktestArgs): BacktestResult {
 function doBacktest(args: Required<BacktestArgs>) {
   let state: InternalTradeState = createInitialState(args);
 
-  const progressBar = startProgressBar(
-    getIterationCount(args),
-    args.showProgressBar
-  );
+  args.progressHandler?.onStart(getIterationCount(args));
 
   // Recursion would result in heap-out-of-memory error on big candle series, as
   // JavaScript doesn't have tail call optimization.
@@ -98,9 +109,9 @@ function doBacktest(args: Required<BacktestArgs>) {
       break;
     }
     state = applyStrategy(handleAllOrders(state), args.strategy);
-    progressBar.increment();
+    args.progressHandler?.afterIteration();
   }
-  progressBar.stop();
+  args.progressHandler?.onFinish();
 
   // Only finished trades are included in the result. Another option would be to
   // close all open trades with the current market price, but exiting against

@@ -1,25 +1,7 @@
-//@ts-ignore cli-progress type defs are broken
-import { Presets, SingleBar } from "cli-progress";
 import { range } from "lodash";
 import { Candle } from "./core/types";
 import { getCurrentTimestampInSeconds } from "./shared/time-util";
 const readline = require("readline");
-
-export const startProgressBar = (length: number, enabled = true) => {
-  if (!enabled) {
-    return {
-      increment: () => {},
-      stop: () => {},
-    };
-  }
-  const progressBar = new SingleBar({}, Presets.shades_classic);
-  progressBar.start(length, 0);
-
-  return {
-    increment: () => progressBar.increment(),
-    stop: () => progressBar.stop(),
-  };
-};
 
 /**
  * Returns a URL for viewing charts from a data set.

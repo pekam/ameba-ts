@@ -42,7 +42,7 @@ export function tradeOnlyRecentlyProfitable(
       const backtestResult = backtest({
         strategy: withStaker(stratProvider, allInStaker),
         series: { _: series.slice(-backtestCandleCount) },
-        showProgressBar: false,
+        progressHandler: null,
       });
       enabled = backtestResult.stats.relativeProfit > profitThreshold;
     }
