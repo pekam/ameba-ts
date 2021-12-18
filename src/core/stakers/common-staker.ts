@@ -1,6 +1,7 @@
+import { identity, sumBy } from "lodash";
 import { m } from "../../shared/functions";
 import { Staker, StrategyUpdate } from "../staker";
-import { FullTradeState, Order } from "../types";
+import { AssetMap, FullTradeState, Order } from "../types";
 
 /**
  * Implementation of a common position sizing strategy, where the max risk of
@@ -51,17 +52,10 @@ export function createStaker({
 
     // Some of the pending exposure will be reduced, because the old entry
     // orders won't be there after this update.
-    const exposureToBeCancelled = Object.entries(updates)
-      // Entry either cancelled or overridden with new order.
-      .filter(([symbol, update]) => m.hasOwnProperty(update, "entryOrder"))
-      .map(([symbol, update]) => state.assets[symbol].entryOrder)
-      .reduce(
-        (exposure, previousEntryOrder) =>
-          previousEntryOrder
-            ? exposure + getExpectedExposure(previousEntryOrder)
-            : exposure,
-        0
-      );
+    const exposureToBeCancelled = getExposureToBeCancelled(
+      state.assets,
+      updates
+    );
 
     const maxExposure = maxRelativeExposure * accountBalance;
 
@@ -116,6 +110,20 @@ export function createStaker({
         }
       ).sizes;
   };
+}
+
+function getExposureToBeCancelled(
+  assets: AssetMap,
+  updates: { [symbol: string]: StrategyUpdate }
+) {
+  const cancelledEntryOrders = Object.entries(updates)
+    // Entry either cancelled or overridden with new order
+    .filter(([symbol, update]) => m.hasOwnProperty(update, "entryOrder"))
+    // Map to the previous entry order (if any)
+    .map(([symbol, update]) => assets[symbol].entryOrder)
+    .filter(identity);
+
+  return sumBy(cancelledEntryOrders, getExpectedExposure);
 }
 
 function getAccountStats(
