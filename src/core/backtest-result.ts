@@ -90,24 +90,10 @@ function getTradesInOrder(state: InternalTradeState) {
   );
 }
 
-function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
-  const profitsAndDurations: [number, number][] = serieses.map((series) => {
-    if (!series.length) {
-      return [0, 0];
-    }
-    const startCandle = series.find((c) => c.time >= range.from);
-    if (!startCandle) {
-      return [0, 0];
-    }
-    const endCandle = series.find((c) => c.time >= range.to) || m.last(series);
-    const startPrice = startCandle.open;
-    const endPrice = endCandle.close;
-
-    const profit = (endPrice - startPrice) / startPrice;
-    const duration = endCandle.time - startCandle.time;
-
-    return [profit, duration];
-  });
+function getBuyAndHoldProfit(series: CandleSeries[], range: Range): number {
+  const profitsAndDurations: [number, number][] = series.map(
+    getBuyAndHoldProfitAndDuration(range)
+  );
 
   const totalWeight = m.sum(
     profitsAndDurations.map(([profit, duration]) => duration)
@@ -120,3 +106,23 @@ function getBuyAndHoldProfit(serieses: CandleSeries[], range: Range): number {
 
   return weightedAvg;
 }
+
+const getBuyAndHoldProfitAndDuration: (
+  range: Range
+) => (series: CandleSeries) => [number, number] = (range) => (series) => {
+  if (!series.length) {
+    return [0, 0];
+  }
+  const startCandle = series.find((c) => c.time >= range.from);
+  if (!startCandle) {
+    return [0, 0];
+  }
+  const endCandle = series.find((c) => c.time >= range.to) || m.last(series);
+  const startPrice = startCandle.open;
+  const endPrice = endCandle.close;
+
+  const profit = (endPrice - startPrice) / startPrice;
+  const duration = endCandle.time - startCandle.time;
+
+  return [profit, duration];
+};
