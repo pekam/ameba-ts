@@ -1,4 +1,4 @@
-import { flatMap, sortBy } from "lodash";
+import { flatMap, sortBy, sumBy } from "lodash";
 import { m } from "../shared/functions";
 import { InternalTradeState } from "./backtest";
 import { CandleSeries, Range, Trade } from "./types";
@@ -95,13 +95,14 @@ function getBuyAndHoldProfit(series: CandleSeries[], range: Range): number {
     getBuyAndHoldProfitAndDuration(range)
   );
 
-  const totalWeight = m.sum(
-    profitsAndDurations.map(([profit, duration]) => duration)
+  const totalWeight = sumBy(
+    profitsAndDurations,
+    ([profit, duration]) => duration
   );
-  const weightedAvg = m.sum(
-    profitsAndDurations.map(
-      ([profit, duration]) => (profit * duration) / totalWeight
-    )
+
+  const weightedAvg = sumBy(
+    profitsAndDurations,
+    ([profit, duration]) => (profit * duration) / totalWeight
   );
 
   return weightedAvg;
