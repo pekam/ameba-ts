@@ -111,9 +111,7 @@ function doBacktest(args: Required<BacktestArgs>) {
 function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
   const assets: AssetMap = mapValues(args.series, (series, symbol) => {
     const initialSeries = (() => {
-      const firstCandleIndex = series.findIndex((candle) =>
-        isWithinRange(args, candle)
-      );
+      const firstCandleIndex = series.findIndex(isWithinRange(args));
       return firstCandleIndex === -1 ? [] : series.slice(0, firstCandleIndex);
     })();
     return {
@@ -251,19 +249,19 @@ function updateAsset(
 }
 
 function getIterationCount(args: Required<BacktestArgs>): number {
-  const allIncludedCandles = flatten(
-    Object.values(args.series)
-  ).filter((candle) => isWithinRange(args, candle));
+  const allIncludedCandles = flatten(Object.values(args.series)).filter(
+    isWithinRange(args)
+  );
   return uniqBy(allIncludedCandles, (candle) => candle.time).length;
 }
 
-function isWithinRange(args: Required<BacktestArgs>, candle: Candle) {
+const isWithinRange = (args: Required<BacktestArgs>) => (candle: Candle) => {
   return candle.time >= args.from && candle.time <= args.to;
-}
+};
 
 function getNextCandle(state: InternalTradeState, asset: AssetState) {
   const fullSeries = state.args.series[asset.symbol];
   const nextIndex = state.assets[asset.symbol].series.length;
   const next = fullSeries[nextIndex];
-  return next && isWithinRange(state.args, next) ? next : null;
+  return next && isWithinRange(state.args)(next) ? next : null;
 }
