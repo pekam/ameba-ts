@@ -189,8 +189,10 @@ export function createStaker({
       .filter(([symbol, update]) => m.hasOwnProperty(update, "entryOrder"))
       .map(([symbol, update]) => state.assets[symbol].entryOrder)
       .reduce(
-        (exp, previousEntryOrder) =>
-          previousEntryOrder ? getExpectedExposure(previousEntryOrder) : exp,
+        (exposure, previousEntryOrder) =>
+          previousEntryOrder
+            ? exposure + getExpectedExposure(previousEntryOrder)
+            : exposure,
         0
       );
 
