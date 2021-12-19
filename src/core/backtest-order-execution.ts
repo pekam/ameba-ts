@@ -1,3 +1,4 @@
+import { identity, pipe } from "lodash/fp";
 import { m } from "../shared/functions";
 import {
   AssetState,
@@ -37,15 +38,16 @@ function handleOrdersOnEntryCandle(state: State): State {
     // Entry not triggered.
     return state;
   }
-  return m.applyIf(
-    !!takeProfit && shouldHandleOrderOnEntryCandle(state, takeProfit),
-    handleTakeProfit,
-    m.applyIf(
-      !!stopLoss && shouldHandleOrderOnEntryCandle(state, stopLoss),
-      handleStopLoss,
-      state
-    )
-  );
+
+  const shouldHandleStopLoss =
+    !!stopLoss && shouldHandleOrderOnEntryCandle(state, stopLoss);
+  const shouldHandleTakeProfit =
+    !!takeProfit && shouldHandleOrderOnEntryCandle(state, takeProfit);
+
+  return pipe<[State], State, State>(
+    shouldHandleStopLoss ? handleStopLoss : identity,
+    shouldHandleTakeProfit ? handleTakeProfit : identity
+  )(state);
 }
 
 function shouldHandleOrderOnEntryCandle(
