@@ -15,6 +15,7 @@ import {
   FullTradingStrategy,
   Range,
   SeriesMap,
+  SingleAssetStrategyUpdate,
 } from "./types";
 
 interface BacktestArgs {
@@ -202,24 +203,25 @@ function applyStrategy(
   const stratUpdates = strat(state);
   const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
     (state, [symbol, update]) => {
-      if (update.entryOrder && update.entryOrder.size <= 0) {
-        throw Error(
-          `Order size must be positive, but was ${update.entryOrder.size}.`
-        );
-      }
-      if (
-        state.assets[symbol].position &&
-        m.hasOwnProperty(update, "entryOrder")
-      ) {
-        throw Error(
-          "Changing entry order while already in a position is not allowed."
-        );
-      }
+      assertUpdate(update, state.assets[symbol]);
       return updateAsset(state, symbol, update);
     },
     state
   );
   return nextState;
+}
+
+function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
+  if (update.entryOrder && update.entryOrder.size <= 0) {
+    throw Error(
+      `Order size must be positive, but was ${update.entryOrder.size}.`
+    );
+  }
+  if (asset.position && m.hasOwnProperty(update, "entryOrder")) {
+    throw Error(
+      "Changing entry order while already in a position is not allowed."
+    );
+  }
 }
 
 function revertUnclosedTrades(state: InternalTradeState) {
