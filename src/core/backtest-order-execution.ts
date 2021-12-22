@@ -1,4 +1,4 @@
-import { identity, pipe } from "lodash/fp";
+import { identity, pipe } from "remeda";
 import { m } from "../shared/functions";
 import {
   AssetState,
@@ -44,10 +44,11 @@ function handleOrdersOnEntryCandle(state: State): State {
   const shouldHandleTakeProfit =
     !!takeProfit && shouldHandleOrderOnEntryCandle(state, takeProfit);
 
-  return pipe<[State], State, State>(
+  return pipe(
+    state,
     shouldHandleStopLoss ? handleStopLoss : identity,
     shouldHandleTakeProfit ? handleTakeProfit : identity
-  )(state);
+  );
 }
 
 function shouldHandleOrderOnEntryCandle(

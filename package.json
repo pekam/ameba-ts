@@ -22,6 +22,7 @@
     "mongodb": "^3.6.2",
     "node-fetch": "^2.6.0",
     "regression": "^2.0.1",
+    "remeda": "0.0.32",
     "technicalindicators": "^3.1.0"
   },
   "devDependencies": {
