@@ -1,4 +1,5 @@
-import { flatten, mapValues, uniqBy } from "lodash";
+import { first, mapValues } from "lodash";
+import { last } from "lodash/fp";
 import { m } from "../shared/functions";
 import { Moment } from "../shared/time-util";
 import {
@@ -6,6 +7,7 @@ import {
   revertLastTransaction,
 } from "./backtest-order-execution";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
+import { createCandleUpdates, SymbolCandlePair } from "./create-candle-updates";
 import { createProgressBar } from "./progress-bar";
 import {
   AssetMap,
@@ -13,12 +15,11 @@ import {
   Candle,
   FullTradeState,
   FullTradingStrategy,
-  Range,
   SeriesMap,
   SingleAssetStrategyUpdate,
 } from "./types";
 
-interface BacktestArgs {
+export interface BacktestArgs {
   /**
    * The strategy to backtest.
    */
@@ -66,10 +67,6 @@ interface BacktestArgs {
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
   args: Required<BacktestArgs>;
-  /**
-   * The time range of candles used in the backtest so far.
-   */
-  range: Partial<Range>;
 }
 
 /**
@@ -97,27 +94,31 @@ export function backtest(args: BacktestArgs): BacktestResult {
 }
 
 function doBacktest(args: Required<BacktestArgs>) {
-  let state: InternalTradeState = createInitialState(args);
-
-  args.progressHandler?.onStart(getIterationCount(args));
-
-  // Recursion would result in heap-out-of-memory error on big candle series, as
-  // JavaScript doesn't have tail call optimization.
-  while (true) {
-    state = addNextCandles(state);
-    if (!state.updated.length) {
-      // All candle series finished.
-      break;
-    }
-    state = applyStrategy(handleAllOrders(state), args.strategy);
-    args.progressHandler?.afterIteration();
+  const candleUpdates = createCandleUpdates(args.series, isWithinRange(args));
+  if (!candleUpdates.length) {
+    throw Error("There are no candles to backtest with.");
   }
+
+  args.progressHandler?.onStart(candleUpdates.length);
+
+  const finalState = candleUpdates.reduce((state, candleUpdate) => {
+    const nextState = applyStrategy(
+      handleAllOrders(addNextCandles(state, candleUpdate)),
+      args.strategy
+    );
+    args.progressHandler?.afterIteration();
+    return nextState;
+  }, createInitialState(args));
+
   args.progressHandler?.onFinish();
 
   // Only finished trades are included in the result. Another option would be to
   // close all open trades with the current market price, but exiting against
   // the strategy's logic would skew the result.
-  return convertToBacktestResult(revertUnclosedTrades(state));
+  return convertToBacktestResult(revertUnclosedTrades(finalState), {
+    from: first(candleUpdates)!.time, // candleUpdates.length asserted earlier
+    to: last(candleUpdates)!.time,
+  });
 }
 
 function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
@@ -144,45 +145,22 @@ function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
     updated: [],
     time: 0,
     args,
-    range: {},
   };
 }
 
-function addNextCandles(state: InternalTradeState): InternalTradeState {
-  const assets = Object.values(state.assets);
-
-  // Collect all assets which will include a new candle
-  // in the next update
-  const [nextAssets, nextTime] = assets.reduce<[AssetState[], number?]>(
-    ([nextAssets, minTime], asset) => {
-      const candle = getNextCandle(state, asset);
-      if (!candle) {
-        // This asset doesn't have further candles
-        return [nextAssets, minTime];
-      } else if (candle.time < (minTime || Infinity)) {
-        return [[asset], candle.time];
-      } else if (candle.time === minTime) {
-        nextAssets.push(asset); // Mutating for performance
-        return [nextAssets, minTime];
-      } else return [nextAssets, minTime];
-    },
-    [[], undefined]
-  );
-
-  // Mutating the candle arrays for performance; slice() has O(N)
+function addNextCandles(
+  state: InternalTradeState,
+  { time, nextCandles }: { time: number; nextCandles: SymbolCandlePair[] }
+): InternalTradeState {
+  // Mutating the candle arrays for performance. Copying an array has O(N)
   // complexity which is a real issue when backtesting big datasets.
-  nextAssets.forEach((asset) => {
-    asset.series.push(getNextCandle(state, asset)!);
-  });
-
+  nextCandles.forEach(({ symbol, candle }) =>
+    state.assets[symbol].series.push(candle)
+  );
   return {
     ...state,
-    updated: nextAssets.map((a) => a.symbol),
-    time: nextTime || state.time,
-    range: {
-      from: state.range.from || nextTime,
-      to: nextTime || state.range.to,
-    },
+    updated: nextCandles.map(({ symbol }) => symbol),
+    time,
   };
 }
 
@@ -261,20 +239,6 @@ function updateAsset(
   };
 }
 
-function getIterationCount(args: Required<BacktestArgs>): number {
-  const allIncludedCandles = flatten(Object.values(args.series)).filter(
-    isWithinRange(args)
-  );
-  return uniqBy(allIncludedCandles, (candle) => candle.time).length;
-}
-
 const isWithinRange = (args: Required<BacktestArgs>) => (candle: Candle) => {
   return candle.time >= args.from && candle.time <= args.to;
 };
-
-function getNextCandle(state: InternalTradeState, asset: AssetState) {
-  const fullSeries = state.args.series[asset.symbol];
-  const nextIndex = state.assets[asset.symbol].series.length;
-  const next = fullSeries[nextIndex];
-  return next && isWithinRange(state.args)(next) ? next : null;
-}

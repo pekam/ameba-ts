@@ -53,19 +53,13 @@ export interface BacktestResult {
 }
 
 export function convertToBacktestResult(
-  finalState: InternalTradeState
+  finalState: InternalTradeState,
+  range: Range
 ): BacktestResult {
-  const {
-    range: { from, to },
-    cash: endBalance,
-  } = finalState;
   const initialBalance = finalState.args.initialBalance;
   const trades = getTradesInOrder(finalState);
 
-  if (!from || !to) {
-    throw Error("There were no candles to backtest with.");
-  }
-  const range = { from, to };
+  const endBalance = finalState.cash;
 
   const stats: BacktestStatistics = {
     initialBalance,
