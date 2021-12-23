@@ -1,5 +1,6 @@
 import { first, mapValues } from "lodash";
 import { last } from "lodash/fp";
+import { pipe } from "remeda";
 import { m } from "../shared/functions";
 import { Moment } from "../shared/time-util";
 import {
@@ -102,9 +103,11 @@ function doBacktest(args: Required<BacktestArgs>) {
   args.progressHandler?.onStart(candleUpdates.length);
 
   const finalState = candleUpdates.reduce((state, candleUpdate) => {
-    const nextState = applyStrategy(
-      handleAllOrders(addNextCandles(state, candleUpdate)),
-      args.strategy
+    const nextState = pipe(
+      state,
+      addNextCandles(candleUpdate),
+      handleAllOrders,
+      applyStrategy(args.strategy)
     );
     args.progressHandler?.afterIteration();
     return nextState;
@@ -148,10 +151,13 @@ function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
   };
 }
 
-function addNextCandles(
-  state: InternalTradeState,
-  { time, nextCandles }: { time: number; nextCandles: SymbolCandlePair[] }
-): InternalTradeState {
+const addNextCandles = ({
+  time,
+  nextCandles,
+}: {
+  time: number;
+  nextCandles: SymbolCandlePair[];
+}) => (state: InternalTradeState): InternalTradeState => {
   // Mutating the candle arrays for performance. Copying an array has O(N)
   // complexity which is a real issue when backtesting big datasets.
   nextCandles.forEach(({ symbol, candle }) =>
@@ -162,7 +168,7 @@ function addNextCandles(
     updated: nextCandles.map(({ symbol }) => symbol),
     time,
   };
-}
+};
 
 function handleAllOrders(state: InternalTradeState): InternalTradeState {
   return state.updated.reduce((state, symbol) => {
@@ -174,10 +180,9 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
   }, state);
 }
 
-function applyStrategy(
-  state: InternalTradeState,
-  strat: FullTradingStrategy
-): InternalTradeState {
+const applyStrategy = (strat: FullTradingStrategy) => (
+  state: InternalTradeState
+): InternalTradeState => {
   const stratUpdates = strat(state);
   const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
     (state, [symbol, update]) => {
@@ -187,7 +192,7 @@ function applyStrategy(
     state
   );
   return nextState;
-}
+};
 
 function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
   if (update.entryOrder && update.entryOrder.size <= 0) {
