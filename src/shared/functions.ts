@@ -1,9 +1,5 @@
-import _ from "lodash";
-import { Candle, CandleSeries, OHLC, Range, SeriesMap } from "../core/types";
-import { candlePatterns } from "./candle-patterns";
-import { candleUtils } from "./candle-utils";
-import { getSwingHighs, getSwingLows } from "./swing-highs-lows";
-import { PERIODS } from "./time-util";
+import { identity, sort } from "remeda";
+import { Candle, CandleSeries, OHLC } from "../core/types";
 
 /**
  * Supports negative index to get from the end of the array.
@@ -20,31 +16,6 @@ function last<T>(array: Array<T>) {
   return get(array, -1);
 }
 
-function indexOf(candles: CandleSeries, candle: Candle): number {
-  if (candles.length === 0) {
-    throw new Error("Candle not found.");
-  }
-  const i = Math.floor(candles.length / 2);
-  const t = candles[i].time;
-  if (t === candle.time) {
-    return i;
-  } else if (t > candle.time) {
-    return indexOf(candles.slice(0, i), candle);
-  } else {
-    return indexOf(candles.slice(i + 1, candles.length), candle) + i + 1;
-  }
-}
-
-function previous(candles: CandleSeries, candle: Candle): Candle | undefined {
-  const index = indexOf(candles, candle);
-  return candles[index - 1];
-}
-
-function relativeChange(candle: Candle, previous?: Candle): number {
-  const oldValue = previous ? previous.close : candle.open;
-  return (candle.close - oldValue) / oldValue;
-}
-
 /**
  * Returns the average of the provided numbers.
  */
@@ -52,28 +23,6 @@ const avg: (values: number[]) => number = (values) =>
   sum(values) / values.length;
 const sum: (values: number[]) => number = (values) =>
   values.reduce((sum, value) => sum + value, 0);
-const range: (length: number) => number[] = (length) =>
-  Array.from(Array(length).keys());
-
-function sortAscending<T>(items: T[], sortBy: (item: T) => number): T[] {
-  return items.slice().sort((a, b) => sortBy(a) - sortBy(b));
-}
-
-function sortDescending<T>(items: T[], sortBy: (item: T) => number): T[] {
-  return items.slice().sort((a, b) => sortBy(b) - sortBy(a));
-}
-
-/**
- * Applies the function to the value if the condition is true, otherwise
- * returns the value.
- */
-const applyIf = <T>(condition: boolean, func: (input: T) => T, value: T): T => {
-  if (condition) {
-    return func(value);
-  } else {
-    return value;
-  }
-};
 
 const getAverageCandleSize = function (
   series: CandleSeries,
@@ -105,122 +54,13 @@ const combineCandles = function (candles: CandleSeries): Candle {
   return { ...combine(candles), volume, time };
 };
 
-const combineMinuteCandles = function (
-  candles: CandleSeries,
-  periodAsSeconds: number
-): CandleSeries {
-  const grouped = _.groupBy(candles, (c) =>
-    Math.floor(c.time / periodAsSeconds)
-  );
-  return Object.values(grouped).map((value) => combineCandles(value));
-};
-
-const combineMinuteToHourlyCandles = function (
-  candles: CandleSeries
-): CandleSeries {
-  return combineMinuteCandles(candles, PERIODS.hour);
-};
-
-const getCandlesBetween = function (
-  candles: CandleSeries,
-  candle1: Candle,
-  candle2: Candle
-): CandleSeries {
-  const index1 = indexOf(candles, candle1);
-  const index2 = indexOf(candles, candle2);
-  if (index1 < 0 || index2 < 0) {
-    throw new Error("Candle not found in series.");
-  }
-  const lowIndex = Math.min(index1, index2);
-  const highIndex = Math.max(index1, index2);
-  return candles.slice(lowIndex + 1, highIndex);
-};
-
-function filterConsecutiveDuplicates(series: CandleSeries): CandleSeries {
-  return series.filter((candle, i, array) => {
-    const prev = array[i - 1];
-    return !prev || prev.time !== candle.time;
-  });
-}
-
 function getRelativeDiff(
   value1: number,
   value2: number,
   relativeToHigher = false
 ) {
-  const [low, high] = sortAscending([value1, value2], (v) => v);
+  const [low, high] = sort([value1, value2], identity);
   return (high - low) / (relativeToHigher ? high : low);
-}
-
-function isGrowingSeries(values: number[]): boolean {
-  return values.every((value, i) => i === 0 || value > values[i - 1]);
-}
-
-function isDecreasingSeries(values: number[]): boolean {
-  return values.every((value, i) => i === 0 || value < values[i - 1]);
-}
-
-function isBetween({
-  value,
-  low,
-  high,
-}: {
-  value: number;
-  low: number;
-  high: number;
-}): boolean {
-  return value > low && value < high;
-}
-
-function takeCandlesAfter(series: CandleSeries, time: number): CandleSeries {
-  return _.takeRightWhile(series, (c) => c.time > time);
-}
-
-/**
- * The first item has biggest weight and the last item
- * has the smallest weight.
- */
-function getWeightedAverage(values: number[]) {
-  // Function copied from weighted-mean npm module which doesn't have ts types
-  function weightedMean(weightedValues: number[][]) {
-    const totalWeight = weightedValues.reduce(function (sum, weightedValue) {
-      return sum + weightedValue[1];
-    }, 0);
-    return weightedValues.reduce(function (mean, weightedValue) {
-      return mean + (weightedValue[0] * weightedValue[1]) / totalWeight;
-    }, 0);
-  }
-
-  const valuesWithWeights = values.map((profit, i) => [
-    profit,
-    values.length - i,
-  ]);
-  return weightedMean(valuesWithWeights);
-}
-
-function formatPercentage(
-  percent: number,
-  showPlusSign: boolean = true
-): string {
-  return `${showPlusSign && percent > 0 ? "+" : ""}${(percent * 100).toFixed(
-    2
-  )}%`;
-}
-
-function combineRanges(...ranges: Range[]) {
-  return {
-    from: Math.min(...ranges.map((r) => r.from)),
-    to: Math.max(...ranges.map((r) => r.to)),
-  };
-}
-
-function seriesWithSymbolsToMap(
-  seriesWithSymbols: { symbol: string; series: CandleSeries }[]
-): SeriesMap {
-  return seriesWithSymbols.reduce((seriesMap, current) => {
-    seriesMap[current.symbol] = current.series;
-    return seriesMap;
-  }, {} as SeriesMap);
 }
 
 /**
@@ -236,35 +76,11 @@ function hasOwnProperty<T extends object>(obj: T, key: keyof T) {
 export const m = {
   get,
   last,
-  indexOf,
-  previous,
-  relativeChange,
   avg,
   sum,
-  range,
-  sortAscending,
-  sortDescending,
-  applyIf,
   getAverageCandleSize,
   combine,
   combineCandles,
-  combineMinuteCandles,
-  combineMinuteToHourlyCandles,
-  getCandlesBetween,
-  filterConsecutiveDuplicates,
   getRelativeDiff,
-  isGrowingSeries,
-  isDecreasingSeries,
-  isBetween,
-  takeCandlesAfter,
-  getWeightedAverage,
-  formatPercentage,
-  combineRanges,
-  seriesWithSymbolsToMap,
   hasOwnProperty,
-
-  getSwingHighs,
-  getSwingLows,
-  ...candlePatterns,
-  ...candleUtils,
 };

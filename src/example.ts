@@ -2,8 +2,7 @@ import { backtest } from "./core/backtest";
 import { Indicators } from "./core/indicators";
 import { TradingStrategy, withStaker } from "./core/staker";
 import { createStaker } from "./core/stakers/common-staker";
-import { AssetState } from "./core/types";
-import { ftxDataStore } from "./ftx/ftx-data-store";
+import { AssetState, CandleSeries } from "./core/types";
 
 /**
  * Creates a strategy that buys the breakout of previous candle's high if the
@@ -53,25 +52,34 @@ function exampleStrategy(smaPeriod: number): TradingStrategy {
 }
 
 /**
- * Returns hourly candlestick data for BTC and ETH cryptos.
+ * Just an example showing how the data should be provided as a
+ * symbol-to-candles dictionary. Data fetching APIs are not included in this
+ * project.
  */
 async function getCryptoSeries() {
-  // Note that ftxDataStore requires FTX API keys in properties.json and MongoDB
-  // to be running, as explained in README.
   return {
-    BTC: await ftxDataStore.getCandles({
+    BTC: await loadCandles({
       market: "BTC/USD",
-      startDate: "2021-01-01",
-      endDate: "2021-12-01",
+      from: "2021-01-01",
+      to: "2021-12-01",
       resolution: "1h",
     }),
-    ETH: await ftxDataStore.getCandles({
+    ETH: await loadCandles({
       market: "ETH/USD",
-      startDate: "2021-01-01",
-      endDate: "2021-12-01",
+      from: "2021-01-01",
+      to: "2021-12-01",
       resolution: "1h",
     }),
   };
+}
+
+async function loadCandles(args: {
+  market: string;
+  from: string;
+  to: string;
+  resolution: string;
+}): Promise<CandleSeries> {
+  throw Error("This project does not include any data APIs at the moment.");
 }
 
 // Backtest the example strategy with the crypto data
