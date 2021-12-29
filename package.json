@@ -8,6 +8,7 @@
     "url": "https://github.com/pekam/ameba-ts.git"
   },
   "author": "Pekka Maanpää",
+  "main": "src/index.ts",
   "scripts": {
     "test": "jest",
     "check-types": "tsc -w --noEmit"
