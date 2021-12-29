@@ -1,12 +1,17 @@
 {
-  "name": "trade-bot",
+  "name": "ameba-ts",
   "version": "1.0.0",
-  "description": "",
+  "description": "A multi-asset backtester for TypeScript",
+  "homepage": "https://github.com/pekam/ameba-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pekam/ameba-ts.git"
+  },
+  "author": "Pekka Maanpää",
   "scripts": {
     "test": "jest",
     "check-types": "tsc -w --noEmit"
   },
-  "author": "Pekka Maanpää",
   "dependencies": {
     "cli-progress": "^3.8.2",
     "lodash": "^4.17.20",

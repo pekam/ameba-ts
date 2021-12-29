@@ -1,3 +1,7 @@
+# Ameba-TS
+
+Ameba-TS is a multi-asset backtester for TypeScript.
+
 ## Backtest example
 
 See [example.ts](src/example.ts) for an example of writing a trading strategy
