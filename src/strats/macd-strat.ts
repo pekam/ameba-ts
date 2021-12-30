@@ -1,4 +1,4 @@
-import { Indicators } from "../core/indicators";
+import { Indicators } from "../indicators/indicators";
 import { SizelessOrder, StrategyUpdate, TradingStrategy } from "../core/staker";
 import { AssetState, MarketPosition } from "../core/types";
 import { get, last } from "../shared/functions";

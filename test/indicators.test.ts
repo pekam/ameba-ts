@@ -1,5 +1,5 @@
-import { Indicators } from "../src/core/indicators";
 import { CandleSeries } from "../src/core/types";
+import { Indicators } from "../src/indicators/indicators";
 import { testData } from "./test-data/testData";
 
 it("should calculate SMA", () => {

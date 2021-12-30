@@ -1,4 +1,4 @@
-import { Indicators } from "../core/indicators";
+import { Indicators } from "../indicators/indicators";
 import { SizelessOrder, StrategyUpdate } from "../core/staker";
 import { AssetState } from "../core/types";
 import { getAverageCandleSize, last } from "../shared/functions";

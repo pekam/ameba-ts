@@ -1,7 +1,9 @@
-import { maxBy, minBy, takeRightWhile } from "lodash";
+import { takeRightWhile } from "lodash";
 import { ADX, ATR, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
-import { avg, last } from "../shared/functions";
-import { Candle, CandleSeries } from "./types";
+import { Candle, CandleSeries } from "../core/types";
+import { last } from "../shared/functions";
+import { DonchianChannel, getDonchianChannel } from "./donchian-channel";
+import { getPredicateCounter } from "./predicate-counter";
 
 export interface IndicatorSettings {
   readonly smaPeriod?: number;
@@ -39,7 +41,7 @@ export interface IndicatorSettings {
   readonly avgRelativeRangePeriod?: number;
 }
 
-interface PredicateCounterSettings {
+export interface PredicateCounterSettings {
   predicate: (candle: Candle, indicatorValues: IndicatorValues) => boolean;
   period: number;
 }
@@ -227,69 +229,4 @@ export class Indicators {
   get(candle: Candle): IndicatorValues | undefined {
     return this.candleToIndicators.get(candle);
   }
-}
-
-type DonchianChannel = (candle: Candle) => IndicatorChannel | undefined;
-
-function getDonchianChannel(period: number): DonchianChannel {
-  if (period < 1) {
-    throw Error("Donchian channel period must be >=1");
-  }
-  const candles: Candle[] = [];
-
-  let maxCandle: Candle | undefined;
-  let minCandle: Candle | undefined;
-
-  return (candle: Candle) => {
-    candles.push(candle);
-
-    const removed = candles.length > period && candles.shift();
-
-    if (candles.length !== period) {
-      return undefined;
-    }
-
-    if (!maxCandle || removed === maxCandle) {
-      maxCandle = maxBy(candles, (c) => c.high)!;
-    } else if (candle.high > maxCandle.high) {
-      maxCandle = candle;
-    }
-
-    if (!minCandle || removed === minCandle) {
-      minCandle = minBy(candles, (c) => c.low)!;
-    } else if (candle.low < minCandle.low) {
-      minCandle = candle;
-    }
-
-    const upper = maxCandle.high;
-    const lower = minCandle.low;
-    const middle = avg([upper, lower]);
-    return { upper, lower, middle };
-  };
-}
-
-function getPredicateCounter({ period, predicate }: PredicateCounterSettings) {
-  if (period < 1) {
-    throw Error("Period must be >=1");
-  }
-  const results: boolean[] = [];
-  let counter = 0;
-
-  return (candle: Candle, indicatorValues: IndicatorValues) => {
-    const result = predicate(candle, indicatorValues);
-    results.push(result);
-    if (result) {
-      counter++;
-    }
-    if (results.length > period) {
-      const removed = results.shift();
-      if (removed) {
-        counter--;
-      }
-    }
-    if (results.length !== period) {
-      return undefined;
-    }
-    return counter / period;
-  };
 }
