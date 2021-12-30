@@ -18,6 +18,9 @@ export type Moment =
  * @returns timestamp as seconds
  */
 export function toTimestamp(input: Moment): number {
+  if (typeof input === "number") {
+    return input;
+  }
   return Math.floor(toDateTime(input).toSeconds());
 }
 

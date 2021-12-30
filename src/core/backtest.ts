@@ -1,8 +1,9 @@
 import { first, mapValues } from "lodash";
 import { last } from "lodash/fp";
 import { pipe } from "remeda";
+import { Moment, toTimestamp } from "../util/time-util";
+import { OverrideProps } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
-import { Moment } from "../util/time-util";
 import {
   handleOrders,
   revertLastTransaction,
@@ -65,9 +66,14 @@ export interface BacktestArgs {
   to?: Moment;
 }
 
+type AdjustedBacktestArgs = OverrideProps<
+  Required<BacktestArgs>,
+  { from: number; to: number }
+>;
+
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
-  args: Required<BacktestArgs>;
+  args: AdjustedBacktestArgs;
 }
 
 /**
@@ -85,16 +91,23 @@ export interface ProgressHandler {
  * historical price data.
  */
 export function backtest(args: BacktestArgs): BacktestResult {
-  const defaults = {
+  const withDefaults = {
     initialBalance: 10000,
     progressHandler: createProgressBar(),
     from: 0,
     to: Infinity,
+    ...args,
   };
-  return doBacktest({ ...defaults, ...args });
+
+  return doBacktest({
+    ...withDefaults,
+    // Enforce timestamps as numbers:
+    from: toTimestamp(withDefaults.from),
+    to: toTimestamp(withDefaults.to),
+  });
 }
 
-function doBacktest(args: Required<BacktestArgs>) {
+function doBacktest(args: AdjustedBacktestArgs) {
   const candleUpdates = createCandleUpdates(args.series, isWithinRange(args));
   if (!candleUpdates.length) {
     throw Error("There are no candles to backtest with.");
@@ -124,7 +137,7 @@ function doBacktest(args: Required<BacktestArgs>) {
   });
 }
 
-function createInitialState(args: Required<BacktestArgs>): InternalTradeState {
+function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
   const assets: AssetMap = mapValues(args.series, (series, symbol) => {
     const initialSeries = (() => {
       const firstCandleIndex = series.findIndex(isWithinRange(args));
@@ -244,6 +257,6 @@ function updateAsset(
   };
 }
 
-const isWithinRange = (args: Required<BacktestArgs>) => (candle: Candle) => {
+const isWithinRange = (args: AdjustedBacktestArgs) => (candle: Candle) => {
   return candle.time >= args.from && candle.time <= args.to;
 };
