@@ -5,7 +5,7 @@ export * from "./core/staker";
 export * from "./stakers/all-in-staker";
 export * from "./stakers/common-staker";
 export * from "./core/types";
-export * from "./shared/time-util";
+export * from "./util/time-util";
 export * from "./strats/auto-optimizer";
 export * from "./strats/donchian-breakout-strat";
 export * from "./strats/macd-strat";

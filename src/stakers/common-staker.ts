@@ -1,5 +1,5 @@
 import { identity, sumBy } from "lodash";
-import { hasOwnProperty, last } from "../shared/functions";
+import { hasOwnProperty, last } from "../util/util";
 import { Staker, StrategyUpdate } from "../core/staker";
 import { AssetMap, FullTradeState, Order } from "../core/types";
 

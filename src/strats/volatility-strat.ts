@@ -5,7 +5,7 @@ import {
   get,
   getAverageCandleSize,
   last,
-} from "../shared/functions";
+} from "../util/util";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
 /**

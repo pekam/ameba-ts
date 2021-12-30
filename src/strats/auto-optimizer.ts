@@ -3,7 +3,7 @@ import { backtest } from "../core/backtest";
 import { TradingStrategy, withStaker } from "../core/staker";
 import { allInStaker } from "../stakers/all-in-staker";
 import { AssetState } from "../core/types";
-import { last } from "../shared/functions";
+import { last } from "../util/util";
 
 const relativeTransactionCost = 0.0007;
 

@@ -1,5 +1,5 @@
 import { identity, pipe } from "remeda";
-import { last } from "../shared/functions";
+import { last } from "../util/util";
 import {
   AssetState,
   Candle,

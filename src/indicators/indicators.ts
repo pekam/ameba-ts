@@ -1,7 +1,7 @@
 import { takeRightWhile } from "lodash";
 import { ADX, ATR, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
 import { Candle, CandleSeries } from "../core/types";
-import { last } from "../shared/functions";
+import { last } from "../util/util";
 import { DonchianChannel, getDonchianChannel } from "./donchian-channel";
 import { getPredicateCounter } from "./predicate-counter";
 

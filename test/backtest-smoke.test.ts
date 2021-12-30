@@ -8,7 +8,7 @@ import {
   TradingStrategy,
   withStaker,
 } from "../src";
-import { last } from "../src/shared/functions";
+import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
 it("should produce a backtest result", () => {

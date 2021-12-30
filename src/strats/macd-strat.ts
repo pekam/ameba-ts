@@ -1,7 +1,7 @@
 import { Indicators } from "../indicators/indicators";
 import { SizelessOrder, StrategyUpdate, TradingStrategy } from "../core/staker";
 import { AssetState, MarketPosition } from "../core/types";
-import { get, last } from "../shared/functions";
+import { get, last } from "../util/util";
 import { withRelativeExits } from "./strat-util";
 
 export function macdStrat(settings: {

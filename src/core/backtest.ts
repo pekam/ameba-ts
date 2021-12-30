@@ -1,8 +1,8 @@
 import { first, mapValues } from "lodash";
 import { last } from "lodash/fp";
 import { pipe } from "remeda";
-import { hasOwnProperty } from "../shared/functions";
-import { Moment } from "../shared/time-util";
+import { hasOwnProperty } from "../util/util";
+import { Moment } from "../util/time-util";
 import {
   handleOrders,
   revertLastTransaction,

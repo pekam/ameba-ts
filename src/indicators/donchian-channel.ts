@@ -1,6 +1,6 @@
 import { maxBy, minBy } from "lodash";
 import { Candle } from "../core/types";
-import { avg } from "../shared/functions";
+import { avg } from "../util/util";
 import { IndicatorChannel } from "./indicators";
 
 export type DonchianChannel = (candle: Candle) => IndicatorChannel | undefined;

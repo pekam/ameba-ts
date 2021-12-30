@@ -1,6 +1,6 @@
 import { SizelessOrder } from "../core/staker";
 import { AssetState, SingleAssetStrategyUpdate } from "../core/types";
-import { last } from "../shared/functions";
+import { last } from "../util/util";
 
 export const cancelEntry: SingleAssetStrategyUpdate = {
   entryOrder: null,

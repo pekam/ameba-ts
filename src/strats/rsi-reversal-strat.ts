@@ -1,7 +1,7 @@
 import { Indicators } from "../indicators/indicators";
 import { SizelessOrder, StrategyUpdate } from "../core/staker";
 import { AssetState } from "../core/types";
-import { getAverageCandleSize, last } from "../shared/functions";
+import { getAverageCandleSize, last } from "../util/util";
 import { cancelEntry } from "./strat-util";
 
 const rsiPeriod = 10;

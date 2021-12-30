@@ -1,5 +1,5 @@
 import { flatMap, sortBy, sumBy } from "lodash";
-import { last } from "../shared/functions";
+import { last } from "../util/util";
 import { InternalTradeState } from "./backtest";
 import { CandleSeries, Range, Trade } from "./types";
 
