@@ -1,4 +1,4 @@
-import { Staker } from "../staker";
+import { Staker } from "../core/staker";
 import { createStaker } from "./common-staker";
 
 /**

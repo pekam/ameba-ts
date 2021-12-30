@@ -1,7 +1,7 @@
 import { identity, sumBy } from "lodash";
-import { hasOwnProperty, last } from "../../shared/functions";
-import { Staker, StrategyUpdate } from "../staker";
-import { AssetMap, FullTradeState, Order } from "../types";
+import { hasOwnProperty, last } from "../shared/functions";
+import { Staker, StrategyUpdate } from "../core/staker";
+import { AssetMap, FullTradeState, Order } from "../core/types";
 
 /**
  * Implementation of a common position sizing strategy, where the max risk of

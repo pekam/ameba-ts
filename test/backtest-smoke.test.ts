@@ -1,10 +1,14 @@
-import { backtest } from "../src/core/backtest";
-import { BacktestResult } from "../src/core/backtest-result";
-import { TradingStrategy, withStaker } from "../src/core/staker";
-import { allInStaker } from "../src/core/stakers/all-in-staker";
-import { AssetState, CandleSeries } from "../src/core/types";
+import {
+  allInStaker,
+  AssetState,
+  backtest,
+  BacktestResult,
+  CandleSeries,
+  timestampFromUTC,
+  TradingStrategy,
+  withStaker,
+} from "../src";
 import { last } from "../src/shared/functions";
-import { timestampFromUTC } from "../src/shared/time-util";
 import { testData } from "./test-data/testData";
 
 it("should produce a backtest result", () => {
