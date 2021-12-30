@@ -1,5 +1,5 @@
 import { identity, sumBy } from "lodash";
-import { m } from "../../shared/functions";
+import { hasOwnProperty, last } from "../../shared/functions";
 import { Staker, StrategyUpdate } from "../staker";
 import { AssetMap, FullTradeState, Order } from "../types";
 
@@ -118,7 +118,7 @@ function getExposureToBeCancelled(
 ) {
   const cancelledEntryOrders = Object.entries(updates)
     // Entry either cancelled or overridden with new order
-    .filter(([symbol, update]) => m.hasOwnProperty(update, "entryOrder"))
+    .filter(([symbol, update]) => hasOwnProperty(update, "entryOrder"))
     // Map to the previous entry order (if any)
     .map(([symbol, update]) => assets[symbol].entryOrder)
     .filter(identity);
@@ -133,7 +133,7 @@ function getAccountStats(
     (acc, asset) => {
       if (asset.position) {
         const positionSize =
-          asset.entryOrder!.size * m.last(asset.series).close;
+          asset.entryOrder!.size * last(asset.series).close;
         return {
           ...acc,
           accountBalance:

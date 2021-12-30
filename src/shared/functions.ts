@@ -4,7 +4,7 @@ import { Candle, CandleSeries } from "../core/types";
 /**
  * Supports negative index to get from the end of the array.
  */
-function get<T>(array: Array<T>, index: number) {
+export function get<T>(array: Array<T>, index: number) {
   if (index < 0) {
     return array[array.length + index];
   } else {
@@ -12,31 +12,33 @@ function get<T>(array: Array<T>, index: number) {
   }
 }
 
-function last<T>(array: Array<T>) {
+export function last<T>(array: Array<T>) {
   return get(array, -1);
 }
 
 /**
  * Returns the average of the provided numbers.
  */
-const avg: (values: number[]) => number = (values) =>
-  sum(values) / values.length;
-const sum: (values: number[]) => number = (values) =>
-  values.reduce((sum, value) => sum + value, 0);
+export function avg(values: number[]): number {
+  return sum(values) / values.length;
+}
+export function sum(values: number[]): number {
+  return values.reduce((sum, value) => sum + value, 0);
+}
 
-const getAverageCandleSize = function (
+export function getAverageCandleSize(
   series: CandleSeries,
   countFromEnd: number
 ) {
   const head: Candle[] =
     series.length >= countFromEnd ? series.slice(-countFromEnd) : series;
   return avg(head.map((candle) => candle.high - candle.low));
-};
+}
 
 /**
  * Expects candles to be subsequent and in order.
  */
-const combineCandles = function (candles: CandleSeries): Candle {
+export function combineCandles(candles: CandleSeries): Candle {
   const volume =
     candles[0].volume !== undefined
       ? sum(candles.map((c) => c.volume || 0))
@@ -49,9 +51,9 @@ const combineCandles = function (candles: CandleSeries): Candle {
     volume,
     time: candles[0].time,
   };
-};
+}
 
-function getRelativeDiff(
+export function getRelativeDiff(
   value1: number,
   value2: number,
   relativeToHigher = false
@@ -63,20 +65,6 @@ function getRelativeDiff(
 /**
  * Type safe way to check if an optional property is present.
  */
-function hasOwnProperty<T extends object>(obj: T, key: keyof T) {
+export function hasOwnProperty<T extends object>(obj: T, key: keyof T) {
   return obj.hasOwnProperty(key);
 }
-
-/**
- * Collection of utility functions.
- */
-export const m = {
-  get,
-  last,
-  avg,
-  sum,
-  getAverageCandleSize,
-  combineCandles,
-  getRelativeDiff,
-  hasOwnProperty,
-};

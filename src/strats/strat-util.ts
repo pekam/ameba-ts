@@ -1,6 +1,6 @@
 import { SizelessOrder } from "../core/staker";
 import { AssetState, SingleAssetStrategyUpdate } from "../core/types";
-import { m } from "../shared/functions";
+import { last } from "../shared/functions";
 
 export const cancelEntry: SingleAssetStrategyUpdate = {
   entryOrder: null,
@@ -50,7 +50,7 @@ export function nonIncresingStopLoss({
     if (stopLossType === "absolute") {
       return stopLossValue;
     } else if (stopLossType === "diff") {
-      const currentPrice = m.last(state.series).close;
+      const currentPrice = last(state.series).close;
       return state.position === "long"
         ? currentPrice - stopLossValue
         : currentPrice + stopLossValue;

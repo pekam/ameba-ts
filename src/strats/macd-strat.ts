@@ -1,7 +1,7 @@
 import { Indicators } from "../core/indicators";
 import { SizelessOrder, StrategyUpdate, TradingStrategy } from "../core/staker";
 import { AssetState, MarketPosition } from "../core/types";
-import { m } from "../shared/functions";
+import { get, last } from "../shared/functions";
 import { withRelativeExits } from "./strat-util";
 
 export function macdStrat(settings: {
@@ -15,12 +15,12 @@ export function macdStrat(settings: {
 
   return function (state: AssetState): StrategyUpdate {
     const series = state.series;
-    const candle = m.last(series);
+    const candle = last(series);
 
     const { macd } = indicators.update(series);
 
     const previousMacd = (() => {
-      const prevIndicators = indicators.get(m.get(series, -2));
+      const prevIndicators = indicators.get(get(series, -2));
       return prevIndicators && prevIndicators.macd;
     })();
 

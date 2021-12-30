@@ -1,5 +1,5 @@
 import { identity, pipe } from "remeda";
-import { m } from "../shared/functions";
+import { last } from "../shared/functions";
 import {
   AssetState,
   Candle,
@@ -58,7 +58,7 @@ function shouldHandleOrderOnEntryCandle(
   const { series, entryOrder } = state.asset;
   // If the candle was green, assume that only prices above the entry price are
   // covered after the entry, and vice versa.
-  const priceMovedUp: boolean = m.last(series).close > m.last(series).open;
+  const priceMovedUp: boolean = last(series).close > last(series).open;
   // entryOrder is definitely non-null right after entering
   const entryPrice = entryOrder!.price;
 
@@ -71,7 +71,7 @@ function shouldHandleOrderOnEntryCandle(
 function handleEntryOrder(state: State): State {
   const { position, entryOrder, series } = state.asset;
   if (!position && entryOrder) {
-    const fillPrice = getFillPrice(entryOrder, m.last(series));
+    const fillPrice = getFillPrice(entryOrder, last(series));
     if (fillPrice) {
       return fulfillEntryOrder(state, entryOrder, fillPrice);
     }
@@ -88,7 +88,7 @@ function handleStopLoss(state: State): State {
       side: position === "long" ? "sell" : "buy",
       size: entryOrder!.size, // entryOrder must exist when in position
     };
-    const price = getFillPrice(stopLossOrder, m.last(series));
+    const price = getFillPrice(stopLossOrder, last(series));
     if (price) {
       return fulfillExitOrder(state, stopLossOrder, price);
     }
@@ -105,7 +105,7 @@ function handleTakeProfit(state: State): State {
       side: position === "long" ? "sell" : "buy",
       size: entryOrder!.size, // entryOrder must exist when in position
     };
-    const fillPrice = getFillPrice(takeProfitOrder, m.last(series));
+    const fillPrice = getFillPrice(takeProfitOrder, last(series));
     if (fillPrice) {
       return fulfillExitOrder(state, takeProfitOrder, fillPrice);
     }
@@ -151,7 +151,7 @@ function fulfillEntryOrder(
     side: entryOrder.side,
     size: entryOrder.size,
     price: fillPrice,
-    time: m.last(state.asset.series).time,
+    time: last(state.asset.series).time,
   };
 
   const transactions = state.asset.transactions.concat(transaction);
@@ -176,7 +176,7 @@ function fulfillExitOrder(
     side: order.side,
     size: order.size,
     price: fillPrice,
-    time: m.last(series).time,
+    time: last(series).time,
   };
   const cash = getCashBalanceAfterTransaction({
     transaction,
@@ -184,7 +184,7 @@ function fulfillExitOrder(
   });
   const trade: Trade = convertToTrade({
     symbol: state.asset.symbol,
-    entry: m.last(transactions),
+    entry: last(transactions),
     exit: transaction,
   });
   return {
@@ -259,7 +259,7 @@ export function revertLastTransaction(state: State): State {
   // be updated to revert those as well.
 
   const transactions = state.asset.transactions;
-  const lastTransaction = m.last(transactions);
+  const lastTransaction = last(transactions);
 
   const oppositeTransaction: Transaction = {
     ...lastTransaction,

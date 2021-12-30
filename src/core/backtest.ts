@@ -1,7 +1,7 @@
 import { first, mapValues } from "lodash";
 import { last } from "lodash/fp";
 import { pipe } from "remeda";
-import { m } from "../shared/functions";
+import { hasOwnProperty } from "../shared/functions";
 import { Moment } from "../shared/time-util";
 import {
   handleOrders,
@@ -200,7 +200,7 @@ function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
       `Order size must be positive, but was ${update.entryOrder.size}.`
     );
   }
-  if (asset.position && m.hasOwnProperty(update, "entryOrder")) {
+  if (asset.position && hasOwnProperty(update, "entryOrder")) {
     throw Error(
       "Changing entry order while already in a position is not allowed."
     );

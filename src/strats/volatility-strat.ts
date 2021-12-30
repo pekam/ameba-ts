@@ -1,6 +1,11 @@
 import { StrategyUpdate } from "../core/staker";
 import { AssetState, MarketPosition } from "../core/types";
-import { m } from "../shared/functions";
+import {
+  combineCandles,
+  get,
+  getAverageCandleSize,
+  last,
+} from "../shared/functions";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
 /**
@@ -15,7 +20,7 @@ export function volatilityStrategy(settings: {
     const series = state.series;
 
     const avgRangePeriod = 20;
-    const avgSize = m.getAverageCandleSize(series, avgRangePeriod);
+    const avgSize = getAverageCandleSize(series, avgRangePeriod);
 
     if (!state.position) {
       if (series.length < avgRangePeriod) {
@@ -24,14 +29,13 @@ export function volatilityStrategy(settings: {
 
       const period = settings.period;
 
-      const recentDiff =
-        m.last(series).close - m.get(series, -(period + 1)).close;
+      const recentDiff = last(series).close - get(series, -(period + 1)).close;
 
       const longCondition = recentDiff > period * avgSize;
       const shortCondition = recentDiff < 0 - period * avgSize;
 
       if (longCondition && settings.onlyDirection !== "short") {
-        const entryPrice = m.combineCandles(series.slice(-(period + 1))).high;
+        const entryPrice = combineCandles(series.slice(-(period + 1))).high;
         return {
           entryOrder: {
             type: "stop",
@@ -43,7 +47,7 @@ export function volatilityStrategy(settings: {
       }
 
       if (shortCondition && settings.onlyDirection !== "long") {
-        const entryPrice = m.combineCandles(series.slice(-(period + 1))).low;
+        const entryPrice = combineCandles(series.slice(-(period + 1))).low;
         return {
           entryOrder: {
             type: "stop",

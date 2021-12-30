@@ -1,7 +1,7 @@
 import { Indicators } from "../core/indicators";
 import { SizelessOrder, StrategyUpdate } from "../core/staker";
 import { AssetState } from "../core/types";
-import { m } from "../shared/functions";
+import { getAverageCandleSize, last } from "../shared/functions";
 import { cancelEntry } from "./strat-util";
 
 const rsiPeriod = 10;
@@ -27,7 +27,7 @@ export function rsiReversalStrategy() {
 
     if (!state.position) {
       if (adx < 25 && rsi < 30) {
-        const entryPrice = m.last(series).low;
+        const entryPrice = last(series).low;
         const entryOrder: SizelessOrder = {
           price: entryPrice,
           type: "limit",
@@ -35,7 +35,7 @@ export function rsiReversalStrategy() {
         };
         return {
           entryOrder,
-          stopLoss: m.last(series).low - m.getAverageCandleSize(series, 5) / 2,
+          stopLoss: last(series).low - getAverageCandleSize(series, 5) / 2,
         };
       } else {
         return cancelEntry;
@@ -43,8 +43,8 @@ export function rsiReversalStrategy() {
     } else {
       if (rsi > 70) {
         return {
-          takeProfit: m.last(series).high,
-          stopLoss: m.last(series).low,
+          takeProfit: last(series).high,
+          stopLoss: last(series).low,
         };
       }
     }

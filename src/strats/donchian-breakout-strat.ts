@@ -1,7 +1,7 @@
 import { Indicators } from "../core/indicators";
 import { StrategyUpdate, TradingStrategy } from "../core/staker";
 import { AssetState, MarketPosition } from "../core/types";
-import { m } from "../shared/functions";
+import { last } from "../shared/functions";
 
 /**
  * Buy when breaking the Donchian channel.
@@ -23,7 +23,7 @@ export function donchianBreakoutStrategy(settings: {
 
   return (state: AssetState) => {
     const series = state.series;
-    const currentPrice = m.last(state.series).close;
+    const currentPrice = last(state.series).close;
 
     const { sma, donchianChannel, atr } = indicators.update(series);
 

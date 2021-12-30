@@ -1,6 +1,6 @@
 import { maxBy, minBy, takeRightWhile } from "lodash";
 import { ADX, ATR, KeltnerChannels, MACD, RSI, SMA } from "technicalindicators";
-import { m } from "../shared/functions";
+import { avg, last } from "../shared/functions";
 import { Candle, CandleSeries } from "./types";
 
 export interface IndicatorSettings {
@@ -220,8 +220,8 @@ export class Indicators {
         this.addIndicatorsForNextCandle(candle);
       }
     );
-    this.lastTimestamp = Math.max(this.lastTimestamp, m.last(series).time);
-    return this.get(m.last(series))!;
+    this.lastTimestamp = Math.max(this.lastTimestamp, last(series).time);
+    return this.get(last(series))!;
   }
 
   get(candle: Candle): IndicatorValues | undefined {
@@ -263,7 +263,7 @@ function getDonchianChannel(period: number): DonchianChannel {
 
     const upper = maxCandle.high;
     const lower = minCandle.low;
-    const middle = m.avg([upper, lower]);
+    const middle = avg([upper, lower]);
     return { upper, lower, middle };
   };
 }

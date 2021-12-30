@@ -1,5 +1,5 @@
 import { flatMap, sortBy, sumBy } from "lodash";
-import { m } from "../shared/functions";
+import { last } from "../shared/functions";
 import { InternalTradeState } from "./backtest";
 import { CandleSeries, Range, Trade } from "./types";
 
@@ -112,7 +112,7 @@ const getBuyAndHoldProfitAndDuration: (
   if (!startCandle) {
     return [0, 0];
   }
-  const endCandle = series.find((c) => c.time >= range.to) || m.last(series);
+  const endCandle = series.find((c) => c.time >= range.to) || last(series);
   const startPrice = startCandle.open;
   const endPrice = endCandle.close;
 

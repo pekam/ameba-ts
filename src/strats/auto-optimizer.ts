@@ -1,9 +1,9 @@
 import _ from "lodash";
 import { backtest } from "../core/backtest";
-import {  TradingStrategy, withStaker } from "../core/staker";
+import { TradingStrategy, withStaker } from "../core/staker";
 import { allInStaker } from "../core/stakers/all-in-staker";
 import { AssetState } from "../core/types";
-import { m } from "../shared/functions";
+import { last } from "../shared/functions";
 
 const relativeTransactionCost = 0.0007;
 
@@ -21,7 +21,7 @@ export function autoOptimizer(settings: {
 
   function optimize({ series }: AssetState): TradingStrategy {
     const withProfits = settings.stratPool.map((stratProvider) => {
-      const from = m.last(series).time - settings.optimizePeriod;
+      const from = last(series).time - settings.optimizePeriod;
       const result = backtest({
         strategy: withStaker(stratProvider, allInStaker),
         series: { _: series.slice(-10000) },
@@ -45,7 +45,7 @@ export function autoOptimizer(settings: {
   }
 
   return (state: AssetState) => {
-    const time = m.last(state.series).time;
+    const time = last(state.series).time;
 
     const seriesLength = time - state.series[0].time;
 
