@@ -1,3 +1,4 @@
+import { OverrideProps } from "../util/type-util";
 import {} from "./backtest";
 import {
   AssetState,
@@ -45,10 +46,12 @@ export type SizelessOrder = Omit<Order, "size">;
  */
 // NOTE: JSDoc needs to be manually kept in sync with SingleAssetStrategyUpdate
 // (for the relevant parts), because the docs can't be inherited.
-export interface StrategyUpdate
-  extends Omit<SingleAssetStrategyUpdate, "entryOrder"> {
-  entryOrder?: SizelessOrder | null;
-}
+export type StrategyUpdate = OverrideProps<
+  SingleAssetStrategyUpdate,
+  {
+    entryOrder?: SizelessOrder | null;
+  }
+>;
 
 /**
  * A single-asset trading strategy without position sizing. It decides when to
