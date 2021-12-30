@@ -31,7 +31,7 @@ export function volatilityStrategy(settings: {
       const shortCondition = recentDiff < 0 - period * avgSize;
 
       if (longCondition && settings.onlyDirection !== "short") {
-        const entryPrice = m.combine(series.slice(-(period + 1))).high;
+        const entryPrice = m.combineCandles(series.slice(-(period + 1))).high;
         return {
           entryOrder: {
             type: "stop",
@@ -43,7 +43,7 @@ export function volatilityStrategy(settings: {
       }
 
       if (shortCondition && settings.onlyDirection !== "long") {
-        const entryPrice = m.combine(series.slice(-(period + 1))).low;
+        const entryPrice = m.combineCandles(series.slice(-(period + 1))).low;
         return {
           entryOrder: {
             type: "stop",

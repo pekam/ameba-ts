@@ -1,5 +1,5 @@
 import { identity, sort } from "remeda";
-import { Candle, CandleSeries, OHLC } from "../core/types";
+import { Candle, CandleSeries } from "../core/types";
 
 /**
  * Supports negative index to get from the end of the array.
@@ -33,15 +33,6 @@ const getAverageCandleSize = function (
   return avg(head.map((candle) => candle.high - candle.low));
 };
 
-const combine = function (candles: CandleSeries): OHLC {
-  return {
-    open: candles[0].open,
-    close: last(candles).close,
-    low: Math.min(...candles.map((c) => c.low)),
-    high: Math.max(...candles.map((c) => c.high)),
-  };
-};
-
 /**
  * Expects candles to be subsequent and in order.
  */
@@ -50,8 +41,14 @@ const combineCandles = function (candles: CandleSeries): Candle {
     candles[0].volume !== undefined
       ? sum(candles.map((c) => c.volume || 0))
       : undefined;
-  const time = candles[0].time;
-  return { ...combine(candles), volume, time };
+  return {
+    open: candles[0].open,
+    close: last(candles).close,
+    low: Math.min(...candles.map((c) => c.low)),
+    high: Math.max(...candles.map((c) => c.high)),
+    volume,
+    time: candles[0].time,
+  };
 };
 
 function getRelativeDiff(
@@ -79,7 +76,6 @@ export const m = {
   avg,
   sum,
   getAverageCandleSize,
-  combine,
   combineCandles,
   getRelativeDiff,
   hasOwnProperty,
