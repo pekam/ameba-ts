@@ -1,9 +1,12 @@
-import _ from "lodash";
-import { backtest } from "../core/backtest";
-import { TradingStrategy, withStaker } from "../core/staker";
-import { allInStaker } from "../stakers/all-in-staker";
-import { AssetState } from "../core/types";
-import { last } from "../util/util";
+import { maxBy } from "lodash";
+import {
+  allInStaker,
+  AssetState,
+  backtest,
+  TradingStrategy,
+  withStaker,
+} from "../..";
+import { last } from "../../util/util";
 
 const relativeTransactionCost = 0.0007;
 
@@ -36,7 +39,7 @@ export function autoOptimizer(settings: {
       return { stratProvider, profit: result.stats.relativeProfit };
     });
 
-    const best = _.maxBy(withProfits, (w) => w.profit);
+    const best = maxBy(withProfits, (w) => w.profit);
     if (!best || best.profit <= 0) {
       return noopStrategy;
     } else {
