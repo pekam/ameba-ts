@@ -1,5 +1,5 @@
 import { Indicators } from "../indicators/indicators";
-import { SizelessOrder, StrategyUpdate } from "../core/staker";
+import { SizelessOrder, StrategyUpdate } from "../high-level-api/types";
 import { AssetState } from "../core/types";
 import { getAverageCandleSize, last } from "../util/util";
 import { cancelEntry } from "./strat-util";

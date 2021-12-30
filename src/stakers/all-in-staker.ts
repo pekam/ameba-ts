@@ -1,4 +1,4 @@
-import { Staker } from "../core/staker";
+import { Staker } from "../high-level-api/types";
 import { createStaker } from "./common-staker";
 
 /**

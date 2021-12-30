@@ -1,4 +1,4 @@
-import { SizelessOrder } from "../core/staker";
+import { SizelessOrder } from "../high-level-api/types";
 import { AssetState, SingleAssetStrategyUpdate } from "../core/types";
 import { last } from "../util/util";
 

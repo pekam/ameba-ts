@@ -1,7 +1,8 @@
 export { backtest, BacktestArgs, ProgressHandler } from "./core/backtest";
 export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
-export * from "./core/staker";
 export * from "./core/types";
+export * from "./high-level-api/types";
+export * from "./high-level-api/with-staker";
 export * from "./indicators/indicators";
 export * from "./stakers/all-in-staker";
 export * from "./stakers/common-staker";

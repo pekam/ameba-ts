@@ -1,5 +1,5 @@
 import { Indicators } from "../indicators/indicators";
-import { SizelessOrder, StrategyUpdate, TradingStrategy } from "../core/staker";
+import { SizelessOrder, StrategyUpdate, TradingStrategy } from "../high-level-api/types";
 import { AssetState, MarketPosition } from "../core/types";
 import { get, last } from "../util/util";
 import { withRelativeExits } from "./strat-util";

@@ -1,6 +1,6 @@
 import { identity, sumBy } from "lodash";
 import { hasOwnProperty, last } from "../util/util";
-import { Staker, StrategyUpdate } from "../core/staker";
+import { Staker, StrategyUpdate } from "../high-level-api/types";
 import { AssetMap, FullTradeState, Order } from "../core/types";
 
 /**

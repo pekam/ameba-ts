@@ -1,4 +1,4 @@
-import { StrategyUpdate } from "../core/staker";
+import { StrategyUpdate } from "../high-level-api/types";
 import { AssetState, MarketPosition } from "../core/types";
 import {
   combineCandles,

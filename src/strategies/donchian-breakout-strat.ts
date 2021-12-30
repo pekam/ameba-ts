@@ -1,5 +1,5 @@
 import { Indicators } from "../indicators/indicators";
-import { StrategyUpdate, TradingStrategy } from "../core/staker";
+import { StrategyUpdate, TradingStrategy } from "../high-level-api/types";
 import { AssetState, MarketPosition } from "../core/types";
 import { last } from "../util/util";
 

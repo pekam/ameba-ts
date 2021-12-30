@@ -1,6 +1,7 @@
 import { backtest } from "./core/backtest";
 import { Indicators } from "./indicators/indicators";
-import { TradingStrategy, withStaker } from "./core/staker";
+import { TradingStrategy } from "./high-level-api/types";
+import { withStaker } from "./high-level-api/with-staker";
 import { createStaker } from "./stakers/common-staker";
 import { AssetState, CandleSeries } from "./core/types";
 
