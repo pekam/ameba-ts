@@ -132,8 +132,7 @@ function getAccountStats(
   return Object.values(state.assets).reduce(
     (acc, asset) => {
       if (asset.position) {
-        const positionSize =
-          asset.entryOrder!.size * last(asset.series).close;
+        const positionSize = asset.entryOrder!.size * last(asset.series).close;
         return {
           ...acc,
           accountBalance:

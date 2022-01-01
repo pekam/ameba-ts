@@ -1,11 +1,6 @@
 import { StrategyUpdate } from "../high-level-api/types";
 import { AssetState, MarketPosition } from "../core/types";
-import {
-  combineCandles,
-  get,
-  getAverageCandleSize,
-  last,
-} from "../util/util";
+import { combineCandles, get, getAverageCandleSize, last } from "../util/util";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
 /**

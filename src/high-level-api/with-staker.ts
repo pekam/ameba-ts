@@ -1,9 +1,9 @@
 import {
   FullStrategyUpdate,
   FullTradeState,
-  FullTradingStrategy
+  FullTradingStrategy,
 } from "../core/types";
-import { TradingStrategy, Staker, StrategyUpdate } from "./types";
+import { Staker, StrategyUpdate, TradingStrategy } from "./types";
 
 /**
  * Combines a single-asset trading strategy with a staker that handles position
@@ -20,12 +20,12 @@ export function withStaker(
   stratProvider: () => TradingStrategy,
   staker: Staker
 ): FullTradingStrategy {
-  const individualStrats: { [symbol: string]: TradingStrategy; } = {};
+  const individualStrats: { [symbol: string]: TradingStrategy } = {};
 
   return function (state: FullTradeState): FullStrategyUpdate {
     const sizelessUpdates = state.updated
       .map((symbol) => state.assets[symbol])
-      .reduce<{ [symbol: string]: StrategyUpdate; }>((updates, asset) => {
+      .reduce<{ [symbol: string]: StrategyUpdate }>((updates, asset) => {
         if (!individualStrats[asset.symbol]) {
           individualStrats[asset.symbol] = stratProvider();
         }

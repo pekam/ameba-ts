@@ -12,7 +12,8 @@
   "scripts": {
     "test": "jest",
     "check-types": "tsc -w --noEmit",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "cli-progress": "^3.8.2",
