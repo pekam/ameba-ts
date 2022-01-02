@@ -55,12 +55,11 @@ function shouldHandleOrderOnEntryCandle(
   state: State,
   orderPrice: number
 ): boolean {
-  const { series, entryOrder } = state.asset;
+  const candle = last(state.asset.series);
   // If the candle was green, assume that only prices above the entry price are
   // covered after the entry, and vice versa.
-  const priceMovedUp: boolean = last(series).close > last(series).open;
-  // entryOrder is definitely non-null right after entering
-  const entryPrice = entryOrder!.price;
+  const priceMovedUp: boolean = candle.close > candle.open;
+  const entryPrice = last(state.asset.transactions).price;
 
   return (
     (priceMovedUp && orderPrice > entryPrice) ||
