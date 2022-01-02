@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import path from "path";
+import { range } from "remeda";
 import { CandleSeries } from "../../src/core/types";
 
 export const testData = {
@@ -31,6 +32,11 @@ export const testData = {
   The array contains 216 candles.
    */
   getBtcHourly: () => loadCandlesFromFile("btc-hourly.json"),
+  /**
+   * Returns a series that opens from 1 and increases in price by 1 with each
+   * candle, without any wicks.
+   */
+  getSimpleTestData,
 };
 
 function loadCandlesFromFile(fileName: string): CandleSeries {
@@ -60,4 +66,16 @@ function loadCandlesFromFile(fileName: string): CandleSeries {
       volume: v,
     })
   );
+}
+
+function getSimpleTestData(candleCount: number): CandleSeries {
+  return range(1, candleCount + 1).map((i) => ({
+    open: i,
+    close: i + 1,
+
+    low: i,
+    high: i + 1,
+
+    time: i,
+  }));
 }

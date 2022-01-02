@@ -1,6 +1,7 @@
 import { first, mapValues } from "lodash";
 import { last } from "lodash/fp";
 import { pipe } from "remeda";
+import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { OverrideProps } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
@@ -39,6 +40,12 @@ export interface BacktestArgs {
    * The initial cash balance of the account. Defaults to 10000.
    */
   initialBalance?: number;
+  /**
+   * A function that returns commissions (transaction costs) for transactions,
+   * enabling simulation of trading fees charged by a real broker. Refer to
+   * {@link CommissionProvider} docs for examples.
+   */
+  commissionProvider?: CommissionProvider;
   /**
    * A collection of callbacks that are called during backtest execution,
    * enabling reporting/visualizing the backtest's progress.
@@ -93,6 +100,7 @@ export interface ProgressHandler {
 export function backtest(args: BacktestArgs): BacktestResult {
   const withDefaults = {
     initialBalance: 10000,
+    commissionProvider: () => 0,
     progressHandler: createProgressBar(),
     from: 0,
     to: Infinity,
@@ -188,6 +196,7 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
     const { asset, cash } = handleOrders({
       asset: state.assets[symbol],
       cash: state.cash,
+      commissionProvider: state.args.commissionProvider,
     });
     return updateAsset(state, symbol, asset, cash);
   }, state);

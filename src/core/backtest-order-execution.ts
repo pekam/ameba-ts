@@ -1,4 +1,5 @@
-import { identity, pipe } from "remeda";
+import { dropLast, identity, pipe } from "remeda";
+import { CommissionProvider } from "..";
 import { last } from "../util/util";
 import {
   AssetState,
@@ -11,16 +12,19 @@ import {
 
 // This module deals with the combination of a single asset's state (position,
 // orders, candles, etc.) and the account's cash balance.
-interface State {
+interface AssetAndCash {
   asset: AssetState;
   cash: number;
+}
+interface OrderHandlerState extends AssetAndCash {
+  commissionProvider: CommissionProvider;
 }
 
 /**
  * Takes the latest candle in the series and executes orders in the state based
  * on those price changes. Returns the updated asset state and cash balance.
  */
-export function handleOrders(state: State): State {
+export function handleOrders(state: OrderHandlerState): OrderHandlerState {
   if (!state.asset.position) {
     return handleOrdersOnEntryCandle(handleEntryOrder(state));
   } else {
@@ -32,7 +36,9 @@ export function handleOrders(state: State): State {
 
 // Stop loss and take profit need to be handled differently on the candle where
 // entry was triggered.
-function handleOrdersOnEntryCandle(state: State): State {
+function handleOrdersOnEntryCandle(
+  state: OrderHandlerState
+): OrderHandlerState {
   const { position, takeProfit, stopLoss } = state.asset;
   if (!position) {
     // Entry not triggered.
@@ -52,7 +58,7 @@ function handleOrdersOnEntryCandle(state: State): State {
 }
 
 function shouldHandleOrderOnEntryCandle(
-  state: State,
+  state: OrderHandlerState,
   orderPrice: number
 ): boolean {
   const candle = last(state.asset.series);
@@ -67,7 +73,7 @@ function shouldHandleOrderOnEntryCandle(
   );
 }
 
-function handleEntryOrder(state: State): State {
+function handleEntryOrder(state: OrderHandlerState): OrderHandlerState {
   const { position, entryOrder, series } = state.asset;
   if (!position && entryOrder) {
     const fillPrice = getFillPrice(entryOrder, last(series));
@@ -78,7 +84,7 @@ function handleEntryOrder(state: State): State {
   return state;
 }
 
-function handleStopLoss(state: State): State {
+function handleStopLoss(state: OrderHandlerState): OrderHandlerState {
   const { position, entryOrder, stopLoss, series } = state.asset;
   if (position && stopLoss) {
     const stopLossOrder: Order = {
@@ -95,7 +101,7 @@ function handleStopLoss(state: State): State {
   return state;
 }
 
-function handleTakeProfit(state: State): State {
+function handleTakeProfit(state: OrderHandlerState): OrderHandlerState {
   const { position, entryOrder, takeProfit, series } = state.asset;
   if (position && takeProfit) {
     const takeProfitOrder: Order = {
@@ -142,51 +148,53 @@ function getFillPrice(order: Order, newCandle: Candle): number | null {
 }
 
 function fulfillEntryOrder(
-  state: State,
+  state: OrderHandlerState,
   entryOrder: Order,
   fillPrice: number
-): State {
-  const transaction: Transaction = {
-    side: entryOrder.side,
-    size: entryOrder.size,
-    price: fillPrice,
-    time: last(state.asset.series).time,
-  };
+): OrderHandlerState {
+  const transaction = withCommission(
+    {
+      side: entryOrder.side,
+      size: entryOrder.size,
+      price: fillPrice,
+      time: last(state.asset.series).time,
+    },
+    state.commissionProvider
+  );
 
   const transactions = state.asset.transactions.concat(transaction);
 
   const position: MarketPosition = entryOrder.side === "buy" ? "long" : "short";
 
-  const cash = getCashBalanceAfterTransaction({
-    transaction,
-    cashBefore: state.cash,
-  });
+  const cash = updateCash(state.cash, transaction);
 
-  return { asset: { ...state.asset, transactions, position }, cash };
+  return { ...state, asset: { ...state.asset, transactions, position }, cash };
 }
 
 function fulfillExitOrder(
-  state: State,
+  state: OrderHandlerState,
   order: Order,
   fillPrice: number
-): State {
+): OrderHandlerState {
   const { series, transactions, trades } = state.asset;
-  const transaction: Transaction = {
-    side: order.side,
-    size: order.size,
-    price: fillPrice,
-    time: last(series).time,
-  };
-  const cash = getCashBalanceAfterTransaction({
-    transaction,
-    cashBefore: state.cash,
-  });
+  const transaction = withCommission(
+    {
+      side: order.side,
+      size: order.size,
+      price: fillPrice,
+      time: last(series).time,
+    },
+    state.commissionProvider
+  );
+  const cash = updateCash(state.cash, transaction);
+
   const trade: Trade = convertToTrade({
     symbol: state.asset.symbol,
     entry: last(transactions),
     exit: transaction,
   });
   return {
+    ...state,
     asset: {
       ...state.asset,
       transactions: transactions.concat(transaction),
@@ -200,17 +208,15 @@ function fulfillExitOrder(
   };
 }
 
-function getCashBalanceAfterTransaction({
-  transaction,
-  cashBefore,
-}: {
-  transaction: Transaction;
-  cashBefore: number;
-}) {
-  const positionSizeUsd = transaction.size * transaction.price;
-  return transaction.side === "buy"
-    ? cashBefore - positionSizeUsd
-    : cashBefore + positionSizeUsd;
+function updateCash(cashBefore: number, transaction: Transaction) {
+  return cashBefore + getCashChange(transaction);
+}
+
+function getCashChange(transaction: Transaction) {
+  const positionSizeInCash = transaction.size * transaction.price;
+  const cashChange =
+    transaction.side === "buy" ? -positionSizeInCash : positionSizeInCash;
+  return cashChange - transaction.commission;
 }
 
 function convertToTrade({
@@ -235,7 +241,9 @@ function convertToTrade({
   const exitValue = exit.price * size;
 
   const absoluteProfit =
-    position === "long" ? exitValue - entryValue : entryValue - exitValue;
+    (position === "long" ? exitValue - entryValue : entryValue - exitValue) -
+    entry.commission -
+    exit.commission;
 
   const relativeProfit = absoluteProfit / entryValue;
   return {
@@ -248,30 +256,30 @@ function convertToTrade({
   };
 }
 
+function withCommission(
+  transaction: Omit<Transaction, "commission">,
+  commissionProvider: CommissionProvider
+): Transaction {
+  const commission = commissionProvider(transaction);
+  if (commission < 0) {
+    throw Error("Commission provider returned a negative commission.");
+  }
+  return { ...transaction, commission };
+}
+
 /**
  * Use to revert the effect of un-closed trade after the backtest finishes.
  * Removes the last transaction and reverts the cash balance to the value before
  * the transaction. Returns the updated asset state and cash balance.
  */
-export function revertLastTransaction(state: State): State {
-  // NOTE: If/when transaction costs are added to the backtester, this needs to
-  // be updated to revert those as well.
-
+export function revertLastTransaction(state: AssetAndCash): AssetAndCash {
   const transactions = state.asset.transactions;
-  const lastTransaction = last(transactions);
-
-  const oppositeTransaction: Transaction = {
-    ...lastTransaction,
-    side: lastTransaction.side === "buy" ? "sell" : "buy",
-  };
-  const cash = getCashBalanceAfterTransaction({
-    transaction: oppositeTransaction,
-    cashBefore: state.cash,
-  });
+  const cash = state.cash - getCashChange(last(transactions));
   return {
+    ...state,
     asset: {
       ...state.asset,
-      transactions: transactions.slice(0, transactions.length - 1),
+      transactions: dropLast(transactions, 1),
       position: null,
     },
     cash,
