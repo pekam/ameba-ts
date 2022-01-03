@@ -6,6 +6,7 @@ import {
   TradingStrategy,
   withStaker,
 } from "../..";
+import { useState } from "../../core/use-state";
 import { last } from "../../util/util";
 
 const relativeTransactionCost = 0.0007;
@@ -19,9 +20,6 @@ export function autoOptimizer(settings: {
   optimizeInterval: number;
   optimizePeriod: number;
 }): TradingStrategy {
-  let currentStrategy: TradingStrategy = noopStrategy;
-  let lastOptimizedTimestamp: number = 0;
-
   function optimize({ series }: AssetState): TradingStrategy {
     const withProfits = settings.stratPool.map((stratProvider) => {
       const from = last(series).time - settings.optimizePeriod;
@@ -48,6 +46,12 @@ export function autoOptimizer(settings: {
   }
 
   return (state: AssetState) => {
+    const [currentStrategy, setCurrentStrategy] = useState(state, noopStrategy);
+    const [lastOptimizedTimestamp, setLastOptimizedTimestamp] = useState(
+      state,
+      0
+    );
+
     const time = last(state.series).time;
 
     const seriesLength = time - state.series[0].time;
@@ -57,10 +61,13 @@ export function autoOptimizer(settings: {
       !state.position &&
       time >= lastOptimizedTimestamp + settings.optimizeInterval
     ) {
-      currentStrategy = optimize(state);
-      lastOptimizedTimestamp = time;
+      setCurrentStrategy(optimize(state));
+      setLastOptimizedTimestamp(time);
     }
 
+    // This is broken as it uses the previous value even if it was updated. This
+    // shows that the callback based hook API from React doesn't really make
+    // sense here, where we want to use the updated value immediately.
     return currentStrategy(state);
   };
 }

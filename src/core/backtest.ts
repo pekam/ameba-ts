@@ -21,6 +21,7 @@ import {
   SeriesMap,
   SingleAssetStrategyUpdate,
 } from "./types";
+import { createStateHook, StatefulAsset } from "./use-state";
 
 export interface BacktestArgs {
   /**
@@ -151,7 +152,7 @@ function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
       const firstCandleIndex = series.findIndex(isWithinRange(args));
       return firstCandleIndex === -1 ? [] : series.slice(0, firstCandleIndex);
     })();
-    return {
+    const asset: StatefulAsset = {
       symbol,
       series: initialSeries,
       position: null,
@@ -160,7 +161,9 @@ function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
       stopLoss: null,
       transactions: [],
       trades: [],
+      _stateHook: createStateHook(), // see use-state.ts
     };
+    return asset;
   });
 
   return {
@@ -205,6 +208,9 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
 const applyStrategy = (strat: FullTradingStrategy) => (
   state: InternalTradeState
 ): InternalTradeState => {
+  Object.values(state.assets).forEach((asset) =>
+    (asset as StatefulAsset)._stateHook.reset()
+  );
   const stratUpdates = strat(state);
   const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
     (state, [symbol, update]) => {
