@@ -1,17 +1,17 @@
-import { Indicators } from "../indicators/indicators";
+import { AssetState } from "../core/types";
 import {
   SizelessOrder,
   StrategyUpdate,
   TradingStrategy,
 } from "../high-level-api/types";
-import { AssetState, MarketPosition } from "../core/types";
+import { Indicators } from "../indicators/indicators";
 import { get, last } from "../util/util";
 import { withRelativeExits } from "./strat-util";
 
 export function macdStrat(settings: {
   relativeTakeProfit: number;
   relativeStopLoss: number;
-  onlyDirection?: MarketPosition;
+  onlyDirection?: "long" | "short";
 }): TradingStrategy {
   const indicators = new Indicators({
     macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },

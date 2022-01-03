@@ -1,7 +1,7 @@
 import { identity, sumBy } from "lodash";
-import { hasOwnProperty, last } from "../util/util";
-import { Staker, StrategyUpdate } from "../high-level-api/types";
 import { AssetMap, FullTradeState, Order } from "../core/types";
+import { Staker, StrategyUpdate } from "../high-level-api/types";
+import { hasOwnProperty, last } from "../util/util";
 
 /**
  * Implementation of a common position sizing strategy, where the max risk of
@@ -132,12 +132,12 @@ function getAccountStats(
   return Object.values(state.assets).reduce(
     (acc, asset) => {
       if (asset.position) {
-        const positionSize = asset.entryOrder!.size * last(asset.series).close;
+        const positionSize = asset.position.size * last(asset.series).close;
         return {
           ...acc,
           accountBalance:
             acc.accountBalance +
-            (asset.position === "long" ? positionSize : -positionSize),
+            (asset.position.side === "long" ? positionSize : -positionSize),
           exposure: acc.exposure + positionSize,
         };
       } else if (asset.entryOrder) {

@@ -1,9 +1,9 @@
 import { dropLast, identity, pipe } from "remeda";
-import { CommissionProvider } from "..";
 import { last } from "../util/util";
 import {
   AssetState,
   Candle,
+  CommissionProvider,
   MarketPosition,
   Order,
   Trade,
@@ -85,13 +85,13 @@ function handleEntryOrder(state: OrderHandlerState): OrderHandlerState {
 }
 
 function handleStopLoss(state: OrderHandlerState): OrderHandlerState {
-  const { position, entryOrder, stopLoss, series } = state.asset;
+  const { position, stopLoss, series } = state.asset;
   if (position && stopLoss) {
     const stopLossOrder: Order = {
       price: stopLoss,
       type: "stop",
-      side: position === "long" ? "sell" : "buy",
-      size: entryOrder!.size, // entryOrder must exist when in position
+      side: position.side === "long" ? "sell" : "buy",
+      size: position.size,
     };
     const price = getFillPrice(stopLossOrder, last(series));
     if (price) {
@@ -102,13 +102,13 @@ function handleStopLoss(state: OrderHandlerState): OrderHandlerState {
 }
 
 function handleTakeProfit(state: OrderHandlerState): OrderHandlerState {
-  const { position, entryOrder, takeProfit, series } = state.asset;
+  const { position, takeProfit, series } = state.asset;
   if (position && takeProfit) {
     const takeProfitOrder: Order = {
       price: takeProfit,
       type: "limit",
-      side: position === "long" ? "sell" : "buy",
-      size: entryOrder!.size, // entryOrder must exist when in position
+      side: position.side === "long" ? "sell" : "buy",
+      size: position.size,
     };
     const fillPrice = getFillPrice(takeProfitOrder, last(series));
     if (fillPrice) {
@@ -164,7 +164,10 @@ function fulfillEntryOrder(
 
   const transactions = state.asset.transactions.concat(transaction);
 
-  const position: MarketPosition = entryOrder.side === "buy" ? "long" : "short";
+  const position: MarketPosition = {
+    side: transaction.side === "buy" ? "long" : "short",
+    size: transaction.size,
+  };
 
   const cash = updateCash(state.cash, transaction);
 
@@ -228,7 +231,7 @@ function convertToTrade({
   entry: Transaction;
   exit: Transaction;
 }): Trade {
-  const position = entry.side === "buy" ? "long" : "short";
+  const side = entry.side === "buy" ? "long" : "short";
   const size = entry.size;
   if (exit.size !== size) {
     throw Error(
@@ -241,7 +244,7 @@ function convertToTrade({
   const exitValue = exit.price * size;
 
   const absoluteProfit =
-    (position === "long" ? exitValue - entryValue : entryValue - exitValue) -
+    (side === "long" ? exitValue - entryValue : entryValue - exitValue) -
     entry.commission -
     exit.commission;
 
@@ -250,7 +253,7 @@ function convertToTrade({
     symbol,
     entry,
     exit,
-    position,
+    position: { side, size },
     absoluteProfit,
     relativeProfit,
   };

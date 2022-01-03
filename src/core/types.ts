@@ -31,7 +31,16 @@ export interface Order {
   size: number;
 }
 
-export type MarketPosition = "long" | "short";
+export interface MarketPosition {
+  /**
+   * Whether this is a long or short position.
+   */
+  side: "long" | "short";
+  /**
+   * The number of units being long or short.
+   */
+  size: number;
+}
 
 export interface Transaction {
   /**

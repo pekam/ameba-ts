@@ -1,5 +1,5 @@
+import { AssetState } from "../core/types";
 import { StrategyUpdate } from "../high-level-api/types";
-import { AssetState, MarketPosition } from "../core/types";
 import { combineCandles, get, getAverageCandleSize, last } from "../util/util";
 import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
 
@@ -9,7 +9,7 @@ import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
  */
 export function volatilityStrategy(settings: {
   period: number;
-  onlyDirection?: MarketPosition;
+  onlyDirection?: "long" | "short";
 }) {
   return function (state: AssetState): StrategyUpdate {
     const series = state.series;

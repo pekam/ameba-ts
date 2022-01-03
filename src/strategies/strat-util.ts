@@ -1,5 +1,5 @@
-import { SizelessOrder } from "../high-level-api/types";
 import { AssetState, SingleAssetStrategyUpdate } from "../core/types";
+import { SizelessOrder } from "../high-level-api/types";
 import { last } from "../util/util";
 
 export const cancelEntry: SingleAssetStrategyUpdate = {
@@ -51,14 +51,14 @@ export function nonIncresingStopLoss({
       return stopLossValue;
     } else if (stopLossType === "diff") {
       const currentPrice = last(state.series).close;
-      return state.position === "long"
+      return state.position.side === "long"
         ? currentPrice - stopLossValue
         : currentPrice + stopLossValue;
     }
     throw Error("Unhandled stop loss type.");
   })();
 
-  const limiterFunc = state.position === "long" ? Math.max : Math.min;
+  const limiterFunc = state.position.side === "long" ? Math.max : Math.min;
 
   return {
     stopLoss: state.stopLoss

@@ -1,6 +1,6 @@
-import { Indicators } from "../indicators/indicators";
+import { AssetState } from "../core/types";
 import { StrategyUpdate, TradingStrategy } from "../high-level-api/types";
-import { AssetState, MarketPosition } from "../core/types";
+import { Indicators } from "../indicators/indicators";
 import { last } from "../util/util";
 
 /**
@@ -11,7 +11,7 @@ import { last } from "../util/util";
 export function donchianBreakoutStrategy(settings: {
   channelPeriod: number;
   smaPeriod: number;
-  onlyDirection?: MarketPosition;
+  onlyDirection?: "long" | "short";
   maxRelativeStopLoss?: number;
   maxAtrStoploss?: number;
 }): TradingStrategy {
@@ -86,7 +86,7 @@ export function donchianBreakoutStrategy(settings: {
         return shortEntry();
       }
     } else {
-      if (state.position === "long") {
+      if (state.position.side === "long") {
         return {
           stopLoss: state.stopLoss ? Math.max(state.stopLoss, sma) : sma,
         };
