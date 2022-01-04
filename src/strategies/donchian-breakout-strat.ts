@@ -3,6 +3,21 @@ import { StrategyUpdate, TradingStrategy } from "../high-level-api/types";
 import { Indicators } from "../indicators/indicators";
 import { last } from "../util/util";
 
+function withSma(strategy: TradingStrategy, period: number): TradingStrategy {
+  return (state: AssetState) => {
+    const indicators =
+      state.data.indicators || new Indicators({ smaPeriod: period });
+
+    const { sma } = indicators.update(state.series);
+
+    const data = { ...state.data, indicators, sma };
+
+    const stratUpdate = strategy({ ...state, data });
+
+    return { ...stratUpdate, data };
+  };
+}
+
 /**
  * Buy when breaking the Donchian channel.
  *
@@ -17,15 +32,18 @@ export function donchianBreakoutStrategy(settings: {
 }): TradingStrategy {
   const indicators = new Indicators({
     donchianChannelPeriod: settings.channelPeriod,
-    smaPeriod: settings.smaPeriod,
+    // smaPeriod: settings.smaPeriod,
     atrPeriod: 20,
   });
 
-  return (state: AssetState) => {
+  const rawStrat = (state: AssetState) => {
     const series = state.series;
     const currentPrice = last(state.series).close;
 
-    const { sma, donchianChannel, atr } = indicators.update(series);
+    const { donchianChannel, atr } = indicators.update(series);
+
+    // How to make typings work?
+    const sma: number = state.data.sma;
 
     if (!donchianChannel || !sma || !atr) {
       return {};
@@ -97,4 +115,6 @@ export function donchianBreakoutStrategy(settings: {
       }
     }
   };
+
+  return withSma(rawStrat, settings.smaPeriod);
 }
