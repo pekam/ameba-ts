@@ -1,3 +1,5 @@
+import { Dictionary } from "../util/type-util";
+
 export interface OHLC {
   open: number;
   high: number;
@@ -154,6 +156,11 @@ export interface AssetState {
    * strategy.
    */
   trades: Trade[];
+  /**
+   * An object to store custom properties, used by strategies to keep track of
+   * things across iterations.
+   */
+  data: Dictionary<any>;
 }
 
 /**
@@ -168,11 +175,15 @@ export interface AssetState {
  *   the value.
  *
  * When in a position, changes to `entryOrder` should not be made.
+ *
+ * The `data` object can be used to carry custom properties to the following
+ * iterations.
  */
 export interface SingleAssetStrategyUpdate {
   entryOrder?: Order | null;
   stopLoss?: number | null;
   takeProfit?: number | null;
+  data?: Dictionary<any>;
 }
 
 /**

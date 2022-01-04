@@ -47,6 +47,9 @@ export type Staker = (
  *   the value.
  *
  * When in a position, changes to `entryOrder` should not be made.
+ *
+ * The `data` object can be used to carry custom properties to the following
+ * iterations.
  */
 // NOTE: JSDoc needs to be manually kept in sync with SingleAssetStrategyUpdate
 // (for the relevant parts), because the docs can't be inherited.

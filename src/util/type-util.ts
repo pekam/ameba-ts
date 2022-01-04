@@ -1,3 +1,5 @@
+export type Dictionary<T> = { [key: string]: T };
+
 /**
  * Partially overrides object property types.
  *

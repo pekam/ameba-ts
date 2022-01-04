@@ -6,9 +6,8 @@ import {
   TradingStrategy,
   withStaker,
 } from "../..";
+import { Dictionary } from "../../util/type-util";
 import { last } from "../../util/util";
-
-const relativeTransactionCost = 0.0007;
 
 /**
  * Periodically backtests all the strategies in the pool and uses the most
@@ -19,9 +18,6 @@ export function autoOptimizer(settings: {
   optimizeInterval: number;
   optimizePeriod: number;
 }): TradingStrategy {
-  let currentStrategy: TradingStrategy = noopStrategy;
-  let lastOptimizedTimestamp: number = 0;
-
   function optimize({ series }: AssetState): TradingStrategy {
     const withProfits = settings.stratPool.map((stratProvider) => {
       const from = last(series).time - settings.optimizePeriod;
@@ -31,10 +27,6 @@ export function autoOptimizer(settings: {
         progressHandler: null,
         from,
       });
-      // const withTransactionCost = withRelativeTransactionCost(
-      //   result,
-      //   relativeTransactionCost
-      // );
 
       return { stratProvider, profit: result.stats.relativeProfit };
     });
@@ -47,23 +39,58 @@ export function autoOptimizer(settings: {
     }
   }
 
-  return (state: AssetState) => {
+  function getAssetData(state: AssetState): HasAutoOptimizerStratData {
     const time = last(state.series).time;
-
     const seriesLength = time - state.series[0].time;
+
+    function hasStratData(data: any): data is HasAutoOptimizerStratData {
+      return !!(data as HasAutoOptimizerStratData).autoOptimizerData;
+    }
+
+    const stratData: AutoOptimizerStratData = hasStratData(state.data)
+      ? state.data.autoOptimizerData
+      : {
+          currentStrategy: noopStrategy,
+          lastOptimized: 0,
+        };
 
     if (
       seriesLength > settings.optimizePeriod &&
       !state.position &&
-      time >= lastOptimizedTimestamp + settings.optimizeInterval
+      time >= stratData.lastOptimized + settings.optimizeInterval
     ) {
-      currentStrategy = optimize(state);
-      lastOptimizedTimestamp = time;
+      return {
+        ...state.data,
+        autoOptimizerData: {
+          currentStrategy: optimize(state),
+          lastOptimized: time,
+        },
+      };
     }
 
-    return currentStrategy(state);
+    return {
+      ...state.data,
+      autoOptimizerData: stratData,
+    };
+  }
+
+  return (state: AssetState) => {
+    const data = getAssetData(state);
+
+    const update = data.autoOptimizerData.currentStrategy(state);
+
+    return { ...update, data: { ...(update.data || {}), ...data } };
   };
 }
+
+interface AutoOptimizerStratData {
+  currentStrategy: TradingStrategy;
+  lastOptimized: number;
+}
+
+type HasAutoOptimizerStratData = Dictionary<any> & {
+  autoOptimizerData: AutoOptimizerStratData;
+};
 
 const noopStrategy: TradingStrategy = () => ({
   entryOrder: null,

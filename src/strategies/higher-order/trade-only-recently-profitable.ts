@@ -3,11 +3,16 @@ import {
   AssetState,
   backtest,
   cancelEntry,
-  CandleSeries,
   StrategyUpdate,
   TradingStrategy,
   withStaker,
 } from "../..";
+import { Dictionary } from "../../util/type-util";
+import { last } from "../../util/util";
+
+// TODO This is a special case of autoOptimizer. Could be just deleted or at
+// least use autoOptimizer internally. Also this has not been tested after major
+// revamps.
 
 /**
  * Trades with the provided strategy only if it was profitable in the near past.
@@ -17,7 +22,7 @@ import {
  * positions on other assets.
  *
  * @param stratProvider provider for the strategy to use
- * @param backtestInterval how many candles between the backtest runs and thus
+ * @param backtestInterval how long period between the backtest runs and thus
  * updating the condition to execute the strategy
  * @param backtestCandleCount how many candles to include in the re-optimizing
  * backtest
@@ -27,17 +32,28 @@ import {
  */
 export function tradeOnlyRecentlyProfitable(
   stratProvider: () => TradingStrategy,
-  backtestInterval = 100,
+  backtestInterval: number,
   backtestCandleCount = 100,
   profitThreshold = 0.005
 ) {
-  const strat: TradingStrategy = stratProvider();
+  function getAssetData(state: AssetState): HasTORPData {
+    function hasStratData(data: any): data is HasTORPData {
+      return !!(data as HasTORPData).torpData;
+    }
 
-  let enabled = false;
+    const series = state.series;
+    const time = last(series).time;
 
-  function updateEnabled(series: CandleSeries) {
+    const stratData: TORPData = hasStratData(state.data)
+      ? state.data.torpData
+      : {
+          enabled: false,
+          lastBacktested: 0,
+          strat: stratProvider(),
+        };
+
     if (
-      series.length % backtestInterval === 0 &&
+      time - stratData.lastBacktested >= backtestInterval &&
       series.length >= backtestCandleCount
     ) {
       const backtestResult = backtest({
@@ -45,21 +61,44 @@ export function tradeOnlyRecentlyProfitable(
         series: { _: series.slice(-backtestCandleCount) },
         progressHandler: null,
       });
-      enabled = backtestResult.stats.relativeProfit > profitThreshold;
+      return {
+        ...state,
+        torpData: {
+          enabled: backtestResult.stats.relativeProfit > profitThreshold,
+          lastBacktested: time,
+          strat: stratData.strat,
+        },
+      };
     }
+
+    return { ...state, torpData: stratData };
   }
 
   return function (state: AssetState): StrategyUpdate {
-    updateEnabled(state.series);
+    const data = getAssetData(state);
 
-    // Need to update indicators in all cases
-    const update = strat(state);
+    const update = (() => {
+      // Update indicators etc. in all cases
+      const update = data.torpData.strat(state);
 
-    if (!state.position && !enabled) {
-      // Not allowed to enter a trade
-      return cancelEntry;
-    } else {
-      return update;
-    }
+      if (!state.position && !data.torpData.enabled) {
+        // Not allowed to enter a trade
+        return cancelEntry;
+      } else {
+        return update;
+      }
+    })();
+
+    return { ...update, data: { ...(update.data || {}), ...data } };
   };
 }
+
+interface TORPData {
+  enabled: boolean;
+  lastBacktested: number;
+  strat: TradingStrategy;
+}
+
+type HasTORPData = Dictionary<any> & {
+  torpData: TORPData;
+};

@@ -160,6 +160,7 @@ function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
       stopLoss: null,
       transactions: [],
       trades: [],
+      data: {},
     };
   });
 
