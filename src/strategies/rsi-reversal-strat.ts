@@ -1,6 +1,6 @@
-import { Indicators } from "../indicators/indicators";
-import { SizelessOrder, StrategyUpdate } from "../high-level-api/types";
+import { getAdx, getRsi } from "..";
 import { AssetState } from "../core/types";
+import { SizelessOrder, StrategyUpdate } from "../high-level-api/types";
 import { getAverageCandleSize, last } from "../util/util";
 import { cancelEntry } from "./strat-util";
 
@@ -11,22 +11,18 @@ const adxPeriod = 20;
  * If ADX is low (there is a sideways trend), buy when RSI is low.
  */
 export function rsiReversalStrategy() {
-  const indicators = new Indicators({ rsiPeriod, adxPeriod });
-
   return function (state: AssetState): StrategyUpdate {
     const series = state.series;
 
-    const { rsi, adx } = indicators.update(series) as {
-      rsi: number;
-      adx: number;
-    };
+    const rsi = getRsi(state, rsiPeriod);
+    const adx = getAdx(state, adxPeriod);
 
-    if (series.length < Math.max(adxPeriod, rsiPeriod)) {
+    if (!rsi || !adx) {
       return {};
     }
 
     if (!state.position) {
-      if (adx < 25 && rsi < 30) {
+      if (adx.adx < 25 && rsi < 30) {
         const entryPrice = last(series).low;
         const entryOrder: SizelessOrder = {
           price: entryPrice,

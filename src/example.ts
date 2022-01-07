@@ -1,56 +1,51 @@
 import { backtest } from "./core/backtest";
-import { Indicators } from "./indicators/indicators";
+import { AssetState, CandleSeries } from "./core/types";
 import { TradingStrategy } from "./high-level-api/types";
 import { withStaker } from "./high-level-api/with-staker";
+import { getSma } from "./indicators";
 import { createStaker } from "./stakers/common-staker";
-import { AssetState, CandleSeries } from "./core/types";
 
 /**
- * Creates a strategy that buys the breakout of previous candle's high if the
- * price is above a simple moving average (SMA), aims to take a 5% profit and
+ * A strategy that buys the breakout of previous candle's high if the price is
+ * above the 50-period simple moving average (SMA), aims to take a 5% profit and
  * has a stop loss that trails 1% below the price.
- *
- * @param smaPeriod the period to use for the moving average
  */
-function exampleStrategy(smaPeriod: number): TradingStrategy {
-  // Calculating indicator values can be really time consuming, unless storing
-  // the previous values in a closure. Unfortunately this makes the strategy
-  // function stateful.
-  const indicators = new Indicators({ smaPeriod });
+const exampleStrategy: TradingStrategy = (state: AssetState) => {
+  const sma = getSma(state, 50);
+  const newCandle = state.series[state.series.length - 1];
 
-  return (state: AssetState) => {
-    const { sma } = indicators.update(state.series);
-    const newCandle = state.series[state.series.length - 1];
+  if (!sma) {
+    return { entryOrder: null };
+  }
 
-    if (!sma) {
+  if (!state.position) {
+    // No position at this point, so we need to decide if we want to enter or
+    // not (potentially cancelling an active entry order)
+
+    const entryPrice = newCandle.high;
+
+    // Enter only above the moving average
+    if (entryPrice < sma) {
       return { entryOrder: null };
     }
 
-    if (!state.position) {
-      const entryPrice = newCandle.high;
-      // Enter only above the moving average
-      if (entryPrice < sma) {
-        return { entryOrder: null };
-      }
-
-      return {
-        entryOrder: {
-          side: "buy",
-          type: "stop",
-          price: entryPrice,
-        },
-        stopLoss: entryPrice * 0.99,
-        takeProfit: entryPrice * 1.05,
-      };
-    } else {
-      // Manage the current position
-      return {
-        // Trailing 1% stop loss
-        stopLoss: Math.max(state.stopLoss || 0, newCandle.high * 0.99),
-      };
-    }
-  };
-}
+    return {
+      entryOrder: {
+        side: "buy",
+        type: "stop",
+        price: entryPrice,
+      },
+      stopLoss: entryPrice * 0.99,
+      takeProfit: entryPrice * 1.05,
+    };
+  } else {
+    // Manage the current position by updating exit order(s)
+    return {
+      // Trailing 1% stop loss
+      stopLoss: Math.max(state.stopLoss || 0, newCandle.high * 0.99),
+    };
+  }
+};
 
 /**
  * Just an example showing how the data should be provided as a
@@ -87,7 +82,7 @@ async function loadCandles(args: {
 (async () => {
   const result = backtest({
     strategy: withStaker(
-      () => exampleStrategy(50),
+      () => exampleStrategy,
       // Staker handles position sizing/risk management
       createStaker({
         maxRelativeRisk: 0.01, // Risk 1% of account per trade

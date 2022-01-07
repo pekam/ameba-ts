@@ -1,17 +1,17 @@
 import { maxBy, minBy } from "lodash";
 import { Candle } from "../core/types";
 import { avg } from "../util/util";
-import { IndicatorChannel } from "./indicators";
-
-export type DonchianChannel = (candle: Candle) => IndicatorChannel | undefined;
+import { createIndicatorWithPeriod, IndicatorChannel } from "./indicator-util";
 
 /**
- * Returns a function that is expected to be called with candles of a series in
- * order and without gaps. It returns the indicator value the provided candle.
- *
- * The implementation is stateful for performance.
+ * Returns the value of a Donchian channel indicator.
  */
-export function getDonchianChannel(period: number): DonchianChannel {
+export const getDonchianChannel = createIndicatorWithPeriod<IndicatorChannel>(
+  "donchianChannel",
+  initDonchianChannel
+);
+
+function initDonchianChannel(period: number) {
   if (period < 1) {
     throw Error("Donchian channel period must be >=1");
   }

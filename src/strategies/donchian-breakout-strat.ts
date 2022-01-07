@@ -1,6 +1,8 @@
 import { AssetState } from "../core/types";
 import { StrategyUpdate, TradingStrategy } from "../high-level-api/types";
-import { Indicators } from "../indicators/indicators";
+import { getAtr } from "../indicators/atr";
+import { getDonchianChannel } from "../indicators/donchian-channel";
+import { getSma } from "../indicators/sma";
 import { last } from "../util/util";
 
 /**
@@ -15,17 +17,12 @@ export function donchianBreakoutStrategy(settings: {
   maxRelativeStopLoss?: number;
   maxAtrStoploss?: number;
 }): TradingStrategy {
-  const indicators = new Indicators({
-    donchianChannelPeriod: settings.channelPeriod,
-    smaPeriod: settings.smaPeriod,
-    atrPeriod: 20,
-  });
-
   return (state: AssetState) => {
-    const series = state.series;
     const currentPrice = last(state.series).close;
 
-    const { sma, donchianChannel, atr } = indicators.update(series);
+    const donchianChannel = getDonchianChannel(state, settings.channelPeriod);
+    const sma = getSma(state, settings.smaPeriod);
+    const atr = getAtr(state, 20);
 
     if (!donchianChannel || !sma || !atr) {
       return {};

@@ -3,7 +3,7 @@ export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
 export * from "./core/types";
 export * from "./high-level-api/types";
 export * from "./high-level-api/with-staker";
-export * from "./indicators/indicators";
+export * from "./indicators/";
 export * from "./stakers/all-in-staker";
 export * from "./stakers/common-staker";
 export * from "./strategies/donchian-breakout-strat";

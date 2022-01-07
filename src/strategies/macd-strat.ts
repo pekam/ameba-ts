@@ -1,32 +1,30 @@
+import { getMacd, MacdSettings } from "..";
 import { AssetState } from "../core/types";
 import {
   SizelessOrder,
   StrategyUpdate,
   TradingStrategy,
 } from "../high-level-api/types";
-import { Indicators } from "../indicators/indicators";
-import { get, last } from "../util/util";
+import { last } from "../util/util";
 import { withRelativeExits } from "./strat-util";
+
+const macdSettings: MacdSettings = {
+  fastPeriod: 12,
+  slowPeriod: 26,
+  signalPeriod: 9,
+};
 
 export function macdStrat(settings: {
   relativeTakeProfit: number;
   relativeStopLoss: number;
   onlyDirection?: "long" | "short";
 }): TradingStrategy {
-  const indicators = new Indicators({
-    macdSettings: { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 },
-  });
-
   return function (state: AssetState): StrategyUpdate {
     const series = state.series;
     const candle = last(series);
 
-    const { macd } = indicators.update(series);
-
-    const previousMacd = (() => {
-      const prevIndicators = indicators.get(get(series, -2));
-      return prevIndicators && prevIndicators.macd;
-    })();
+    const macd = getMacd(state, macdSettings);
+    const previousMacd = getMacd(state, macdSettings, 1);
 
     if (!macd || !previousMacd) {
       return {};
