@@ -11,28 +11,19 @@ import { Staker, StrategyUpdate, TradingStrategy } from "./types";
  * simultaneously. This {@link FullTradingStrategy} can then be backtested or
  * executed with a broker.
  *
- * @param stratProvider should return new instances of the same strategy, if the
- * strategy is stateful (e.g. keeping track of previous indicator values such as
- * moving averages in a closure, for performance reasons)
+ * @param strategy should be stateless, because the same strategy function may
+ * be called for multiple assets
  */
 
 export function withStaker(
-  stratProvider: () => TradingStrategy,
+  strategy: TradingStrategy,
   staker: Staker
 ): FullTradingStrategy {
-  const individualStrats: { [symbol: string]: TradingStrategy } = {};
-
   return function (state: FullTradeState): FullStrategyUpdate {
     const sizelessUpdates = state.updated
       .map((symbol) => state.assets[symbol])
       .reduce<{ [symbol: string]: StrategyUpdate }>((updates, asset) => {
-        if (!individualStrats[asset.symbol]) {
-          individualStrats[asset.symbol] = stratProvider();
-        }
-        const strat = individualStrats[asset.symbol];
-
-        const update = strat(state.assets[asset.symbol]);
-
+        const update = strategy(state.assets[asset.symbol]);
         return { ...updates, [asset.symbol]: update };
       }, {});
 

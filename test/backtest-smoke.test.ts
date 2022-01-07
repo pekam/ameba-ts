@@ -46,7 +46,7 @@ it("should produce a backtest result", () => {
   };
 
   const result: BacktestResult = backtest({
-    strategy: withStaker(() => strat, allInStaker),
+    strategy: withStaker(strat, allInStaker),
     series: {
       btc: series,
     },

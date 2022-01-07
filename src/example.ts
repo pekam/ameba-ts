@@ -82,7 +82,7 @@ async function loadCandles(args: {
 (async () => {
   const result = backtest({
     strategy: withStaker(
-      () => exampleStrategy,
+      exampleStrategy,
       // Staker handles position sizing/risk management
       createStaker({
         maxRelativeRisk: 0.01, // Risk 1% of account per trade

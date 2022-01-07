@@ -14,28 +14,28 @@ import { last } from "../../util/util";
  * profitable one.
  */
 export function autoOptimizer(settings: {
-  stratPool: (() => TradingStrategy)[];
+  stratPool: TradingStrategy[];
   optimizeInterval: number;
   optimizePeriod: number;
 }): TradingStrategy {
   function optimize({ series }: AssetState): TradingStrategy {
-    const withProfits = settings.stratPool.map((stratProvider) => {
+    const withProfits = settings.stratPool.map((strategy) => {
       const from = last(series).time - settings.optimizePeriod;
       const result = backtest({
-        strategy: withStaker(stratProvider, allInStaker),
+        strategy: withStaker(strategy, allInStaker),
         series: { _: series.slice(-10000) },
         progressHandler: null,
         from,
       });
 
-      return { stratProvider, profit: result.stats.relativeProfit };
+      return { strategy, profit: result.stats.relativeProfit };
     });
 
     const best = maxBy(withProfits, (w) => w.profit);
     if (!best || best.profit <= 0) {
       return noopStrategy;
     } else {
-      return best.stratProvider();
+      return best.strategy;
     }
   }
 

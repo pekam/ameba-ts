@@ -21,7 +21,7 @@ import { last } from "../../util/util";
  * if used with the multi-asset backtester, especially when having short
  * positions on other assets.
  *
- * @param stratProvider provider for the strategy to use
+ * @param strategy the strategy to use
  * @param backtestInterval how long period between the backtest runs and thus
  * updating the condition to execute the strategy
  * @param backtestCandleCount how many candles to include in the re-optimizing
@@ -31,7 +31,7 @@ import { last } from "../../util/util";
  * profit
  */
 export function tradeOnlyRecentlyProfitable(
-  stratProvider: () => TradingStrategy,
+  strategy: TradingStrategy,
   backtestInterval: number,
   backtestCandleCount = 100,
   profitThreshold = 0.005
@@ -49,7 +49,6 @@ export function tradeOnlyRecentlyProfitable(
       : {
           enabled: false,
           lastBacktested: 0,
-          strat: stratProvider(),
         };
 
     if (
@@ -57,7 +56,7 @@ export function tradeOnlyRecentlyProfitable(
       series.length >= backtestCandleCount
     ) {
       const backtestResult = backtest({
-        strategy: withStaker(stratProvider, allInStaker),
+        strategy: withStaker(strategy, allInStaker),
         series: { _: series.slice(-backtestCandleCount) },
         progressHandler: null,
       });
@@ -66,7 +65,6 @@ export function tradeOnlyRecentlyProfitable(
         torpData: {
           enabled: backtestResult.stats.relativeProfit > profitThreshold,
           lastBacktested: time,
-          strat: stratData.strat,
         },
       };
     }
@@ -78,14 +76,11 @@ export function tradeOnlyRecentlyProfitable(
     const data = getAssetData(state);
 
     const update = (() => {
-      // Update indicators etc. in all cases
-      const update = data.torpData.strat(state);
-
       if (!state.position && !data.torpData.enabled) {
         // Not allowed to enter a trade
         return cancelEntry;
       } else {
-        return update;
+        return strategy(state);
       }
     })();
 
@@ -96,7 +91,6 @@ export function tradeOnlyRecentlyProfitable(
 interface TORPData {
   enabled: boolean;
   lastBacktested: number;
-  strat: TradingStrategy;
 }
 
 type HasTORPData = Dictionary<any> & {
