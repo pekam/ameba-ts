@@ -54,12 +54,12 @@ const addSizesToUpdates = (
   stakes: Dictionary<number>
 ) =>
   mapValues(sizelessUpdates, (update, symbol) =>
-    addSizeToUpdate(update, stakes[symbol], symbol)
+    addSizeToUpdate(update, stakes, symbol)
   );
 
 function addSizeToUpdate(
   update: StrategyUpdate,
-  size: number,
+  stakes: Dictionary<number>,
   symbol: string
 ): SingleAssetStrategyUpdate {
   if (!update.entryOrder) {
@@ -69,6 +69,7 @@ function addSizeToUpdate(
     return update as SingleAssetStrategyUpdate;
   }
 
+  const size: number | undefined = stakes[symbol];
   validatePositionSize(size, symbol);
 
   // Cancel the entry if size would be 0
@@ -81,7 +82,10 @@ function addSizeToUpdate(
   };
 }
 
-function validatePositionSize(size: number | undefined, symbol: string) {
+function validatePositionSize(
+  size: number | undefined,
+  symbol: string
+): asserts size is number {
   if (size === undefined) {
     throw Error(
       `Staker did not return an order size for an updated symbol ${symbol}.`
