@@ -22,6 +22,8 @@ fetched (the common reason for bugs in non-pure code), the value of a specific
 indicator for a specific candle will always be the same.
 */
 
+export type SeriesAndData = Pick<AssetState, "series" | "data">;
+
 /**
  * Gets the value of an indicator, or `undefined` if there's not been enough
  * data to calculate the indicator yet.
@@ -37,7 +39,7 @@ indicator for a specific candle will always be the same.
  * @param indexFromEnd 0 to get the latest value, 1 for the second last etc.
  */
 export function getIndicatorValue<RESULT>(
-  state: AssetState,
+  state: SeriesAndData,
   key: string,
   initializer: () => (c: Candle) => RESULT | undefined,
   indexFromEnd: number
@@ -71,7 +73,7 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
   };
 }
 
-function getIndicatorStore(state: AssetState): Dictionary<any> {
+function getIndicatorStore(state: SeriesAndData): Dictionary<any> {
   return computeIfAbsent(state.data, "_indicators", () => ({}));
 }
 

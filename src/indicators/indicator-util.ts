@@ -1,6 +1,6 @@
-import { AssetState, Candle } from "../core/types";
+import { Candle } from "../core/types";
 import { Dictionary } from "../util/type-util";
-import { getIndicatorValue } from "./indicator";
+import { getIndicatorValue, SeriesAndData } from "./indicator";
 
 export interface IndicatorChannel {
   upper: number;
@@ -16,7 +16,7 @@ export function createIndicatorWithPeriod<RESULT>(
   keyPrefix: string,
   initializer: (period: number) => (c: Candle) => RESULT | undefined
 ) {
-  return (state: AssetState, period: number, indexFromEnd: number = 0) =>
+  return (state: SeriesAndData, period: number, indexFromEnd: number = 0) =>
     getIndicatorValue(
       state,
       `${keyPrefix}_${period}`,
@@ -33,7 +33,7 @@ export function createIndicatorWithSettings<SETTINGS, RESULT>(
   keyPrefix: string,
   initializer: (settings: SETTINGS) => (c: Candle) => RESULT | undefined
 ) {
-  return (state: AssetState, settings: SETTINGS, indexFromEnd: number = 0) =>
+  return (state: SeriesAndData, settings: SETTINGS, indexFromEnd: number = 0) =>
     getIndicatorValue(
       state,
       `${keyPrefix}_${settingsToString(settings)}`,

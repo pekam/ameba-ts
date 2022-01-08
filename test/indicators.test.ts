@@ -1,5 +1,4 @@
 import {
-  AssetState,
   Candle,
   CandleSeries,
   getAdx,
@@ -12,25 +11,16 @@ import {
   getRsi,
   getSma,
 } from "../src";
-import { getIndicatorValue } from "../src/indicators/indicator";
+import { getIndicatorValue, SeriesAndData } from "../src/indicators/indicator";
 import { testData } from "./test-data/testData";
 
 let fullSeries: CandleSeries;
-let mockState: AssetState;
+let mockState: SeriesAndData;
 
 beforeEach(() => {
   fullSeries = testData.getSimpleTestData(5);
   mockState = {
     series: [],
-
-    symbol: "foo",
-    entryOrder: null,
-    position: null,
-    stopLoss: null,
-    takeProfit: null,
-    trades: [],
-    transactions: [],
-
     data: {},
   };
 });
