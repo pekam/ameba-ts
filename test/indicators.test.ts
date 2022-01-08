@@ -6,6 +6,7 @@ import {
   getAvgRelativeRange,
   getAvgVolume,
   getDonchianChannel,
+  getEma,
   getKeltnerChannel,
   getMacd,
   getRsi,
@@ -82,6 +83,7 @@ it("should support multiple indicators with different settings", () => {
       avgRelRange: getAvgRelativeRange(mockState, setting),
       avgVol: getAvgVolume(mockState, setting),
       dc: getDonchianChannel(mockState, setting),
+      ema: getEma(mockState, setting),
       kc: getKeltnerChannel(mockState, {
         atrPeriod: setting,
         maPeriod: setting,
@@ -134,6 +136,7 @@ it("should support multiple indicators with different settings", () => {
         "middle": 44271.5,
         "upper": 45016,
       },
+      "ema": 44575.75720164609,
       "kc": Object {
         "lower": 43803.94408164609,
         "middle": 44575.75720164609,
