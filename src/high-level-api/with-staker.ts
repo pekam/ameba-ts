@@ -1,4 +1,4 @@
-import { pipe, reduce, toPairs } from "remeda";
+import { map, mapValues, pipe } from "remeda";
 import {
   AssetState,
   FullStrategyUpdate,
@@ -8,6 +8,7 @@ import {
   SingleAssetStrategyUpdate,
 } from "../core/types";
 import { Dictionary } from "../util/type-util";
+import { fromPairs } from "../util/util";
 import { Staker, StrategyUpdate, TradingStrategy } from "./types";
 
 /**
@@ -23,47 +24,48 @@ export const withStaker = (
   strategy: TradingStrategy,
   staker: Staker
 ): FullTradingStrategy => (state: FullTradeState): FullStrategyUpdate => {
-  const sizelessUpdates: Dictionary<StrategyUpdate> = pipe(
+  const sizelessUpdates: Dictionary<StrategyUpdate> = getSizelessUpdates(
+    state,
+    strategy
+  );
+  const stakes: Dictionary<number> = staker(state, sizelessUpdates);
+  return addSizesToUpdates(sizelessUpdates, stakes);
+};
+
+const getSizelessUpdates = (state: FullTradeState, strategy: TradingStrategy) =>
+  pipe(
     state,
     getAssetsWithNewCandle,
-    getStrategyUpdates(strategy)
+    getSizelessUpdatesAsPairs(strategy),
+    fromPairs
   );
-
-  const stakes: Dictionary<number> = staker(state, sizelessUpdates);
-
-  return addSizesToStrategyUpdates(sizelessUpdates, stakes);
-};
 
 const getAssetsWithNewCandle = (state: FullTradeState) =>
   state.updated.map((symbol) => state.assets[symbol]);
 
-const getStrategyUpdates = (strategy: TradingStrategy) =>
-  reduce<AssetState, Dictionary<StrategyUpdate>>(
-    (updates, asset) => ({ ...updates, [asset.symbol]: strategy(asset) }),
-    {}
-  );
+const getSizelessUpdatesAsPairs = (strategy: TradingStrategy) =>
+  map((asset: AssetState): [string, StrategyUpdate] => [
+    asset.symbol,
+    strategy(asset),
+  ]);
 
-const addSizesToStrategyUpdates = (
+const addSizesToUpdates = (
   sizelessUpdates: Dictionary<StrategyUpdate>,
   stakes: Dictionary<number>
-) => pipe(sizelessUpdates, toPairs, collectUpdatesWithSizes(stakes));
-
-const collectUpdatesWithSizes = (stakes: Dictionary<number>) =>
-  reduce<[string, StrategyUpdate], FullStrategyUpdate>(
-    (sizedUpdates, [symbol, update]) => ({
-      ...sizedUpdates,
-      [symbol]: addSizeToUpdate(symbol, update, stakes[symbol]),
-    }),
-    {}
+) =>
+  mapValues(sizelessUpdates, (update, symbol) =>
+    addSizeToUpdate(update, stakes[symbol], symbol)
   );
 
 function addSizeToUpdate(
-  symbol: string,
   update: StrategyUpdate,
-  size: number
+  size: number,
+  symbol: string
 ): SingleAssetStrategyUpdate {
   if (!update.entryOrder) {
-    // TODO avoid this type assertion caused by TS language limitation
+    // TODO avoid this type assertion caused by TS language limitation. The only
+    // difference between these two types is whether a defined entryOrder has
+    // size, so they should be compatible when entryOrder is null or undefined.
     return update as SingleAssetStrategyUpdate;
   }
 

@@ -1,4 +1,4 @@
-import { identity, sort } from "remeda";
+import { fromPairs as remedaFromPairs, identity, sort } from "remeda";
 import { Candle, CandleSeries } from "../core/types";
 
 /**
@@ -68,3 +68,10 @@ export function getRelativeDiff(
 export function hasOwnProperty<T extends object>(obj: T, key: keyof T) {
   return obj.hasOwnProperty(key);
 }
+
+/**
+ * Same as Remeda's fromPairs, but with the key-type enforced as string. This
+ * fixes an issue where the Remeda function's return type has `string | number`
+ * as the key type, even though the input uses strings.
+ */
+export const fromPairs = <T>(pairs: [string, T][]) => remedaFromPairs(pairs);
