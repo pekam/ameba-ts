@@ -1,18 +1,10 @@
 import { sumBy } from "lodash/fp";
-import {
-  filter,
-  isDefined,
-  keys,
-  map,
-  mapValues,
-  pipe,
-  reduce,
-  values,
-} from "remeda";
-import { AssetMap, AssetState, FullTradeState, Order } from "../core/types";
+import { filter, isDefined, keys, map, mapValues, pipe, values } from "remeda";
+import { AssetMap, AssetState, FullTradeState } from "../core/types";
 import { SizelessOrder, Staker, StrategyUpdate } from "../high-level-api/types";
 import { Dictionary, OverrideProps } from "../util/type-util";
-import { hasOwnProperty, last, pickBy } from "../util/util";
+import { hasOwnProperty, pickBy } from "../util/util";
+import { AccountStats, getAccountStats, getExpectedExposure } from "./util";
 
 /**
  * Implementation of a common position sizing strategy, where the max risk of
@@ -191,49 +183,4 @@ function validateUpdateType(
       );
     }
   });
-}
-
-interface AccountStats {
-  accountBalance: number;
-  exposure: number;
-  pendingExposure: number;
-}
-
-const getAccountStats = (state: FullTradeState): AccountStats =>
-  pipe(
-    state.assets,
-    values,
-    reduce(addToAccountStats, {
-      accountBalance: state.cash,
-      exposure: 0,
-      pendingExposure: 0,
-    })
-  );
-
-function addToAccountStats(stats: AccountStats, asset: AssetState) {
-  if (asset.position) {
-    const positionSize = asset.position.size * last(asset.series).close;
-    return {
-      ...stats,
-      accountBalance:
-        stats.accountBalance +
-        (asset.position.side === "long" ? positionSize : -positionSize),
-      exposure: stats.exposure + positionSize,
-    };
-  } else if (asset.entryOrder) {
-    const pendingPosition = getExpectedExposure(asset.entryOrder);
-    return {
-      ...stats,
-      pendingExposure: stats.pendingExposure + pendingPosition,
-    };
-  } else {
-    return stats;
-  }
-}
-
-function getExpectedExposure(order: Order) {
-  // This can be updated to add some safety margin to account for slippage. Note
-  // that the same margin should then be separately added to position size
-  // calculation.
-  return order.size * order.price;
 }
