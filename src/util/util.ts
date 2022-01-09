@@ -1,5 +1,7 @@
+import _ from "lodash";
 import { fromPairs as remedaFromPairs, identity, sort } from "remeda";
 import { Candle, CandleSeries } from "../core/types";
+import { Dictionary } from "./type-util";
 
 /**
  * Supports negative index to get from the end of the array.
@@ -75,3 +77,12 @@ export function hasOwnProperty<T extends object>(obj: T, key: keyof T) {
  * as the key type, even though the input uses strings.
  */
 export const fromPairs = <T>(pairs: [string, T][]) => remedaFromPairs(pairs);
+
+/**
+ * Filters object entries by the given predicate.
+ *
+ * Lodash's pickBy curried and with better typing.
+ */
+export const pickBy = <T>(predicate: (value: T, key: string) => boolean) => (
+  obj: Dictionary<T>
+): Dictionary<T> => _.pickBy(obj, predicate);
