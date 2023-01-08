@@ -14,24 +14,39 @@ export interface Candle extends OHLC {
 
 export type CandleSeries = Array<Candle>;
 
-export interface Order {
+interface OrderBase {
   /**
-   * Defines if this is a buy or a sell order.
+   * Defines whether this is a buy or a sell order.
    */
-  side: "buy" | "sell";
-  /**
-   * Defines if this a limit order or a stop order.
-   */
-  type: "limit" | "stop";
-  /**
-   * Limit price for a limit order, or stop price for a stop order.
-   */
-  price: number;
+  side: OrderSide;
   /**
    * How many units to buy/sell.
    */
   size: number;
+  /**
+   * The order type (market, limit or stop order).
+   */
+  type: OrderType;
 }
+interface OrderWithPrice extends OrderBase {
+  /**
+   * Limit price for a limit order, or stop price for a stop order.
+   */
+  price: number;
+}
+export interface MarketOrder extends OrderBase {
+  type: "market";
+}
+export interface LimitOrder extends OrderWithPrice {
+  type: "limit";
+}
+export interface StopOrder extends OrderWithPrice {
+  type: "stop";
+}
+export type Order = MarketOrder | LimitOrder | StopOrder;
+
+export type OrderSide = "buy" | "sell";
+export type OrderType = "market" | "limit" | "stop";
 
 export interface MarketPosition {
   /**
@@ -48,7 +63,7 @@ export interface Transaction {
   /**
    * Defines if this is a buy or a sell transaction.
    */
-  side: "buy" | "sell";
+  side: OrderSide;
   /**
    * How many units were bought/sold.
    */

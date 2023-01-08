@@ -25,8 +25,7 @@ it("should charge commissions by the commission provider", () => {
         [symbol]: {
           entryOrder: {
             side: "buy",
-            type: "limit",
-            price: candle.close + 1, // basically a market order
+            type: "market",
             size: 100,
           },
           takeProfit: candle.close + 0.5,

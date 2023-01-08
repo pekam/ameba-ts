@@ -1,6 +1,13 @@
 import _ from "lodash";
-import { fromPairs as remedaFromPairs, identity, sort } from "remeda";
-import { Candle, CandleSeries } from "../core/types";
+import {
+  fromPairs as remedaFromPairs,
+  identity,
+  isArray,
+  isNumber,
+  sort,
+} from "remeda";
+import { Candle, CandleSeries, Order } from "../core/types";
+import { SizelessOrder } from "../high-level-api/types";
 import { Dictionary } from "./type-util";
 
 /**
@@ -62,6 +69,20 @@ export function getRelativeDiff(
 ) {
   const [low, high] = sort([value1, value2], identity);
   return (high - low) / (relativeToHigher ? high : low);
+}
+
+export function getExpectedFillPriceWithoutSlippage(
+  order: Order | SizelessOrder,
+  currentPrice: number | Candle | CandleSeries
+): number {
+  if (order.type === "market") {
+    return isNumber(currentPrice)
+      ? currentPrice
+      : isArray(currentPrice)
+      ? last(currentPrice).close
+      : currentPrice.close;
+  }
+  return order.price;
 }
 
 /**

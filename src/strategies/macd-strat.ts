@@ -49,7 +49,7 @@ export function macdStrat(settings: {
         type: "stop",
         price: entryPrice,
       };
-      return withRelativeExits({ entryOrder, ...settings });
+      return withRelativeExits({ entryOrder, series, ...settings });
     }
     if (settings.onlyDirection !== "long" && bullishFilters.every((b) => !b)) {
       // Short
@@ -59,7 +59,7 @@ export function macdStrat(settings: {
         type: "stop",
         price: entryPrice,
       };
-      return withRelativeExits({ entryOrder, ...settings });
+      return withRelativeExits({ entryOrder, series, ...settings });
     }
     return { entryOrder: null };
   };

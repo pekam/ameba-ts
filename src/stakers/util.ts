@@ -1,6 +1,6 @@
 import { pipe, reduce, values } from "remeda";
-import { AssetState, FullTradeState, Order } from "..";
-import { last } from "../util/util";
+import { AssetState, FullTradeState } from "..";
+import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
 
 export interface AccountStats {
   /**
@@ -42,7 +42,7 @@ function addToAccountStats(stats: AccountStats, asset: AssetState) {
       exposure: stats.exposure + positionSize,
     };
   } else if (asset.entryOrder) {
-    const pendingPosition = getExpectedExposure(asset.entryOrder);
+    const pendingPosition = getExpectedExposure(asset);
     return {
       ...stats,
       pendingExposure: stats.pendingExposure + pendingPosition,
@@ -52,9 +52,20 @@ function addToAccountStats(stats: AccountStats, asset: AssetState) {
   }
 }
 
-export function getExpectedExposure(order: Order) {
+/**
+ * Returns the cash value of the new position if the current entry order would be
+ * triggered, assuming zero slippage. Returns zero if there's no entry order.
+ */
+export function getExpectedExposure({ entryOrder, series }: AssetState) {
+  if (!entryOrder) {
+    return 0;
+  }
   // This can be updated to add some safety margin to account for slippage. Note
   // that the same margin should then be separately added to position size
   // calculation.
-  return order.size * order.price;
+  const expectedFillPrice = getExpectedFillPriceWithoutSlippage(
+    entryOrder,
+    series
+  );
+  return entryOrder.size * expectedFillPrice;
 }

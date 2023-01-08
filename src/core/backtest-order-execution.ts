@@ -126,6 +126,10 @@ function handleTakeProfit(state: OrderHandlerState): OrderHandlerState {
  * candle's close and current candle's open.
  */
 function getFillPrice(order: Order, newCandle: Candle): number | null {
+  if (order.type === "market") {
+    return newCandle.open;
+  }
+
   const priceBelowOrder = newCandle.low <= order.price;
   if (priceBelowOrder) {
     const buyPriceCrossed = order.side === "buy" && order.type === "limit";

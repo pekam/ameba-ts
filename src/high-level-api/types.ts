@@ -2,8 +2,11 @@ import {} from "../core/backtest";
 import {
   AssetState,
   FullTradeState,
+  LimitOrder,
+  MarketOrder,
   Order,
   SingleAssetStrategyUpdate,
+  StopOrder,
 } from "../core/types";
 import { OverrideProps } from "../util/type-util";
 
@@ -64,4 +67,8 @@ export type StrategyUpdate = OverrideProps<
  * An {@link Order} which doens't have the 'size' property yet, as it is
  * expected to be provided later by a {@link Staker} function.
  */
-export type SizelessOrder = Omit<Order, "size">;
+export type SizelessOrder =
+  | Omit<MarketOrder, "size">
+  | Omit<LimitOrder, "size">
+  | Omit<StopOrder, "size">;
+// Note: Omit<Order, "size"> would not work while Order has this union type structure

@@ -1,31 +1,42 @@
-import { AssetState, SingleAssetStrategyUpdate } from "../core/types";
+import {
+  AssetState,
+  CandleSeries,
+  SingleAssetStrategyUpdate,
+} from "../core/types";
 import { SizelessOrder } from "../high-level-api/types";
-import { last } from "../util/util";
+import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
 
 export const cancelEntry: SingleAssetStrategyUpdate = {
   entryOrder: null,
 } as const;
 
-export function withRelativeExits<O extends SizelessOrder>({
+export function withRelativeExits({
   entryOrder,
+  series,
   relativeTakeProfit,
   relativeStopLoss,
 }: {
-  entryOrder: O;
+  entryOrder: SizelessOrder;
+  series: CandleSeries;
   relativeTakeProfit: number;
   relativeStopLoss: number;
-}): { entryOrder: O; takeProfit: number; stopLoss: number } {
+}): { entryOrder: SizelessOrder; takeProfit: number; stopLoss: number } {
+  const expectedFillPrice = getExpectedFillPriceWithoutSlippage(
+    entryOrder,
+    series
+  );
+
   if (entryOrder.side === "buy") {
     return {
       entryOrder,
-      takeProfit: entryOrder.price * (1 + relativeTakeProfit),
-      stopLoss: entryOrder.price * (1 - relativeStopLoss),
+      takeProfit: expectedFillPrice * (1 + relativeTakeProfit),
+      stopLoss: expectedFillPrice * (1 - relativeStopLoss),
     };
   } else {
     return {
       entryOrder,
-      takeProfit: entryOrder.price * (1 - relativeTakeProfit),
-      stopLoss: entryOrder.price * (1 + relativeStopLoss),
+      takeProfit: expectedFillPrice * (1 - relativeTakeProfit),
+      stopLoss: expectedFillPrice * (1 + relativeStopLoss),
     };
   }
 }

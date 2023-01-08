@@ -1,9 +1,13 @@
 import { sumBy } from "lodash/fp";
-import { filter, isDefined, keys, map, mapValues, pipe, values } from "remeda";
+import { keys, map, mapValues, pipe, values } from "remeda";
 import { AssetMap, AssetState, FullTradeState } from "../core/types";
 import { SizelessOrder, Staker, StrategyUpdate } from "../high-level-api/types";
 import { Dictionary, OverrideProps } from "../util/type-util";
-import { hasOwnProperty, pickBy } from "../util/util";
+import {
+  getExpectedFillPriceWithoutSlippage,
+  hasOwnProperty,
+  pickBy,
+} from "../util/util";
 import { AccountStats, getAccountStats, getExpectedExposure } from "./util";
 
 /**
@@ -61,12 +65,16 @@ export const createStaker = ({
   const updatesWithEntryOrderAndStopLoss = filterByEntryAndStopLoss(updates);
   const entryPrices = mapValues(
     updatesWithEntryOrderAndStopLoss,
-    (update) => update.entryOrder.price
+    (update, symbol) =>
+      getExpectedFillPriceWithoutSlippage(
+        update.entryOrder,
+        state.assets[symbol].series
+      )
   );
 
   return pipe(
     updatesWithEntryOrderAndStopLoss,
-    getCashStakesByRisk(maxCashRiskPerTrade),
+    getCashStakesByRisk(maxCashRiskPerTrade, entryPrices),
     limitCashStakeByExposure(exposureToSpare),
     convertCashStakesToAssetQuantities(allowFractions, entryPrices)
   );
@@ -97,19 +105,21 @@ const getExposureToBeCancelled = (
 ) =>
   pipe(
     updates,
-    // Entry either cancelled or overridden with new order:
+    // Select assets whose entry is either cancelled or overridden with new order
     pickBy((update) => hasOwnProperty(update, "entryOrder")),
     keys,
-    // Map to the previous entry order (if any):
-    map((symbol) => assets[symbol].entryOrder),
-    filter(isDefined),
+    // Map to the old state (before the new update is applied)
+    map((symbol) => assets[symbol]),
     sumBy(getExpectedExposure)
   );
 
-const getCashStakesByRisk = (maxCashRiskPerTrade: number) =>
-  mapValues<Dictionary<UpdateWithEntryAndStopLoss>, number>((update) =>
+const getCashStakesByRisk = (
+  maxCashRiskPerTrade: number,
+  entryPrices: Dictionary<number>
+) =>
+  mapValues<Dictionary<UpdateWithEntryAndStopLoss>, number>((update, symbol) =>
     getCashStakeByRisk({
-      entryPrice: update.entryOrder.price,
+      entryPrice: entryPrices[symbol],
       stopLoss: update.stopLoss,
       maxCashRiskPerTrade,
     })
