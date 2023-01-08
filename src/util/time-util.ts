@@ -41,7 +41,7 @@ export function toDateTime(input: Moment): DateTime {
   } else if (input instanceof Date) {
     return DateTime.fromJSDate(input);
   } else {
-    return DateTime.fromObject({ ...input, ...options });
+    return DateTime.fromObject(input, options);
   }
 }
 

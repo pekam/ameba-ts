@@ -122,8 +122,8 @@ it("should support multiple indicators with different settings", () => {
   // The values below have been verified to be close to the indicator values
   // provided by a charting platform.
   expect(indicators).toMatchInlineSnapshot(`
-    Object {
-      "adx": Object {
+    {
+      "adx": {
         "adx": 45.145700520328454,
         "mdi": 8.257667348282443,
         "pdi": 42.39683305720431,
@@ -131,18 +131,18 @@ it("should support multiple indicators with different settings", () => {
       "atr": 385.90656,
       "avgRelRange": 0.009468291431461794,
       "avgVol": 25687492.16444,
-      "dc": Object {
+      "dc": {
         "lower": 43527,
         "middle": 44271.5,
         "upper": 45016,
       },
       "ema": 44575.75720164609,
-      "kc": Object {
+      "kc": {
         "lower": 43803.94408164609,
         "middle": 44575.75720164609,
         "upper": 45347.57032164609,
       },
-      "macd": Object {
+      "macd": {
         "histogram": 8.207271344561875,
         "macd": 98.09812838173093,
         "signal": 89.89085703716906,

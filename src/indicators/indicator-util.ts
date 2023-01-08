@@ -29,7 +29,10 @@ export function createIndicatorWithPeriod<RESULT>(
  * Shorthand for creating an indicator getter API, when the indicator has
  * multiple arguments wrapped in a `settings` object.
  */
-export function createIndicatorWithSettings<SETTINGS, RESULT>(
+export function createIndicatorWithSettings<
+  SETTINGS extends Dictionary<any>,
+  RESULT
+>(
   keyPrefix: string,
   initializer: (settings: SETTINGS) => (c: Candle) => RESULT | undefined
 ) {
