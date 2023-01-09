@@ -260,6 +260,12 @@ export interface FullTradeState {
    * The timestamp of the last added candles, as seconds since the Unix epoch.
    */
   time: number;
+  // portfolio: {
+  //   portfolioValue: number;
+  //   maxPortfolioValue: number;
+  //   drawdown:number;
+  //   maxDrawdown:number;
+  // }
 }
 
 /**
