@@ -1,6 +1,6 @@
 import { first, mapValues } from "lodash";
 import { last } from "lodash/fp";
-import { pipe } from "remeda";
+import { pipe, values } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { OverrideProps } from "../util/type-util";
@@ -131,6 +131,11 @@ function doBacktest(args: AdjustedBacktestArgs) {
       applyStrategy(args.strategy)
     );
     args.progressHandler?.afterIteration();
+    values(nextState.assets).forEach((asset) => {
+      while (asset.series.length > 1000) {
+        asset.series.shift();
+      }
+    });
     return nextState;
   }, createInitialState(args));
 
@@ -173,24 +178,20 @@ function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
   };
 }
 
-const addNextCandles = ({
-  time,
-  nextCandles,
-}: {
-  time: number;
-  nextCandles: SymbolCandlePair[];
-}) => (state: InternalTradeState): InternalTradeState => {
-  // Mutating the candle arrays for performance. Copying an array has O(N)
-  // complexity which is a real issue when backtesting big datasets.
-  nextCandles.forEach(({ symbol, candle }) =>
-    state.assets[symbol].series.push(candle)
-  );
-  return {
-    ...state,
-    updated: nextCandles.map(({ symbol }) => symbol),
-    time,
+const addNextCandles =
+  ({ time, nextCandles }: { time: number; nextCandles: SymbolCandlePair[] }) =>
+  (state: InternalTradeState): InternalTradeState => {
+    // Mutating the candle arrays for performance. Copying an array has O(N)
+    // complexity which is a real issue when backtesting big datasets.
+    nextCandles.forEach(({ symbol, candle }) =>
+      state.assets[symbol].series.push(candle)
+    );
+    return {
+      ...state,
+      updated: nextCandles.map(({ symbol }) => symbol),
+      time,
+    };
   };
-};
 
 function handleAllOrders(state: InternalTradeState): InternalTradeState {
   return state.updated.reduce((state, symbol) => {
@@ -203,19 +204,19 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
   }, state);
 }
 
-const applyStrategy = (strat: FullTradingStrategy) => (
-  state: InternalTradeState
-): InternalTradeState => {
-  const stratUpdates = strat(state);
-  const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
-    (state, [symbol, update]) => {
-      assertUpdate(update, state.assets[symbol]);
-      return updateAsset(state, symbol, update);
-    },
-    state
-  );
-  return nextState;
-};
+const applyStrategy =
+  (strat: FullTradingStrategy) =>
+  (state: InternalTradeState): InternalTradeState => {
+    const stratUpdates = strat(state);
+    const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
+      (state, [symbol, update]) => {
+        assertUpdate(update, state.assets[symbol]);
+        return updateAsset(state, symbol, update);
+      },
+      state
+    );
+    return nextState;
+  };
 
 function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
   if (update.entryOrder && update.entryOrder.size <= 0) {

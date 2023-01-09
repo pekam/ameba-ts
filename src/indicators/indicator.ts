@@ -24,6 +24,8 @@ indicator for a specific candle will always be the same.
 
 export type SeriesAndData = Pick<AssetState, "series" | "data">;
 
+const maxIndicatorSequenceLength = 1000;
+
 /**
  * Gets the value of an indicator, or `undefined` if there's not been enough
  * data to calculate the indicator yet.
@@ -63,6 +65,9 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
       takeRightWhile(series, (c) => c.time > lastTimestamp).forEach((c) => {
         const nextValue = nextValueGenerator(c);
         nextValue && result.push(nextValue);
+        while (result.length > maxIndicatorSequenceLength) {
+          result.shift();
+        }
       });
       lastTimestamp = Math.max(lastTimestamp, last(series).time);
     },
