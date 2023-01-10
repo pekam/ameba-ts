@@ -45,14 +45,20 @@ export interface StopOrder extends OrderWithPrice {
 }
 export type Order = MarketOrder | LimitOrder | StopOrder;
 
-export type OrderSide = "buy" | "sell";
-export type OrderType = "market" | "limit" | "stop";
+export type OrderSide = (typeof ORDER_SIDES)[number];
+export const ORDER_SIDES = ["buy", "sell"] as const;
+
+export type OrderType = (typeof ORDER_TYPES)[number];
+export const ORDER_TYPES = ["market", "limit", "stop"] as const;
+
+export type PositionSide = (typeof POSITION_SIDES)[number];
+export const POSITION_SIDES = ["long", "short"] as const;
 
 export interface MarketPosition {
   /**
    * Whether this is a long or short position.
    */
-  side: "long" | "short";
+  side: PositionSide;
   /**
    * The number of units being long or short.
    */
