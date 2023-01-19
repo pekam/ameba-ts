@@ -21,64 +21,66 @@ import { AccountStats, getAccountStats, getExpectedExposure } from "./util";
  * Example use case: "I want to risk max 2% of my account balance per trade, and
  * use max 50% leverage."
  */
-export const createStaker = ({
-  maxRelativeRisk,
-  maxRelativeExposure,
-  allowFractions,
-}: {
-  /**
-   * How much of the current account balance can be lost in one trade. For
-   * example 0.01 if you want to risk max 1% of your account per trade.
-   */
-  maxRelativeRisk: number;
-  /**
-   * What is the max combined position size relative to the account balance. For
-   * example 1 to prevent using leverage, 3 to use max 3x leverage. This will
-   * prevent activating a new entry order (or limit it's size) when the sum of
-   * current exposure (value of open positions) and potential exposure (added
-   * exposure if the all the open entry orders would trigger) reaches the limit.
-   */
-  maxRelativeExposure: number;
-  /**
-   * Whether or not fractional positions are allowed. In general, fractional
-   * positions are okay when trading currencies and cryptos, but not when
-   * trading stocks (unless the broker offers fractional shares).
-   *
-   * If set to false, the position size will be rounded down to the nearest
-   * whole number.
-   */
-  allowFractions: boolean;
-}): Staker => (
-  state: FullTradeState,
-  updates: Dictionary<StrategyUpdate>
-): Dictionary<number> => {
-  const accountStats = getAccountStats(state);
-  const maxCashRiskPerTrade = accountStats.accountBalance * maxRelativeRisk;
+export const createStaker =
+  ({
+    maxRelativeRisk,
+    maxRelativeExposure,
+    allowFractions,
+  }: {
+    /**
+     * How much of the current account balance can be lost in one trade. For
+     * example 0.01 if you want to risk max 1% of your account per trade.
+     */
+    maxRelativeRisk: number;
+    /**
+     * What is the max combined position size relative to the account balance. For
+     * example 1 to prevent using leverage, 3 to use max 3x leverage. This will
+     * prevent activating a new entry order (or limit it's size) when the sum of
+     * current exposure (value of open positions) and potential exposure (added
+     * exposure if the all the open entry orders would trigger) reaches the limit.
+     */
+    maxRelativeExposure: number;
+    /**
+     * Whether or not fractional positions are allowed. In general, fractional
+     * positions are okay when trading currencies and cryptos, but not when
+     * trading stocks (unless the broker offers fractional shares).
+     *
+     * If set to false, the position size will be rounded down to the nearest
+     * whole number.
+     */
+    allowFractions: boolean;
+  }): Staker =>
+  (
+    state: FullTradeState,
+    updates: Dictionary<StrategyUpdate>
+  ): Dictionary<number> => {
+    const accountStats = getAccountStats(state);
+    const maxCashRiskPerTrade = accountStats.accountBalance * maxRelativeRisk;
 
-  // How much cash can be entered to new positions:
-  const exposureToSpare = getExposureToSpare(
-    accountStats,
-    state.assets,
-    updates,
-    maxRelativeExposure
-  );
-  const updatesWithEntryOrderAndStopLoss = filterByEntryAndStopLoss(updates);
-  const entryPrices = mapValues(
-    updatesWithEntryOrderAndStopLoss,
-    (update, symbol) =>
-      getExpectedFillPriceWithoutSlippage(
-        update.entryOrder,
-        state.assets[symbol].series
-      )
-  );
+    // How much cash can be entered to new positions:
+    const exposureToSpare = getExposureToSpare(
+      accountStats,
+      state.assets,
+      updates,
+      maxRelativeExposure
+    );
+    const updatesWithEntryOrderAndStopLoss = filterByEntryAndStopLoss(updates);
+    const entryPrices = mapValues(
+      updatesWithEntryOrderAndStopLoss,
+      (update, symbol) =>
+        getExpectedFillPriceWithoutSlippage(
+          update.entryOrder,
+          state.assets[symbol].series
+        )
+    );
 
-  return pipe(
-    updatesWithEntryOrderAndStopLoss,
-    getCashStakesByRisk(maxCashRiskPerTrade, entryPrices),
-    limitCashStakeByExposure(exposureToSpare),
-    convertCashStakesToAssetQuantities(allowFractions, entryPrices)
-  );
-};
+    return pipe(
+      updatesWithEntryOrderAndStopLoss,
+      getCashStakesByRisk(maxCashRiskPerTrade, entryPrices),
+      limitCashStakeByExposure(exposureToSpare),
+      convertCashStakesToAssetQuantities(allowFractions, entryPrices)
+    );
+  };
 
 function getExposureToSpare(
   accountStats: AccountStats,
@@ -138,18 +140,20 @@ const getCashStakeByRisk = ({
   return maxCashRiskPerTrade / relativeRisk;
 };
 
-const limitCashStakeByExposure = (exposureToSpare: number) => (
-  stakes: Dictionary<number>
-) => {
-  // Using reduce just to carry the remaining exposure would complicate things
-  // quite much compared to having this mutable variable in very limited scope.
-  let remainingExposureToSpare = exposureToSpare;
-  return mapValues(stakes, (size) => {
-    const adjustedSize = Math.max(0, Math.min(remainingExposureToSpare, size));
-    remainingExposureToSpare -= adjustedSize;
-    return adjustedSize;
-  });
-};
+const limitCashStakeByExposure =
+  (exposureToSpare: number) => (stakes: Dictionary<number>) => {
+    // Using reduce just to carry the remaining exposure would complicate things
+    // quite much compared to having this mutable variable in very limited scope.
+    let remainingExposureToSpare = exposureToSpare;
+    return mapValues(stakes, (size) => {
+      const adjustedSize = Math.max(
+        0,
+        Math.min(remainingExposureToSpare, size)
+      );
+      remainingExposureToSpare -= adjustedSize;
+      return adjustedSize;
+    });
+  };
 
 const convertCashStakesToAssetQuantities = (
   allowFractions: boolean,

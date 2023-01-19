@@ -20,17 +20,16 @@ import { Staker, StrategyUpdate, TradingStrategy } from "./types";
  * @param strategy should be stateless, because the same strategy function may
  * be called for multiple assets
  */
-export const withStaker = (
-  strategy: TradingStrategy,
-  staker: Staker
-): FullTradingStrategy => (state: FullTradeState): FullStrategyUpdate => {
-  const sizelessUpdates: Dictionary<StrategyUpdate> = getSizelessUpdates(
-    state,
-    strategy
-  );
-  const stakes: Dictionary<number> = staker(state, sizelessUpdates);
-  return addSizesToUpdates(sizelessUpdates, stakes);
-};
+export const withStaker =
+  (strategy: TradingStrategy, staker: Staker): FullTradingStrategy =>
+  (state: FullTradeState): FullStrategyUpdate => {
+    const sizelessUpdates: Dictionary<StrategyUpdate> = getSizelessUpdates(
+      state,
+      strategy
+    );
+    const stakes: Dictionary<number> = staker(state, sizelessUpdates);
+    return addSizesToUpdates(sizelessUpdates, stakes);
+  };
 
 const getSizelessUpdates = (state: FullTradeState, strategy: TradingStrategy) =>
   pipe(

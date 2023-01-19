@@ -104,15 +104,17 @@ export const fromPairs = <T>(pairs: [string, T][]) => remedaFromPairs(pairs);
  *
  * Lodash's pickBy curried and with better typing.
  */
-export const pickBy = <T>(predicate: (value: T, key: string) => boolean) => (
-  obj: Dictionary<T>
-): Dictionary<T> => _.pickBy(obj, predicate);
+export const pickBy =
+  <T>(predicate: (value: T, key: string) => boolean) =>
+  (obj: Dictionary<T>): Dictionary<T> =>
+    _.pickBy(obj, predicate);
 
 /**
  * Maps object values by the given function.
  *
  * Lodash's mapValues curried and with better typing.
  */
-export const mapValues = <T, R>(mapper: (value: T, key: string) => R) => (
-  obj: Dictionary<T>
-): Dictionary<R> => _.mapValues(obj, mapper);
+export const mapValues =
+  <T, R>(mapper: (value: T, key: string) => R) =>
+  (obj: Dictionary<T>): Dictionary<R> =>
+    _.mapValues(obj, mapper);
