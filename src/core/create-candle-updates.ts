@@ -7,16 +7,22 @@ export interface SymbolCandlePair {
 }
 
 /**
+ * Contains all candles with the same timestamp (one or zero per each asset
+ * included in a backtest)
+ */
+export interface CandleUpdate {
+  time: number;
+  nextCandles: SymbolCandlePair[];
+}
+
+/**
  * Converts the candle data to a list of updates, where each updates contains
  * the candles (one per symbol) to add at a specific timestamp.
  */
 export function createCandleUpdates(
   series: SeriesMap,
   isWithinRange: (c: Candle) => boolean
-): {
-  time: number;
-  nextCandles: SymbolCandlePair[];
-}[] {
+): CandleUpdate[] {
   return pipe(
     series,
     toSymbolCandlePairs,
