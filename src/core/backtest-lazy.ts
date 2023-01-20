@@ -3,6 +3,7 @@ import { toTimestamp } from "../util/time-util";
 import { Nullable, OverrideProps } from "../util/type-util";
 import {
   BacktestArgs,
+  initState,
   InternalTradeState,
   produceNextState,
   revertUnclosedTrades,
@@ -71,7 +72,7 @@ function adjustArgs(args: BacktestLazyArgs): AdjustedBacktestLazyArgs {
 async function doBacktestLazy(
   args: AdjustedBacktestLazyArgs
 ): Promise<BacktestResult> {
-  let state = createInitialState(args);
+  let state = initState(args, {});
   let lastCandleTime: number | undefined = undefined;
   let backtestRange: Partial<Range> = {};
 
@@ -132,15 +133,3 @@ const initMissingAssetStates =
       assets: { ...state.assets, ...newAssets },
     };
   };
-
-function createInitialState(
-  args: AdjustedBacktestLazyArgs
-): InternalTradeState {
-  return {
-    cash: args.initialBalance,
-    assets: {},
-    updated: [],
-    time: 0,
-    args,
-  };
-}
