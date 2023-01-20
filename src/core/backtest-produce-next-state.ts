@@ -1,9 +1,10 @@
-import { map, pipe } from "remeda";
+import { filter, map, mapToObj, pipe } from "remeda";
 import { hasOwnProperty } from "../util/util";
 import { InternalTradeState, updateAsset } from "./backtest";
 import { handleOrders } from "./backtest-order-execution";
 import { CandleUpdate } from "./create-candle-updates";
 import {
+  AssetMap,
   AssetState,
   FullTradingStrategy,
   SingleAssetStrategyUpdate,
@@ -15,11 +16,40 @@ export function produceNextState(
 ) {
   return pipe(
     state,
+    initMissingAssetStates(candleUpdate),
     addNextCandles(candleUpdate),
     handleAllOrders,
     applyStrategy(state.args.strategy)
   );
 }
+
+const initMissingAssetStates =
+  (candleUpdate: CandleUpdate) =>
+  (state: InternalTradeState): InternalTradeState => {
+    const symbols = candleUpdate.nextCandles.map(({ symbol }) => symbol);
+    const newAssets: AssetMap = pipe(
+      symbols,
+      filter((symbol) => !state.assets[symbol]),
+      mapToObj((symbol) => [
+        symbol,
+        {
+          symbol,
+          series: [],
+          position: null,
+          entryOrder: null,
+          takeProfit: null,
+          stopLoss: null,
+          transactions: [],
+          trades: [],
+          data: {},
+        },
+      ])
+    );
+    return {
+      ...state,
+      assets: { ...state.assets, ...newAssets },
+    };
+  };
 
 const addNextCandles =
   ({ time, nextCandles }: CandleUpdate) =>
@@ -53,6 +83,9 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
 const applyStrategy =
   (strat: FullTradingStrategy) =>
   (state: InternalTradeState): InternalTradeState => {
+    if (state.time < state.args.from) {
+      return state;
+    }
     const stratUpdates = strat(state);
     const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
       (state, [symbol, update]) => {
