@@ -1,12 +1,11 @@
 import { mapValues } from "lodash";
-import { first, last, map, pipe } from "remeda";
+import { first, last } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { OverrideProps } from "../util/type-util";
-import { hasOwnProperty } from "../util/util";
-import { handleOrders } from "./backtest-order-execution";
+import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
+import { createCandleUpdates } from "./create-candle-updates";
 import { createProgressBar } from "./progress-bar";
 import {
   AssetMap,
@@ -15,7 +14,6 @@ import {
   FullTradeState,
   FullTradingStrategy,
   SeriesMap,
-  SingleAssetStrategyUpdate,
 } from "./types";
 
 export interface BacktestArgs {
@@ -150,18 +148,6 @@ function doBacktest(args: AdjustedBacktestArgs) {
   });
 }
 
-export function produceNextState(
-  state: InternalTradeState,
-  candleUpdate: CandleUpdate
-) {
-  return pipe(
-    state,
-    addNextCandles(candleUpdate),
-    handleAllOrders,
-    applyStrategy(state.args.strategy)
-  );
-}
-
 export function initState(
   args: InternalTradeState["args"],
   assets: AssetMap
@@ -193,62 +179,6 @@ function initAssets(args: AdjustedBacktestArgs): AssetMap {
       data: {},
     };
   });
-}
-
-const addNextCandles =
-  ({ time, nextCandles }: CandleUpdate) =>
-  (state: InternalTradeState): InternalTradeState => {
-    const symbols = map(nextCandles, ({ symbol }) => symbol);
-    return pipe(state, (state) => {
-      // Mutating the candle arrays for performance. Copying an array has O(N)
-      // complexity which is a real issue when backtesting big datasets.
-      nextCandles.forEach(({ symbol, candle }) =>
-        state.assets[symbol].series.push(candle)
-      );
-      return {
-        ...state,
-        updated: symbols,
-        time,
-      };
-    });
-  };
-
-function handleAllOrders(state: InternalTradeState): InternalTradeState {
-  return state.updated.reduce((state, symbol) => {
-    const { asset, cash } = handleOrders({
-      asset: state.assets[symbol],
-      cash: state.cash,
-      commissionProvider: state.args.commissionProvider,
-    });
-    return updateAsset(state, symbol, asset, cash);
-  }, state);
-}
-
-const applyStrategy =
-  (strat: FullTradingStrategy) =>
-  (state: InternalTradeState): InternalTradeState => {
-    const stratUpdates = strat(state);
-    const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
-      (state, [symbol, update]) => {
-        assertUpdate(update, state.assets[symbol]);
-        return updateAsset(state, symbol, update);
-      },
-      state
-    );
-    return nextState;
-  };
-
-function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
-  if (update.entryOrder && update.entryOrder.size <= 0) {
-    throw Error(
-      `Order size must be positive, but was ${update.entryOrder.size}.`
-    );
-  }
-  if (asset.position && hasOwnProperty(update, "entryOrder")) {
-    throw Error(
-      "Changing entry order while already in a position is not allowed."
-    );
-  }
 }
 
 /**
