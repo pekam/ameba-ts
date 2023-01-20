@@ -5,8 +5,8 @@ import {
   CommonBacktestArgs,
   initState,
   InternalTradeState,
-  produceNextState,
 } from "./backtest";
+import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate } from "./create-candle-updates";
 import { AssetMap, Range } from "./types";
