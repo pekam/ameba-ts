@@ -1,9 +1,10 @@
-export { backtest, BacktestArgs, ProgressHandler } from "./core/backtest";
 export {
-  backtestLazy,
+  backtest,
+  BacktestArgs,
   BacktestLazyArgs,
   LazyCandleProvider,
-} from "./core/backtest-lazy";
+  ProgressHandler,
+} from "./core/backtest";
 export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
 export { CandleUpdate } from "./core/create-candle-updates";
 export * from "./core/type-guards";

@@ -2,14 +2,13 @@ import {
   allInStaker,
   AssetState,
   backtest,
-  BacktestArgs,
-  backtestLazy,
   BacktestResult,
   CandleSeries,
   timestampFromUTC,
   TradingStrategy,
   withStaker,
 } from "../src";
+import { CommonBacktestArgs } from "../src/core/backtest";
 import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
@@ -46,7 +45,7 @@ const backtestRange = {
   to: timestampFromUTC(2021, 10, 8),
 };
 
-const args: Omit<BacktestArgs, "series"> = {
+const args: CommonBacktestArgs = {
   strategy: withStaker(strat, allInStaker),
   ...backtestRange,
   initialBalance: 100,
@@ -73,7 +72,7 @@ it("should produce a backtest result", () => {
 });
 
 it("should produce a backtest result (lazy)", async () => {
-  const result: BacktestResult = await backtestLazy({
+  const result: BacktestResult = await backtest({
     ...args,
     candleProvider: (previousCandleTime) => {
       const candle = previousCandleTime

@@ -1,18 +1,15 @@
-import { mapValues } from "lodash";
-import { first, last } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
-import { OverrideProps } from "../util/type-util";
+import { Nullable, OverrideProps } from "../util/type-util";
 import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { createCandleUpdates } from "./create-candle-updates";
+import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
 import { createProgressBar } from "./progress-bar";
 import {
-  AssetMap,
   AssetState,
-  Candle,
   FullTradeState,
   FullTradingStrategy,
+  Range,
   SeriesMap,
 } from "./types";
 
@@ -67,23 +64,49 @@ export interface BacktestArgs {
   to?: Moment;
 }
 
-// Args used by both backtest and backtestLazy
-export type CommonBacktestArgs = Omit<
-  BacktestArgs,
-  "series" | "progressHandler"
->;
+/**
+ * Args used by both synchronous and asynchronous backtest
+ */
+export type CommonBacktestArgs = Omit<BacktestArgs, "series">;
+
+export type LazyCandleProvider = (
+  lastCandleTime: number | undefined
+) => Promise<Nullable<CandleUpdate>>;
+
+export type EagerCandleProvider = (
+  lastCandleTime: number | undefined
+) => Nullable<CandleUpdate>;
+
+export interface BacktestLazyArgs extends CommonBacktestArgs {
+  /**
+   * A function that should return the next set of candles for the backtester
+   * each time when called. All candles which have the same timestamp (one per
+   * asset) should be included in the same return value. Each return value
+   * should include newer candles than the previous one.
+   *
+   * The function should return null or undefined when the backtest should
+   * finish. The backtest can also end if the optional 'to'-parameter is
+   * provided and this moment is reached.
+   *
+   * The return value is a Promise, so the implementation can for example fetch
+   * a batch of data from a web service or a database when needed, and there's
+   * no need to keep old data in memory.
+   */
+  candleProvider: LazyCandleProvider;
+}
+
+function isBacktestArgs(a: BacktestArgs | BacktestLazyArgs): a is BacktestArgs {
+  return !!(a as BacktestArgs).series;
+}
 
 type AdjustedBacktestArgs = OverrideProps<
-  Required<BacktestArgs>,
+  Required<CommonBacktestArgs>,
   { from: number; to: number }
 >;
 
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
-  args: Pick<
-    AdjustedBacktestArgs,
-    "initialBalance" | "strategy" | "commissionProvider"
-  >;
+  args: AdjustedBacktestArgs;
 }
 
 /**
@@ -100,22 +123,50 @@ export interface ProgressHandler {
  * Tests how the given trading strategy would have performed with the provided
  * historical price data.
  */
-export function backtest(args: BacktestArgs): BacktestResult {
-  return doBacktest({
-    ...args,
-    ...adjustArgs(args),
-    progressHandler: args.progressHandler || createProgressBar(),
-  });
+export function backtest(args: BacktestArgs): BacktestResult;
+export function backtest(args: BacktestLazyArgs): Promise<BacktestResult>;
+export function backtest(
+  args: BacktestArgs | BacktestLazyArgs
+): BacktestResult | Promise<BacktestResult> {
+  const eager = isBacktestArgs(args);
+
+  const state: InternalTradeState = initState(adjustArgs(args));
+
+  // todo fix range
+  const range: Range = {
+    from: state.args.from || 0,
+    to: state.args.to || 0,
+  };
+
+  // todo use progress handler again
+
+  if (eager) {
+    const candleUpdates = createCandleUpdates(args.series);
+    // todo optimize
+    const candleProvider: EagerCandleProvider = (
+      lastCandleTime: number | undefined
+    ) => candleUpdates.find((c) => c.time > (lastCandleTime || -Infinity));
+
+    return convertToBacktestResult(
+      produceFinalState(state, candleProvider),
+      range
+    );
+  } else {
+    return produceFinalStateLazy(state, args.candleProvider).then(
+      (finalState) => convertToBacktestResult(finalState, range)
+    );
+  }
 }
 
 export function adjustArgs(
   args: CommonBacktestArgs
 ): OverrideProps<Required<CommonBacktestArgs>, { from: number; to: number }> {
-  const withDefaults = {
+  const withDefaults: Required<CommonBacktestArgs> = {
     initialBalance: 10000,
     commissionProvider: () => 0,
     from: 0,
     to: Infinity,
+    progressHandler: createProgressBar(),
     ...args,
   };
   return {
@@ -126,59 +177,40 @@ export function adjustArgs(
   };
 }
 
-function doBacktest(args: AdjustedBacktestArgs) {
-  const candleUpdates = createCandleUpdates(args.series, isWithinRange(args));
-  if (!candleUpdates.length) {
-    throw Error("There are no candles to backtest with.");
+function produceFinalState(
+  state: InternalTradeState,
+  candleProvider: EagerCandleProvider
+): InternalTradeState {
+  while (true) {
+    const candleUpdate = candleProvider(state.time || undefined);
+    if (!candleUpdate || candleUpdate.time > state.args.to) {
+      return state;
+    }
+    state = produceNextState(state, candleUpdate);
   }
-
-  args.progressHandler?.onStart(candleUpdates.length);
-
-  const finalState = candleUpdates.reduce((state, candleUpdate) => {
-    const nextState = produceNextState(state, candleUpdate);
-    args.progressHandler?.afterIteration();
-    return nextState;
-  }, initState(args, initAssets(args)));
-
-  args.progressHandler?.onFinish();
-
-  return convertToBacktestResult(finalState, {
-    from: first(candleUpdates)!.time, // candleUpdates.length asserted earlier
-    to: last(candleUpdates)!.time,
-  });
 }
 
-export function initState(
-  args: InternalTradeState["args"],
-  assets: AssetMap
-): InternalTradeState {
+async function produceFinalStateLazy(
+  state: InternalTradeState,
+  candleProvider: LazyCandleProvider
+): Promise<InternalTradeState> {
+  while (true) {
+    const candleUpdate = await candleProvider(state.time || undefined);
+    if (!candleUpdate || candleUpdate.time > state.args.to) {
+      return state;
+    }
+    state = produceNextState(state, candleUpdate);
+  }
+}
+
+function initState(args: InternalTradeState["args"]): InternalTradeState {
   return {
     cash: args.initialBalance,
-    assets,
+    assets: {},
     updated: [],
     time: 0,
     args,
   };
-}
-
-function initAssets(args: AdjustedBacktestArgs): AssetMap {
-  return mapValues(args.series, (series, symbol) => {
-    const initialSeries = (() => {
-      const firstCandleIndex = series.findIndex(isWithinRange(args));
-      return firstCandleIndex === -1 ? [] : series.slice(0, firstCandleIndex);
-    })();
-    return {
-      symbol,
-      series: initialSeries,
-      position: null,
-      entryOrder: null,
-      takeProfit: null,
-      stopLoss: null,
-      transactions: [],
-      trades: [],
-      data: {},
-    };
-  });
 }
 
 /**
@@ -204,7 +236,3 @@ export function updateAsset(
     },
   };
 }
-
-const isWithinRange = (args: AdjustedBacktestArgs) => (candle: Candle) => {
-  return candle.time >= args.from && candle.time <= args.to;
-};

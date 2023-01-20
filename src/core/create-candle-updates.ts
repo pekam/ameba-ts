@@ -1,4 +1,4 @@
-import { filter, flatMap, groupBy, map, pipe, sortBy } from "remeda";
+import { flatMap, groupBy, map, pipe, sortBy } from "remeda";
 import { Candle, CandleSeries, SeriesMap } from "./types";
 
 export interface SymbolCandlePair {
@@ -19,14 +19,10 @@ export interface CandleUpdate {
  * Converts the candle data to a list of updates, where each updates contains
  * the candles (one per symbol) to add at a specific timestamp.
  */
-export function createCandleUpdates(
-  series: SeriesMap,
-  isWithinRange: (c: Candle) => boolean
-): CandleUpdate[] {
+export function createCandleUpdates(series: SeriesMap): CandleUpdate[] {
   return pipe(
     series,
     toSymbolCandlePairs,
-    filter(({ candle }) => isWithinRange(candle)),
     groupBy(({ candle }) => candle.time),
     toList,
     sortBy(({ time }) => time)
