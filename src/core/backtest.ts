@@ -69,6 +69,12 @@ export interface BacktestArgs {
   to?: Moment;
 }
 
+// Args used by both backtest and backtestLazy
+export type CommonBacktestArgs = Omit<
+  BacktestArgs,
+  "series" | "progressHandler"
+>;
+
 type AdjustedBacktestArgs = OverrideProps<
   Required<BacktestArgs>,
   { from: number; to: number }
@@ -97,14 +103,19 @@ export interface ProgressHandler {
  * historical price data.
  */
 export function backtest(args: BacktestArgs): BacktestResult {
-  return doBacktest(adjustArgs(args));
+  return doBacktest({
+    ...args,
+    ...adjustArgs(args),
+    progressHandler: args.progressHandler || createProgressBar(),
+  });
 }
 
-export function adjustArgs(args: BacktestArgs): AdjustedBacktestArgs {
+export function adjustArgs(
+  args: CommonBacktestArgs
+): OverrideProps<Required<CommonBacktestArgs>, { from: number; to: number }> {
   const withDefaults = {
     initialBalance: 10000,
     commissionProvider: () => 0,
-    progressHandler: createProgressBar(),
     from: 0,
     to: Infinity,
     ...args,
