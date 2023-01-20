@@ -6,7 +6,6 @@ import {
   initState,
   InternalTradeState,
   produceNextState,
-  revertUnclosedTrades,
 } from "./backtest";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate } from "./create-candle-updates";
@@ -97,10 +96,7 @@ async function doBacktestLazy(
     lastCandleTime = candleUpdate.time;
   }
 
-  // Only finished trades are included in the result. Another option would be to
-  // close all open trades with the current market price, but exiting against
-  // the strategy's logic would skew the result.
-  return convertToBacktestResult(revertUnclosedTrades(state), {
+  return convertToBacktestResult(state, {
     from: backtestRange.from!, // TODO handle zero candle updates properly
     to: backtestRange.to!,
   });

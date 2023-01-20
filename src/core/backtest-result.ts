@@ -1,6 +1,8 @@
 import { flatMap, sortBy, sumBy } from "lodash";
+import { pipe } from "remeda";
 import { last } from "../util/util";
-import { BacktestArgs, InternalTradeState } from "./backtest";
+import { BacktestArgs, InternalTradeState, updateAsset } from "./backtest";
+import { revertLastTransaction } from "./backtest-order-execution";
 import { CandleSeries, Range, Trade } from "./types";
 
 export interface BacktestStatistics {
@@ -56,26 +58,44 @@ export function convertToBacktestResult(
   finalState: InternalTradeState,
   range: Range
 ): BacktestResult {
-  const initialBalance = finalState.args.initialBalance;
-  const trades = getTradesInOrder(finalState);
+  // Only finished trades are included in the result. Another option would be to
+  // close all open trades with the current market price, but exiting against
+  // the strategy's logic would be skew the result in a worse way.
+  return pipe(finalState, revertUnclosedTrades, (finalState) => {
+    const initialBalance = finalState.args.initialBalance;
+    const trades = getTradesInOrder(finalState);
 
-  const endBalance = finalState.cash;
+    const endBalance = finalState.cash;
 
-  const stats: BacktestStatistics = {
-    initialBalance,
-    endBalance,
-    relativeProfit: (endBalance - initialBalance) / initialBalance,
-    tradeCount: trades.length,
-    successRate:
-      trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
-    buyAndHoldProfit: getBuyAndHoldProfit(
-      // TODO fix typings and support backtestLazy
-      Object.values((finalState.args as BacktestArgs).series || {}),
-      range
-    ),
-    range,
-  };
-  return { trades, stats };
+    const stats: BacktestStatistics = {
+      initialBalance,
+      endBalance,
+      relativeProfit: (endBalance - initialBalance) / initialBalance,
+      tradeCount: trades.length,
+      successRate:
+        trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
+      buyAndHoldProfit: getBuyAndHoldProfit(
+        // TODO fix typings and support backtestLazy
+        Object.values((finalState.args as BacktestArgs).series || {}),
+        range
+      ),
+      range,
+    };
+    return { trades, stats };
+  });
+}
+
+function revertUnclosedTrades(state: InternalTradeState) {
+  return Object.values(state.assets)
+    .filter((a) => a.position)
+    .reduce((state, asset) => {
+      const { asset: nextAssetState, cash } = revertLastTransaction({
+        asset,
+        cash: state.cash,
+      });
+
+      return updateAsset(state, asset.symbol, nextAssetState, cash);
+    }, state);
 }
 
 function getTradesInOrder(state: InternalTradeState) {
