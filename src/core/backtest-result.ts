@@ -1,6 +1,6 @@
 import { flatMap, sortBy, sumBy } from "lodash";
 import { last } from "../util/util";
-import { InternalTradeState } from "./backtest";
+import { BacktestArgs, InternalTradeState } from "./backtest";
 import { CandleSeries, Range, Trade } from "./types";
 
 export interface BacktestStatistics {
@@ -69,7 +69,8 @@ export function convertToBacktestResult(
     successRate:
       trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
     buyAndHoldProfit: getBuyAndHoldProfit(
-      Object.values(finalState.args.series),
+      // TODO fix typings and support backtestLazy
+      Object.values((finalState.args as BacktestArgs).series || {}),
       range
     ),
     range,

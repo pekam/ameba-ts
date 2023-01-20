@@ -1,5 +1,7 @@
 export type Dictionary<T> = Record<string, T>;
 
+export type Nullable<T> = T | null | undefined;
+
 /**
  * Partially overrides object property types.
  *

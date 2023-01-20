@@ -1,6 +1,5 @@
-import { first, mapValues } from "lodash";
-import { last } from "lodash/fp";
-import { pipe } from "remeda";
+import { mapValues } from "lodash";
+import { first, last, map, pipe } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { OverrideProps } from "../util/type-util";
@@ -10,7 +9,7 @@ import {
   revertLastTransaction,
 } from "./backtest-order-execution";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { createCandleUpdates, SymbolCandlePair } from "./create-candle-updates";
+import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
 import { createProgressBar } from "./progress-bar";
 import {
   AssetMap,
@@ -80,7 +79,10 @@ type AdjustedBacktestArgs = OverrideProps<
 
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
-  args: AdjustedBacktestArgs;
+  args: Pick<
+    AdjustedBacktestArgs,
+    "initialBalance" | "strategy" | "commissionProvider"
+  >;
 }
 
 /**
@@ -98,6 +100,10 @@ export interface ProgressHandler {
  * historical price data.
  */
 export function backtest(args: BacktestArgs): BacktestResult {
+  return doBacktest(adjustArgs(args));
+}
+
+export function adjustArgs(args: BacktestArgs): AdjustedBacktestArgs {
   const withDefaults = {
     initialBalance: 10000,
     commissionProvider: () => 0,
@@ -106,13 +112,12 @@ export function backtest(args: BacktestArgs): BacktestResult {
     to: Infinity,
     ...args,
   };
-
-  return doBacktest({
+  return {
     ...withDefaults,
     // Enforce timestamps as numbers:
     from: toTimestamp(withDefaults.from),
     to: toTimestamp(withDefaults.to),
-  });
+  };
 }
 
 function doBacktest(args: AdjustedBacktestArgs) {
@@ -124,12 +129,7 @@ function doBacktest(args: AdjustedBacktestArgs) {
   args.progressHandler?.onStart(candleUpdates.length);
 
   const finalState = candleUpdates.reduce((state, candleUpdate) => {
-    const nextState = pipe(
-      state,
-      addNextCandles(candleUpdate),
-      handleAllOrders,
-      applyStrategy(args.strategy)
-    );
+    const nextState = produceNextState(state, candleUpdate);
     args.progressHandler?.afterIteration();
     return nextState;
   }, createInitialState(args));
@@ -143,6 +143,18 @@ function doBacktest(args: AdjustedBacktestArgs) {
     from: first(candleUpdates)!.time, // candleUpdates.length asserted earlier
     to: last(candleUpdates)!.time,
   });
+}
+
+export function produceNextState(
+  state: InternalTradeState,
+  candleUpdate: CandleUpdate
+) {
+  return pipe(
+    state,
+    addNextCandles(candleUpdate),
+    handleAllOrders,
+    applyStrategy(state.args.strategy)
+  );
 }
 
 function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
@@ -174,18 +186,21 @@ function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
 }
 
 const addNextCandles =
-  ({ time, nextCandles }: { time: number; nextCandles: SymbolCandlePair[] }) =>
+  ({ time, nextCandles }: CandleUpdate) =>
   (state: InternalTradeState): InternalTradeState => {
-    // Mutating the candle arrays for performance. Copying an array has O(N)
-    // complexity which is a real issue when backtesting big datasets.
-    nextCandles.forEach(({ symbol, candle }) =>
-      state.assets[symbol].series.push(candle)
-    );
-    return {
-      ...state,
-      updated: nextCandles.map(({ symbol }) => symbol),
-      time,
-    };
+    const symbols = map(nextCandles, ({ symbol }) => symbol);
+    return pipe(state, (state) => {
+      // Mutating the candle arrays for performance. Copying an array has O(N)
+      // complexity which is a real issue when backtesting big datasets.
+      nextCandles.forEach(({ symbol, candle }) =>
+        state.assets[symbol].series.push(candle)
+      );
+      return {
+        ...state,
+        updated: symbols,
+        time,
+      };
+    });
   };
 
 function handleAllOrders(state: InternalTradeState): InternalTradeState {
@@ -226,7 +241,7 @@ function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
   }
 }
 
-function revertUnclosedTrades(state: InternalTradeState) {
+export function revertUnclosedTrades(state: InternalTradeState) {
   return Object.values(state.assets)
     .filter((a) => a.position)
     .reduce((state, asset) => {
