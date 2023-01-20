@@ -1,23 +1,21 @@
 import { filter, mapToObj, pipe } from "remeda";
-import { toTimestamp } from "../util/time-util";
 import { Nullable, OverrideProps } from "../util/type-util";
 import {
-  BacktestArgs,
+  adjustArgs,
+  CommonBacktestArgs,
   initState,
   InternalTradeState,
   produceNextState,
 } from "./backtest";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate } from "./create-candle-updates";
-import { createProgressBar } from "./progress-bar";
 import { AssetMap, Range } from "./types";
 
 export type LazyCandleProvider = (
   lastCandleTime: number | undefined
 ) => Promise<Nullable<CandleUpdate>>;
 
-export interface BacktestLazyArgs
-  extends Omit<BacktestArgs, "series" | "progressHandler"> {
+export interface BacktestLazyArgs extends CommonBacktestArgs {
   /**
    * A function that should return the next set of candles for the backtester
    * each time when called. All candles which have the same timestamp (one per
@@ -48,24 +46,10 @@ type AdjustedBacktestLazyArgs = OverrideProps<
 export async function backtestLazy(
   args: BacktestLazyArgs
 ): Promise<BacktestResult> {
-  return doBacktestLazy(adjustArgs(args));
-}
-
-function adjustArgs(args: BacktestLazyArgs): AdjustedBacktestLazyArgs {
-  const withDefaults = {
-    initialBalance: 10000,
-    commissionProvider: () => 0,
-    progressHandler: createProgressBar(),
-    from: 0,
-    to: Infinity,
+  return doBacktestLazy({
     ...args,
-  };
-  return {
-    ...withDefaults,
-    // Enforce timestamps as numbers:
-    from: toTimestamp(withDefaults.from),
-    to: toTimestamp(withDefaults.to),
-  };
+    ...adjustArgs(args),
+  });
 }
 
 async function doBacktestLazy(
