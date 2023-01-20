@@ -132,7 +132,7 @@ function doBacktest(args: AdjustedBacktestArgs) {
     const nextState = produceNextState(state, candleUpdate);
     args.progressHandler?.afterIteration();
     return nextState;
-  }, createInitialState(args));
+  }, initState(args, initAssets(args)));
 
   args.progressHandler?.onFinish();
 
@@ -157,8 +157,21 @@ export function produceNextState(
   );
 }
 
-function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
-  const assets: AssetMap = mapValues(args.series, (series, symbol) => {
+export function initState(
+  args: InternalTradeState["args"],
+  assets: AssetMap
+): InternalTradeState {
+  return {
+    cash: args.initialBalance,
+    assets,
+    updated: [],
+    time: 0,
+    args,
+  };
+}
+
+function initAssets(args: AdjustedBacktestArgs): AssetMap {
+  return mapValues(args.series, (series, symbol) => {
     const initialSeries = (() => {
       const firstCandleIndex = series.findIndex(isWithinRange(args));
       return firstCandleIndex === -1 ? [] : series.slice(0, firstCandleIndex);
@@ -175,14 +188,6 @@ function createInitialState(args: AdjustedBacktestArgs): InternalTradeState {
       data: {},
     };
   });
-
-  return {
-    cash: args.initialBalance,
-    assets,
-    updated: [],
-    time: 0,
-    args,
-  };
 }
 
 const addNextCandles =
