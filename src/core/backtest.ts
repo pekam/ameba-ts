@@ -4,10 +4,7 @@ import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { OverrideProps } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
-import {
-  handleOrders,
-  revertLastTransaction,
-} from "./backtest-order-execution";
+import { handleOrders } from "./backtest-order-execution";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
 import { createProgressBar } from "./progress-bar";
@@ -136,10 +133,7 @@ function doBacktest(args: AdjustedBacktestArgs) {
 
   args.progressHandler?.onFinish();
 
-  // Only finished trades are included in the result. Another option would be to
-  // close all open trades with the current market price, but exiting against
-  // the strategy's logic would skew the result.
-  return convertToBacktestResult(revertUnclosedTrades(finalState), {
+  return convertToBacktestResult(finalState, {
     from: first(candleUpdates)!.time, // candleUpdates.length asserted earlier
     to: last(candleUpdates)!.time,
   });
@@ -246,25 +240,12 @@ function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
   }
 }
 
-export function revertUnclosedTrades(state: InternalTradeState) {
-  return Object.values(state.assets)
-    .filter((a) => a.position)
-    .reduce((state, asset) => {
-      const { asset: nextAssetState, cash } = revertLastTransaction({
-        asset,
-        cash: state.cash,
-      });
-
-      return updateAsset(state, asset.symbol, nextAssetState, cash);
-    }, state);
-}
-
 /**
  * Returns a new state after applying {@link update} to the asset with
  * {@link symbol}. If the update changes also the cash balance, provide the new
  * value as {@link cash}.
  */
-function updateAsset(
+export function updateAsset(
   state: InternalTradeState,
   symbol: string,
   update: Partial<AssetState>,
