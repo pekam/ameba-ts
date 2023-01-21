@@ -7,10 +7,19 @@ import { ProgressHandler } from "./backtest";
  * console.
  */
 export function createProgressBar(): ProgressHandler {
-  const progressBar = new SingleBar({}, Presets.shades_classic);
-  return {
-    onStart: (iterationCount: number) => progressBar.start(iterationCount, 0),
-    afterIteration: () => progressBar.increment(),
-    onFinish: () => progressBar.stop(),
+  let progressBar: SingleBar;
+  return (currentTime, startTime, finishTime) => {
+    if (!finishTime) {
+      return;
+    }
+    if (!progressBar) {
+      progressBar = new SingleBar({}, Presets.shades_classic);
+      progressBar.start(finishTime - startTime);
+    }
+    progressBar.update(currentTime - startTime);
+
+    if (currentTime >= finishTime) {
+      progressBar.stop();
+    }
   };
 }

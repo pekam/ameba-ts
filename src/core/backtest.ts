@@ -1,3 +1,5 @@
+import { find, findLast } from "lodash";
+import { pipe } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
@@ -38,8 +40,8 @@ export interface BacktestArgs {
    */
   commissionProvider?: CommissionProvider;
   /**
-   * A collection of callbacks that are called during backtest execution,
-   * enabling reporting/visualizing the backtest's progress.
+   * A callback that is called during backtest execution, enabling
+   * reporting/visualizing the backtest's progress.
    *
    * Defaults to a handler that renders a progress bar in the console. This
    * default behavior can be disabled by explicitly passing `null` or
@@ -108,18 +110,28 @@ type AdjustedBacktestArgs = OverrideProps<
 export interface InternalTradeState extends FullTradeState {
   args: AdjustedBacktestArgs;
   finished: boolean;
+  startTime?: number;
+  finishTime?: number;
   firstAndLastCandles: Dictionary<[Candle, Candle]>;
 }
 
 /**
- * A collection of callbacks that are called during backtest execution, enabling
+ * A callback that is called during backtest execution, enabling
  * reporting/visualizing the backtest's progress.
+ *
+ * @param currentTime the timestamp of the currently processed candle
+ * @param startTime the timestamp of the first candle included in the backtest
+ * @param finishTime the expected timestamp of the last candle to be included in
+ * the backtest. For synchronous backtest the values is always defined and
+ * correct. For async backtest the finishTime is based on the end time ('to')
+ * provided by the backtest caller, and may be incorrect if the candle provider
+ * stops sending candles before reaching 'to'.
  */
-export interface ProgressHandler {
-  onStart: (iterationCount: number) => void;
-  afterIteration: () => void;
-  onFinish: () => void;
-}
+export type ProgressHandler = (
+  currentTime: number,
+  startTime: number,
+  finishTime?: number
+) => void;
 
 /**
  * Tests how the given trading strategy would have performed with the provided
@@ -132,15 +144,17 @@ export function backtest(
 ): BacktestResult | Promise<BacktestResult> {
   const state: InternalTradeState = initState(adjustArgs(args));
 
-  // todo use progress handler again
-
   if (isSynchronous(args)) {
     const candleUpdates = createCandleUpdates(args.series);
-
     let candleIndex = 0; // stateful for performance
     const candleProvider: CandleProvider = () => candleUpdates[candleIndex++];
 
-    return convertToBacktestResult(produceFinalState(state, candleProvider));
+    return pipe(
+      state,
+      addStartAndFinishTimes(candleUpdates),
+      (state) => produceFinalState(state, candleProvider),
+      convertToBacktestResult
+    );
   } else {
     return produceFinalStateAsync(state, args.candleProvider).then(
       convertToBacktestResult
@@ -203,6 +217,20 @@ function initState(args: InternalTradeState["args"]): InternalTradeState {
     firstAndLastCandles: {},
   };
 }
+
+const addStartAndFinishTimes =
+  (candleUpdates: CandleUpdate[]) =>
+  (state: InternalTradeState): InternalTradeState => ({
+    ...state,
+    startTime: find(
+      candleUpdates,
+      (candleUpdate) => !state.args.from || candleUpdate.time >= state.args.from
+    )?.time,
+    finishTime: findLast(
+      candleUpdates,
+      (candleUpdate) => !state.args.to || candleUpdate.time <= state.args.to
+    )?.time,
+  });
 
 /**
  * Returns a new state after applying {@link update} to the asset with
