@@ -23,13 +23,14 @@ export function produceNextState(
     state,
     initMissingAssetStates(candleUpdate),
     addNextCandles(candleUpdate),
-    handleAllOrders,
 
     candleUpdate.time < state.args.from
       ? identity
       : createPipe(
+          handleAllOrders,
           applyStrategy(state.args.strategy),
-          updateFirstAndLastCandles(candleUpdate)
+          updateFirstAndLastCandles(candleUpdate),
+          notifyProgressHandler
         )
   );
 }
@@ -137,3 +138,10 @@ const updateFirstAndLastCandles =
       },
     };
   };
+
+function notifyProgressHandler(state: InternalTradeState): InternalTradeState {
+  if (state.args.progressHandler && state.startTime) {
+    state.args.progressHandler(state.time, state.startTime, state.finishTime);
+  }
+  return state;
+}
