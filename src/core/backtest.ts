@@ -136,15 +136,14 @@ export function backtest(
 
   if (isSynchronous(args)) {
     const candleUpdates = createCandleUpdates(args.series);
-    // todo optimize
-    const candleProvider: CandleProvider = (
-      lastCandleTime: number | undefined
-    ) => candleUpdates.find((c) => c.time > (lastCandleTime || -Infinity));
+
+    let candleIndex = 0; // stateful for performance
+    const candleProvider: CandleProvider = () => candleUpdates[candleIndex++];
 
     return convertToBacktestResult(produceFinalState(state, candleProvider));
   } else {
     return produceFinalStateAsync(state, args.candleProvider).then(
-      (finalState) => convertToBacktestResult(finalState)
+      convertToBacktestResult
     );
   }
 }
