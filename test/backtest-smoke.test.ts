@@ -52,12 +52,18 @@ const args: CommonBacktestArgs = {
 };
 
 function assertBacktestResult(result: BacktestResult) {
-  // This is basically a snapshot test
-  expect(result.stats.endBalance).toBe(103.966784092104632);
-  expect(result.stats.relativeProfit).toBe(0.03966784092104632);
-  expect(result.stats.tradeCount).toBe(22);
-
-  expect(result.stats.range).toEqual(backtestRange);
+  expect(result.stats).toEqual({
+    buyAndHoldProfit: 0.12410729114764989,
+    endBalance: 103.96678409210463,
+    initialBalance: 100,
+    range: {
+      from: 1633132800,
+      to: 1633651200,
+    },
+    relativeProfit: 0.03966784092104632,
+    successRate: 0.5909090909090909,
+    tradeCount: 22,
+  });
 }
 
 it("should produce a backtest result", () => {
