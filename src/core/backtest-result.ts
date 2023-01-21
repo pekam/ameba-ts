@@ -1,5 +1,5 @@
 import { flatMap, sortBy, sumBy } from "lodash";
-import { identity, map, maxBy, minBy, pipe, values } from "remeda";
+import { map, pipe, values } from "remeda";
 import { InternalTradeState, updateAsset } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { Candle, Range, Trade } from "./types";
@@ -133,21 +133,12 @@ const getBuyAndHoldProfitAndDuration = (
   return [profit, duration];
 };
 
-const getRange = (state: InternalTradeState): Range | undefined => {
-  const firstAndLastCandles = values(state.firstAndLastCandles);
-  if (!firstAndLastCandles.length) {
-    return undefined;
+const getRange = (finalState: InternalTradeState): Range | undefined => {
+  if (finalState.startTime && finalState.time) {
+    return {
+      from: finalState.startTime,
+      to: finalState.time,
+    };
   }
-  return {
-    from: pipe(
-      firstAndLastCandles,
-      map(([first, last]) => first.time),
-      minBy(identity)
-    )!,
-    to: pipe(
-      firstAndLastCandles,
-      map(([first, last]) => last.time),
-      maxBy(identity)
-    )!,
-  };
+  return undefined;
 };

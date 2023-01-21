@@ -19,7 +19,7 @@ export function produceNextState(
   if (!candleUpdate || candleUpdate.time > state.args.to) {
     return pipe(
       state,
-      (state) => ({ ...state, finished: true }),
+      (state) => ({ ...state, finished: true, finishTime: state.time }),
       notifyProgressHandler
     );
   }
