@@ -118,3 +118,11 @@ export const mapValues =
   <T, R>(mapper: (value: T, key: string) => R) =>
   (obj: Dictionary<T>): Dictionary<R> =>
     _.mapValues(obj, mapper);
+
+/**
+ * Enables using Promise.then in pipe without arrow functions.
+ */
+export const then =
+  <T, R>(fn: (arg: T) => R): ((arg: Promise<T>) => Promise<R>) =>
+  (arg: Promise<T>) =>
+    arg.then(fn);
