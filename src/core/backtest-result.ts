@@ -1,9 +1,8 @@
 import { flatMap, sortBy, sumBy } from "lodash";
-import { pipe } from "remeda";
-import { last } from "../util/util";
-import { BacktestArgs, InternalTradeState, updateAsset } from "./backtest";
+import { identity, map, maxBy, minBy, pipe, values } from "remeda";
+import { InternalTradeState, updateAsset } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
-import { CandleSeries, Range, Trade } from "./types";
+import { Candle, Range, Trade } from "./types";
 
 export interface BacktestStatistics {
   initialBalance: number;
@@ -37,9 +36,9 @@ export interface BacktestStatistics {
   buyAndHoldProfit: number;
   /**
    * Timestamps of the first and last candle included in the backtest (both
-   * inclusive).
+   * inclusive). Not defined if the backtest didn't use any candles.
    */
-  range: Range;
+  range: Range | undefined;
 }
 
 export interface BacktestResult {
@@ -55,8 +54,7 @@ export interface BacktestResult {
 }
 
 export function convertToBacktestResult(
-  finalState: InternalTradeState,
-  range: Range
+  finalState: InternalTradeState
 ): BacktestResult {
   // Only finished trades are included in the result. Another option would be to
   // close all open trades with the current market price, but exiting against
@@ -74,12 +72,8 @@ export function convertToBacktestResult(
       tradeCount: trades.length,
       successRate:
         trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
-      buyAndHoldProfit: getBuyAndHoldProfit(
-        // TODO fix typings and support async backtest
-        Object.values((finalState.args as BacktestArgs).series || {}),
-        range
-      ),
-      range,
+      buyAndHoldProfit: getBuyAndHoldProfit(finalState),
+      range: getRange(finalState),
     };
     return { trades, stats };
   });
@@ -105,9 +99,11 @@ function getTradesInOrder(state: InternalTradeState) {
   );
 }
 
-function getBuyAndHoldProfit(series: CandleSeries[], range: Range): number {
-  const profitsAndDurations: [number, number][] = series.map(
-    getBuyAndHoldProfitAndDuration(range)
+function getBuyAndHoldProfit(state: InternalTradeState): number {
+  const profitsAndDurations: [number, number][] = pipe(
+    state.firstAndLastCandles,
+    values,
+    map(getBuyAndHoldProfitAndDuration)
   );
 
   const totalWeight = sumBy(
@@ -123,17 +119,11 @@ function getBuyAndHoldProfit(series: CandleSeries[], range: Range): number {
   return weightedAvg;
 }
 
-const getBuyAndHoldProfitAndDuration: (
-  range: Range
-) => (series: CandleSeries) => [number, number] = (range) => (series) => {
-  if (!series.length) {
-    return [0, 0];
-  }
-  const startCandle = series.find((c) => c.time >= range.from);
-  if (!startCandle) {
-    return [0, 0];
-  }
-  const endCandle = series.find((c) => c.time >= range.to) || last(series);
+const getBuyAndHoldProfitAndDuration = (
+  firstAndLastCandles: [Candle, Candle]
+): [number, number] => {
+  const [startCandle, endCandle] = firstAndLastCandles;
+
   const startPrice = startCandle.open;
   const endPrice = endCandle.close;
 
@@ -141,4 +131,23 @@ const getBuyAndHoldProfitAndDuration: (
   const duration = endCandle.time - startCandle.time;
 
   return [profit, duration];
+};
+
+const getRange = (state: InternalTradeState): Range | undefined => {
+  const firstAndLastCandles = values(state.firstAndLastCandles);
+  if (!firstAndLastCandles.length) {
+    return undefined;
+  }
+  return {
+    from: pipe(
+      firstAndLastCandles,
+      map(([first, last]) => first.time),
+      minBy(identity)
+    )!,
+    to: pipe(
+      firstAndLastCandles,
+      map(([first, last]) => last.time),
+      maxBy(identity)
+    )!,
+  };
 };

@@ -57,8 +57,7 @@ function assertBacktestResult(result: BacktestResult) {
   expect(result.stats.relativeProfit).toBe(0.03966784092104632);
   expect(result.stats.tradeCount).toBe(22);
 
-  expect(result.stats.range.from).toBe(backtestRange.from);
-  expect(result.stats.range.to).toBe(backtestRange.to);
+  expect(result.stats.range).toEqual(backtestRange);
 }
 
 it("should produce a backtest result", () => {
