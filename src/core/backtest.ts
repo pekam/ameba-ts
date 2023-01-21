@@ -1,15 +1,15 @@
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
-import { Nullable, OverrideProps } from "../util/type-util";
+import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
 import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
 import { createProgressBar } from "./progress-bar";
 import {
   AssetState,
+  Candle,
   FullTradeState,
   FullTradingStrategy,
-  Range,
   SeriesMap,
 } from "./types";
 
@@ -108,6 +108,7 @@ type AdjustedBacktestArgs = OverrideProps<
 export interface InternalTradeState extends FullTradeState {
   args: AdjustedBacktestArgs;
   finished: boolean;
+  firstAndLastCandles: Dictionary<[Candle, Candle]>;
 }
 
 /**
@@ -131,12 +132,6 @@ export function backtest(
 ): BacktestResult | Promise<BacktestResult> {
   const state: InternalTradeState = initState(adjustArgs(args));
 
-  // todo fix range
-  const range: Range = {
-    from: state.args.from || 0,
-    to: state.args.to || 0,
-  };
-
   // todo use progress handler again
 
   if (isSynchronous(args)) {
@@ -146,13 +141,10 @@ export function backtest(
       lastCandleTime: number | undefined
     ) => candleUpdates.find((c) => c.time > (lastCandleTime || -Infinity));
 
-    return convertToBacktestResult(
-      produceFinalState(state, candleProvider),
-      range
-    );
+    return convertToBacktestResult(produceFinalState(state, candleProvider));
   } else {
     return produceFinalStateAsync(state, args.candleProvider).then(
-      (finalState) => convertToBacktestResult(finalState, range)
+      (finalState) => convertToBacktestResult(finalState)
     );
   }
 }
@@ -207,6 +199,7 @@ function initState(args: InternalTradeState["args"]): InternalTradeState {
     time: 0,
     args,
     finished: false,
+    firstAndLastCandles: {},
   };
 }
 

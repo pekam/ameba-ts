@@ -1,5 +1,5 @@
-import { filter, map, mapToObj, pipe } from "remeda";
-import { Nullable } from "../util/type-util";
+import { createPipe, filter, identity, map, mapToObj, pipe } from "remeda";
+import { Dictionary, Nullable } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
 import { InternalTradeState, updateAsset } from "./backtest";
 import { handleOrders } from "./backtest-order-execution";
@@ -7,6 +7,7 @@ import { CandleUpdate } from "./create-candle-updates";
 import {
   AssetMap,
   AssetState,
+  Candle,
   FullTradingStrategy,
   SingleAssetStrategyUpdate,
 } from "./types";
@@ -23,7 +24,13 @@ export function produceNextState(
     initMissingAssetStates(candleUpdate),
     addNextCandles(candleUpdate),
     handleAllOrders,
-    applyStrategy(state.args.strategy)
+
+    candleUpdate.time < state.args.from
+      ? identity
+      : createPipe(
+          applyStrategy(state.args.strategy),
+          updateFirstAndLastCandles(candleUpdate)
+        )
   );
 }
 
@@ -59,18 +66,16 @@ const addNextCandles =
   ({ time, nextCandles }: CandleUpdate) =>
   (state: InternalTradeState): InternalTradeState => {
     const symbols = map(nextCandles, ({ symbol }) => symbol);
-    return pipe(state, (state) => {
-      // Mutating the candle arrays for performance. Copying an array has O(N)
-      // complexity which is a real issue when backtesting big datasets.
-      nextCandles.forEach(({ symbol, candle }) =>
-        state.assets[symbol].series.push(candle)
-      );
-      return {
-        ...state,
-        updated: symbols,
-        time,
-      };
-    });
+    // Mutating the candle arrays for performance. Copying an array has O(N)
+    // complexity which is a real issue when backtesting big datasets.
+    nextCandles.forEach(({ symbol, candle }) =>
+      state.assets[symbol].series.push(candle)
+    );
+    return {
+      ...state,
+      updated: symbols,
+      time,
+    };
   };
 
 function handleAllOrders(state: InternalTradeState): InternalTradeState {
@@ -87,9 +92,6 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
 const applyStrategy =
   (strat: FullTradingStrategy) =>
   (state: InternalTradeState): InternalTradeState => {
-    if (state.time < state.args.from) {
-      return state;
-    }
     const stratUpdates = strat(state);
     const nextState: InternalTradeState = Object.entries(stratUpdates).reduce(
       (state, [symbol, update]) => {
@@ -113,3 +115,25 @@ function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
     );
   }
 }
+
+const updateFirstAndLastCandles =
+  (candleUpdate: CandleUpdate) =>
+  (state: InternalTradeState): InternalTradeState => {
+    const updatedEntries: Dictionary<[Candle, Candle]> = pipe(
+      candleUpdate.nextCandles,
+      mapToObj(({ symbol, candle }) => {
+        const firstAndLastCandles = state.firstAndLastCandles[symbol];
+        return [
+          symbol,
+          [firstAndLastCandles ? firstAndLastCandles[0] : candle, candle],
+        ];
+      })
+    );
+    return {
+      ...state,
+      firstAndLastCandles: {
+        ...state.firstAndLastCandles,
+        ...updatedEntries,
+      },
+    };
+  };
