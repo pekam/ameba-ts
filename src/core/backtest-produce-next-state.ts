@@ -1,4 +1,5 @@
 import { filter, map, mapToObj, pipe } from "remeda";
+import { Nullable } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
 import { InternalTradeState, updateAsset } from "./backtest";
 import { handleOrders } from "./backtest-order-execution";
@@ -12,8 +13,11 @@ import {
 
 export function produceNextState(
   state: InternalTradeState,
-  candleUpdate: CandleUpdate
-) {
+  candleUpdate: Nullable<CandleUpdate>
+): InternalTradeState {
+  if (!candleUpdate || candleUpdate.time > state.args.to) {
+    return { ...state, finished: true };
+  }
   return pipe(
     state,
     initMissingAssetStates(candleUpdate),
