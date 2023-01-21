@@ -146,11 +146,11 @@ const updateFirstAndLastCandles =
 
 function notifyProgressHandler(state: InternalTradeState): InternalTradeState {
   if (state.args.progressHandler && state.startTime) {
-    state.args.progressHandler(
-      state.time,
-      state.startTime,
-      state.finished ? state.time : state.finishTime
-    );
+    state.args.progressHandler({
+      currentTime: state.time,
+      startTime: state.startTime,
+      finishTime: state.finished ? state.time : state.finishTime,
+    });
   }
   return state;
 }
