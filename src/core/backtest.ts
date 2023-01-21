@@ -172,6 +172,7 @@ function produceFinalState(
   state: InternalTradeState,
   candleProvider: CandleProvider
 ): InternalTradeState {
+  // Can't use recursion because JS doesn't have tail call optimization
   while (!state.finished) {
     state = produceNextState(state, candleProvider(state.time || undefined));
   }
@@ -182,6 +183,7 @@ async function produceFinalStateAsync(
   state: InternalTradeState,
   candleProvider: AsyncCandleProvider
 ): Promise<InternalTradeState> {
+  // Can't use recursion because JS doesn't have tail call optimization
   while (!state.finished) {
     state = produceNextState(
       state,
