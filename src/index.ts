@@ -3,10 +3,10 @@ export {
   AsyncCandleProvider,
   backtest,
   BacktestArgs,
-  ProgressHandler,
 } from "./core/backtest";
 export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
 export { CandleUpdate } from "./core/create-candle-updates";
+export { ProgressHandler } from "./core/progress-handler";
 export * from "./core/type-guards";
 export * from "./core/types";
 export * from "./high-level-api/types";
