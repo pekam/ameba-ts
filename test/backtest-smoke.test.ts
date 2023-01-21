@@ -71,7 +71,7 @@ it("should produce a backtest result", () => {
   assertBacktestResult(result);
 });
 
-it("should produce a backtest result (lazy)", async () => {
+it("should produce a backtest result (async)", async () => {
   const result: BacktestResult = await backtest({
     ...args,
     candleProvider: (previousCandleTime) => {

@@ -1,8 +1,8 @@
 export {
+  AsyncBacktestArgs,
+  AsyncCandleProvider,
   backtest,
   BacktestArgs,
-  BacktestLazyArgs,
-  LazyCandleProvider,
   ProgressHandler,
 } from "./core/backtest";
 export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
