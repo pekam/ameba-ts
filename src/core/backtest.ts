@@ -107,6 +107,7 @@ type AdjustedBacktestArgs = OverrideProps<
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
   args: AdjustedBacktestArgs;
+  finished: boolean;
 }
 
 /**
@@ -181,26 +182,23 @@ function produceFinalState(
   state: InternalTradeState,
   candleProvider: EagerCandleProvider
 ): InternalTradeState {
-  while (true) {
-    const candleUpdate = candleProvider(state.time || undefined);
-    if (!candleUpdate || candleUpdate.time > state.args.to) {
-      return state;
-    }
-    state = produceNextState(state, candleUpdate);
+  while (!state.finished) {
+    state = produceNextState(state, candleProvider(state.time || undefined));
   }
+  return state;
 }
 
 async function produceFinalStateLazy(
   state: InternalTradeState,
   candleProvider: LazyCandleProvider
 ): Promise<InternalTradeState> {
-  while (true) {
-    const candleUpdate = await candleProvider(state.time || undefined);
-    if (!candleUpdate || candleUpdate.time > state.args.to) {
-      return state;
-    }
-    state = produceNextState(state, candleUpdate);
+  while (!state.finished) {
+    state = produceNextState(
+      state,
+      await candleProvider(state.time || undefined)
+    );
   }
+  return state;
 }
 
 function initState(args: InternalTradeState["args"]): InternalTradeState {
@@ -210,6 +208,7 @@ function initState(args: InternalTradeState["args"]): InternalTradeState {
     updated: [],
     time: 0,
     args,
+    finished: false,
   };
 }
 
