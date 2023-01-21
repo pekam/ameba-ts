@@ -6,7 +6,7 @@ import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
 import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
-import { createProgressBar } from "./progress-bar";
+import { createProgressBar, ProgressHandler } from "./progress-handler";
 import {
   AssetState,
   Candle,
@@ -114,24 +114,6 @@ export interface InternalTradeState extends FullTradeState {
   finishTime?: number;
   firstAndLastCandles: Dictionary<[Candle, Candle]>;
 }
-
-/**
- * A callback that is called during backtest execution, enabling
- * reporting/visualizing the backtest's progress.
- *
- * @param currentTime the timestamp of the currently processed candle
- * @param startTime the timestamp of the first candle included in the backtest
- * @param finishTime the expected timestamp of the last candle to be included in
- * the backtest. For synchronous backtest the values is always defined and
- * correct. For async backtest the finishTime is based on the end time ('to')
- * provided by the backtest caller, and may be incorrect if the candle provider
- * stops sending candles before reaching 'to'.
- */
-export type ProgressHandler = (
-  currentTime: number,
-  startTime: number,
-  finishTime?: number
-) => void;
 
 /**
  * Tests how the given trading strategy would have performed with the provided
