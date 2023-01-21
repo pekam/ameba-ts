@@ -75,7 +75,7 @@ export function convertToBacktestResult(
       successRate:
         trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
       buyAndHoldProfit: getBuyAndHoldProfit(
-        // TODO fix typings and support backtestLazy
+        // TODO fix typings and support async backtest
         Object.values((finalState.args as BacktestArgs).series || {}),
         range
       ),

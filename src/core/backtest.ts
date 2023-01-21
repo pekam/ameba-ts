@@ -69,15 +69,7 @@ export interface BacktestArgs {
  */
 export type CommonBacktestArgs = Omit<BacktestArgs, "series">;
 
-export type LazyCandleProvider = (
-  lastCandleTime: number | undefined
-) => Promise<Nullable<CandleUpdate>>;
-
-export type EagerCandleProvider = (
-  lastCandleTime: number | undefined
-) => Nullable<CandleUpdate>;
-
-export interface BacktestLazyArgs extends CommonBacktestArgs {
+export interface AsyncBacktestArgs extends CommonBacktestArgs {
   /**
    * A function that should return the next set of candles for the backtester
    * each time when called. All candles which have the same timestamp (one per
@@ -92,10 +84,18 @@ export interface BacktestLazyArgs extends CommonBacktestArgs {
    * a batch of data from a web service or a database when needed, and there's
    * no need to keep old data in memory.
    */
-  candleProvider: LazyCandleProvider;
+  candleProvider: AsyncCandleProvider;
 }
 
-function isBacktestArgs(a: BacktestArgs | BacktestLazyArgs): a is BacktestArgs {
+export type AsyncCandleProvider = (
+  lastCandleTime: number | undefined
+) => Promise<Nullable<CandleUpdate>>;
+
+export type CandleProvider = (
+  lastCandleTime: number | undefined
+) => Nullable<CandleUpdate>;
+
+function isSynchronous(a: BacktestArgs | AsyncBacktestArgs): a is BacktestArgs {
   return !!(a as BacktestArgs).series;
 }
 
@@ -125,12 +125,10 @@ export interface ProgressHandler {
  * historical price data.
  */
 export function backtest(args: BacktestArgs): BacktestResult;
-export function backtest(args: BacktestLazyArgs): Promise<BacktestResult>;
+export function backtest(args: AsyncBacktestArgs): Promise<BacktestResult>;
 export function backtest(
-  args: BacktestArgs | BacktestLazyArgs
+  args: BacktestArgs | AsyncBacktestArgs
 ): BacktestResult | Promise<BacktestResult> {
-  const eager = isBacktestArgs(args);
-
   const state: InternalTradeState = initState(adjustArgs(args));
 
   // todo fix range
@@ -141,10 +139,10 @@ export function backtest(
 
   // todo use progress handler again
 
-  if (eager) {
+  if (isSynchronous(args)) {
     const candleUpdates = createCandleUpdates(args.series);
     // todo optimize
-    const candleProvider: EagerCandleProvider = (
+    const candleProvider: CandleProvider = (
       lastCandleTime: number | undefined
     ) => candleUpdates.find((c) => c.time > (lastCandleTime || -Infinity));
 
@@ -153,7 +151,7 @@ export function backtest(
       range
     );
   } else {
-    return produceFinalStateLazy(state, args.candleProvider).then(
+    return produceFinalStateAsync(state, args.candleProvider).then(
       (finalState) => convertToBacktestResult(finalState, range)
     );
   }
@@ -180,7 +178,7 @@ export function adjustArgs(
 
 function produceFinalState(
   state: InternalTradeState,
-  candleProvider: EagerCandleProvider
+  candleProvider: CandleProvider
 ): InternalTradeState {
   while (!state.finished) {
     state = produceNextState(state, candleProvider(state.time || undefined));
@@ -188,9 +186,9 @@ function produceFinalState(
   return state;
 }
 
-async function produceFinalStateLazy(
+async function produceFinalStateAsync(
   state: InternalTradeState,
-  candleProvider: LazyCandleProvider
+  candleProvider: AsyncCandleProvider
 ): Promise<InternalTradeState> {
   while (!state.finished) {
     state = produceNextState(
