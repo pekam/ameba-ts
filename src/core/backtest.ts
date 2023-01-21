@@ -1,4 +1,4 @@
-import { find, findLast } from "lodash";
+import { findLast } from "lodash";
 import { pipe } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
@@ -122,25 +122,25 @@ export interface InternalTradeState extends FullTradeState {
 export function backtest(args: BacktestArgs): BacktestResult;
 export function backtest(args: AsyncBacktestArgs): Promise<BacktestResult>;
 export function backtest(
-  args: BacktestArgs | AsyncBacktestArgs
+  originalArgs: BacktestArgs | AsyncBacktestArgs
 ): BacktestResult | Promise<BacktestResult> {
-  const state: InternalTradeState = initState(adjustArgs(args));
+  const state: InternalTradeState = initState(adjustArgs(originalArgs));
 
-  if (isSynchronous(args)) {
-    const candleUpdates = createCandleUpdates(args.series);
+  if (isSynchronous(originalArgs)) {
+    const candleUpdates = createCandleUpdates(originalArgs.series);
     let candleIndex = 0; // stateful for performance
     const candleProvider: CandleProvider = () => candleUpdates[candleIndex++];
 
     return pipe(
       state,
-      addStartAndFinishTimes(candleUpdates),
+      addFinishTimeFromCandleUpdates(candleUpdates),
       (state) => produceFinalState(state, candleProvider),
       convertToBacktestResult
     );
   } else {
-    return produceFinalStateAsync(state, args.candleProvider).then(
-      convertToBacktestResult
-    );
+    return pipe(state, addFinishTime(originalArgs.to), (state) =>
+      produceFinalStateAsync(state, originalArgs.candleProvider)
+    ).then(convertToBacktestResult);
   }
 }
 
@@ -200,18 +200,21 @@ function initState(args: InternalTradeState["args"]): InternalTradeState {
   };
 }
 
-const addStartAndFinishTimes =
+const addFinishTimeFromCandleUpdates =
   (candleUpdates: CandleUpdate[]) =>
+  (state: InternalTradeState): InternalTradeState =>
+    addFinishTime(
+      findLast(
+        candleUpdates,
+        (candleUpdate) => !state.args.to || candleUpdate.time <= state.args.to
+      )?.time
+    )(state);
+
+const addFinishTime =
+  (finishTime: Moment | undefined) =>
   (state: InternalTradeState): InternalTradeState => ({
     ...state,
-    startTime: find(
-      candleUpdates,
-      (candleUpdate) => !state.args.from || candleUpdate.time >= state.args.from
-    )?.time,
-    finishTime: findLast(
-      candleUpdates,
-      (candleUpdate) => !state.args.to || candleUpdate.time <= state.args.to
-    )?.time,
+    finishTime: finishTime === undefined ? finishTime : toTimestamp(finishTime),
   });
 
 /**

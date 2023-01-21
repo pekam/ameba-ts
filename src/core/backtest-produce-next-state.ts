@@ -17,7 +17,11 @@ export function produceNextState(
   candleUpdate: Nullable<CandleUpdate>
 ): InternalTradeState {
   if (!candleUpdate || candleUpdate.time > state.args.to) {
-    return { ...state, finished: true };
+    return pipe(
+      state,
+      (state) => ({ ...state, finished: true }),
+      notifyProgressHandler
+    );
   }
   return pipe(
     state,
@@ -27,6 +31,7 @@ export function produceNextState(
     candleUpdate.time < state.args.from
       ? identity
       : createPipe(
+          updateStartTime(candleUpdate),
           handleAllOrders,
           applyStrategy(state.args.strategy),
           updateFirstAndLastCandles(candleUpdate),
@@ -141,7 +146,16 @@ const updateFirstAndLastCandles =
 
 function notifyProgressHandler(state: InternalTradeState): InternalTradeState {
   if (state.args.progressHandler && state.startTime) {
-    state.args.progressHandler(state.time, state.startTime, state.finishTime);
+    state.args.progressHandler(
+      state.time,
+      state.startTime,
+      state.finished ? state.time : state.finishTime
+    );
   }
   return state;
 }
+
+const updateStartTime =
+  (candleUpdate: CandleUpdate) =>
+  (state: InternalTradeState): InternalTradeState =>
+    state.startTime ? state : { ...state, startTime: candleUpdate.time };
