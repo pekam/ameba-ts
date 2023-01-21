@@ -31,8 +31,9 @@ export function createProgressBar(): ProgressHandler {
     }
     if (!progressBar) {
       progressBar = new SingleBar({}, Presets.shades_classic);
-      progressBar.start(finishTime - startTime);
+      progressBar.start();
     }
+    progressBar.setTotal(finishTime - startTime);
     progressBar.update(currentTime - startTime);
 
     if (currentTime >= finishTime) {
