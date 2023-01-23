@@ -3,7 +3,7 @@ import { pipe } from "remeda";
 import { CommissionProvider } from "..";
 import { Moment, toTimestamp } from "../util/time-util";
 import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
-import { then } from "../util/util";
+import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
@@ -135,10 +135,11 @@ export function backtest(
 
   if (isSynchronous(originalArgs)) {
     const candleUpdates = createCandleUpdates(originalArgs.series);
+    const candleProvider = toCandleProvider(candleUpdates);
     return pipe(
       state,
       addFinishTimeFromCandleUpdates(candleUpdates),
-      produceFinalState(toCandleProvider(candleUpdates)),
+      produceFinalState(candleProvider),
       convertToBacktestResult
     );
   } else {
@@ -150,6 +151,20 @@ export function backtest(
     );
   }
 }
+
+const produceFinalState = (candleProvider: CandleProvider) =>
+  repeatUntil(
+    (state: InternalTradeState) =>
+      produceNextState(state, candleProvider(state.time || undefined)),
+    (state: InternalTradeState) => state.finished
+  );
+
+const produceFinalStateAsync = (candleProvider: AsyncCandleProvider) =>
+  repeatUntilAsync(
+    async (state: InternalTradeState) =>
+      produceNextState(state, await candleProvider(state.time || undefined)),
+    (state: InternalTradeState) => state.finished
+  );
 
 export function adjustArgs(
   args: CommonBacktestArgs
@@ -169,29 +184,6 @@ export function adjustArgs(
     to: toTimestamp(withDefaults.to),
   };
 }
-
-const produceFinalState =
-  (candleProvider: CandleProvider) =>
-  (state: InternalTradeState): InternalTradeState => {
-    // Can't use recursion because JS doesn't have tail call optimization
-    while (!state.finished) {
-      state = produceNextState(state, candleProvider(state.time || undefined));
-    }
-    return state;
-  };
-
-const produceFinalStateAsync =
-  (candleProvider: AsyncCandleProvider) =>
-  async (state: InternalTradeState): Promise<InternalTradeState> => {
-    // Can't use recursion because JS doesn't have tail call optimization
-    while (!state.finished) {
-      state = produceNextState(
-        state,
-        await candleProvider(state.time || undefined)
-      );
-    }
-    return state;
-  };
 
 function initState(args: InternalTradeState["args"]): InternalTradeState {
   return {

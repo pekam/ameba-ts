@@ -126,3 +126,33 @@ export const then =
   <T, R>(fn: (arg: T) => R): ((arg: Promise<T>) => Promise<R>) =>
   (arg: Promise<T>) =>
     arg.then(fn);
+
+/**
+ * Repeats the given function on the initialValue until the endCondition is
+ * reached. This can be used instead of recursion when performance is an issue
+ * because of missing tail call optimization.
+ */
+export const repeatUntil =
+  <T>(fn: (arg: T) => T, endCondition: (arg: T) => boolean) =>
+  (initialValue: T) => {
+    let value = initialValue;
+    while (!endCondition(value)) {
+      value = fn(value);
+    }
+    return value;
+  };
+
+/**
+ * Repeats the given function on the initialValue until the endCondition is
+ * reached. This can be used instead of recursion when performance is an issue
+ * because of missing tail call optimization.
+ */
+export const repeatUntilAsync =
+  <T>(fn: (arg: T) => Promise<T>, endCondition: (arg: T) => boolean) =>
+  async (initialValue: T) => {
+    let value = initialValue;
+    while (!endCondition(value)) {
+      value = await fn(value);
+    }
+    return value;
+  };
