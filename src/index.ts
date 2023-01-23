@@ -21,5 +21,5 @@ export * from "./strategies/macd-strat";
 export * from "./strategies/rsi-reversal-strat";
 export * from "./strategies/strat-util";
 export * from "./strategies/volatility-strat";
+export * from "./time";
 export * from "./util/conversions";
-export * from "./util/time-util";

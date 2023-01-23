@@ -4,7 +4,6 @@ import {
   backtest,
   BacktestResult,
   CandleSeries,
-  timestampFromUTC,
   TradingStrategy,
   withStaker,
 } from "../src";
@@ -41,8 +40,8 @@ const strat: TradingStrategy = (state: AssetState) => {
 };
 
 const backtestRange = {
-  from: timestampFromUTC(2021, 10, 2),
-  to: timestampFromUTC(2021, 10, 8),
+  from: "2021-10-02",
+  to: "2021-10-08",
 };
 
 const args: CommonBacktestArgs = {

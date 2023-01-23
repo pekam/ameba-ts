@@ -1,7 +1,7 @@
 import { findLast } from "lodash";
 import { pipe } from "remeda";
 import { CommissionProvider } from "..";
-import { Moment, toTimestamp } from "../util/time-util";
+import { Moment, toTimestamp } from "../time";
 import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
 import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import { produceNextState } from "./backtest-produce-next-state";
