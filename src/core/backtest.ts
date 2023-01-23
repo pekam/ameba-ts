@@ -215,8 +215,25 @@ const addFinishTime =
   });
 
 function toCandleProvider(candleUpdates: CandleUpdate[]): CandleProvider {
-  let candleIndex = 0; // stateful for performance
-  return () => candleUpdates[candleIndex++];
+  // Stateful for performance. The correctness of this helper value is still
+  // verified each time, so the function works correctly even if it gets out of
+  // sync with the backtest process (for example, if the bactest execution is
+  // resumed by using a persisted backtest state).
+  let candleIndex = 0;
+
+  return (lastCandleTime: number | undefined) => {
+    if (!lastCandleTime) {
+      candleIndex = 0;
+    } else {
+      const isCorrect = candleUpdates[candleIndex - 1]?.time === lastCandleTime;
+      if (!isCorrect) {
+        candleIndex = candleUpdates.findIndex(
+          (update) => update.time > lastCandleTime
+        );
+      }
+    }
+    return candleUpdates[candleIndex++];
+  };
 }
 
 /**
