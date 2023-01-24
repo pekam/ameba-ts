@@ -1,5 +1,5 @@
 import { takeRightWhile } from "lodash";
-import { AssetState, Candle, CandleSeries } from "../core/types";
+import { AssetState, Candle } from "../core/types";
 import { Dictionary } from "../util/type-util";
 import { last } from "../util/util";
 
@@ -22,7 +22,10 @@ fetched (the common reason for bugs in non-pure code), the value of a specific
 indicator for a specific candle will always be the same.
 */
 
-export type SeriesAndData = Pick<AssetState, "series" | "data">;
+export type IndicatorInputState = Pick<
+  AssetState,
+  "series" | "data" | "bufferSize"
+>;
 
 /**
  * Gets the value of an indicator, or `undefined` if there's not been enough
@@ -39,7 +42,7 @@ export type SeriesAndData = Pick<AssetState, "series" | "data">;
  * @param indexFromEnd 0 to get the latest value, 1 for the second last etc.
  */
 export function getIndicatorValue<RESULT>(
-  state: SeriesAndData,
+  state: IndicatorInputState,
   key: string,
   initializer: () => (c: Candle) => RESULT | undefined,
   indexFromEnd: number
@@ -48,7 +51,7 @@ export function getIndicatorValue<RESULT>(
     createIndicator(initializer)
   );
 
-  indicator.update(state.series);
+  indicator.update(state);
   return indicator.getFromEnd(indexFromEnd);
 }
 
@@ -59,10 +62,13 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
   let lastTimestamp = -1;
 
   return {
-    update: (series: CandleSeries): void => {
+    update: ({ series, bufferSize }: IndicatorInputState): void => {
       takeRightWhile(series, (c) => c.time > lastTimestamp).forEach((c) => {
         const nextValue = nextValueGenerator(c);
         nextValue && result.push(nextValue);
+        while (result.length > bufferSize) {
+          result.shift();
+        }
       });
       lastTimestamp = Math.max(lastTimestamp, last(series).time);
     },
@@ -73,7 +79,7 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
   };
 }
 
-function getIndicatorStore(state: SeriesAndData): Dictionary<any> {
+function getIndicatorStore(state: IndicatorInputState): Dictionary<any> {
   return computeIfAbsent(state.data, "_indicators", () => ({}));
 }
 

@@ -182,6 +182,12 @@ export interface AssetState {
    * things across iterations.
    */
   data: Dictionary<any>;
+  /**
+   * The number of candles and indicators to keep in memory. When bufferSize is
+   * reached, the oldest candles and indicators will be removed as new ones are
+   * added.
+   */
+  bufferSize: number;
 }
 
 /**

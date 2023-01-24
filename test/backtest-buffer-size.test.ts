@@ -1,14 +1,18 @@
+import { range } from "remeda";
+import { getSma } from "../src";
 import { backtest } from "../src/core/backtest";
 import { FullTradingStrategy, SeriesMap } from "../src/core/types";
+import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
-it("should remove old candles when bufferSize reached", () => {
-  const series: SeriesMap = {
-    a: testData.getSimpleTestData(5),
-    b: testData.getSimpleTestData(5),
-  };
+const series: SeriesMap = {
+  a: testData.getSimpleTestData(5),
+  b: testData.getSimpleTestData(5),
+};
 
+it("should remove old candles when bufferSize reached", () => {
   const bufferSize = 3;
+
   // prettier-ignore
   const expectedCandleTimes = [
     [1],
@@ -38,4 +42,48 @@ it("should remove old candles when bufferSize reached", () => {
   });
 
   expect(round).toBe(expectedCandleTimes.length);
+});
+
+it("should remove old indicator values when bufferSize reached", () => {
+  const smaPeriod = 2;
+  const bufferSize = 2;
+  // prettier-ignore
+  const expectedSmaEachRound = [
+    undefined,
+    2.5,
+    3.5,
+    4.5,
+    5.5
+  ];
+  // prettier-ignore
+  const expectedSmaFinalRound = [
+    undefined,
+    undefined,
+    undefined,
+    4.5,
+    5.5
+  ];
+
+  let smaEachRound: (number | undefined)[] = [];
+  let smaFinalRound: (number | undefined)[] = [];
+  const strategy: FullTradingStrategy = (state) => {
+    const sma = getSma(state.assets.a, smaPeriod);
+    smaEachRound.push(sma);
+    if (state.time === last(series.a).time) {
+      smaFinalRound = range(0, series.a.length)
+        .reverse()
+        .map((indexFromEnd) => getSma(state.assets.a, smaPeriod, indexFromEnd));
+    }
+    return {};
+  };
+
+  backtest({
+    series,
+    strategy,
+    progressHandler: null,
+    bufferSize,
+  });
+
+  expect(smaEachRound).toEqual(expectedSmaEachRound);
+  expect(smaFinalRound).toEqual(expectedSmaFinalRound);
 });

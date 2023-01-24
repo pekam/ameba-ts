@@ -59,6 +59,7 @@ const initMissingAssetStates =
           transactions: [],
           trades: [],
           data: {},
+          bufferSize: state.args.bufferSize,
         },
       ])
     );

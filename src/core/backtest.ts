@@ -66,9 +66,9 @@ export interface BacktestArgs {
    */
   to?: Moment;
   /**
-   * The number of candles to keep in memory during the backtest. When
-   * bufferSize is reached, the oldest candles will be removed as new ones are
-   * added. Defaults to 10000.
+   * The number of candles and indicators to keep in memory during the backtest.
+   * When bufferSize is reached, the oldest candles and indicators will be
+   * removed as new ones are added. Defaults to 10000.
    */
   bufferSize?: number;
 }

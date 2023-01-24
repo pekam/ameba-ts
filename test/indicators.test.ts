@@ -12,17 +12,21 @@ import {
   getRsi,
   getSma,
 } from "../src";
-import { getIndicatorValue, SeriesAndData } from "../src/indicators/indicator";
+import {
+  getIndicatorValue,
+  IndicatorInputState,
+} from "../src/indicators/indicator";
 import { testData } from "./test-data/testData";
 
 let fullSeries: CandleSeries;
-let mockState: SeriesAndData;
+let mockState: IndicatorInputState;
 
 beforeEach(() => {
   fullSeries = testData.getSimpleTestData(5);
   mockState = {
     series: [],
     data: {},
+    bufferSize: Infinity,
   };
 });
 
