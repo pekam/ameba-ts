@@ -1,9 +1,13 @@
+import { dropWhile, takeWhile } from "lodash/fp";
+import { pipe } from "remeda";
 import {
   allInStaker,
   AssetState,
   backtest,
   BacktestResult,
+  CandleDataProvider,
   CandleSeries,
+  createAsyncCandleProvider,
   TradingStrategy,
   withStaker,
 } from "../src";
@@ -90,6 +94,40 @@ it("should produce a backtest result (async)", async () => {
         nextCandles: [{ symbol: "BTC", candle }],
       });
     },
+  });
+  assertBacktestResult(result);
+});
+
+it("should produce a backtest result (async data provider)", async () => {
+  const dataProvider: CandleDataProvider = ({
+    symbol,
+    from,
+    to,
+    timeframe,
+  }) => {
+    if (symbol !== "BTC") {
+      throw Error("Unexpected symbol requested " + symbol);
+    }
+    if (timeframe !== "1h") {
+      throw Error("Unexpected timeframe requested " + timeframe);
+    }
+    const candles = pipe(
+      series,
+      dropWhile((c) => c.time < from),
+      takeWhile((c) => c.time <= to)
+    );
+    return Promise.resolve(candles);
+  };
+
+  const result: BacktestResult = await backtest({
+    ...args,
+    candleProvider: createAsyncCandleProvider({
+      dataProvider,
+      symbols: ["BTC"],
+      timeframe: "1h",
+      batchSize: 10,
+      ...backtestRange,
+    }),
   });
   assertBacktestResult(result);
 });

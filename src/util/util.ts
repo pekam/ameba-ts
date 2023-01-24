@@ -128,6 +128,15 @@ export const then =
     arg.then(fn);
 
 /**
+ * Enables using Promise.then for an array of promises in pipe without arrow
+ * functions.
+ */
+export const thenAll =
+  <T, R>(fn: (arg: T[]) => R): ((arg: Promise<T>[]) => Promise<R>) =>
+  (arg: Promise<T>[]) =>
+    Promise.all(arg).then(fn);
+
+/**
  * Repeats the given function on the initialValue until the endCondition is
  * reached. This can be used instead of recursion when performance is an issue
  * because of missing tail call optimization.

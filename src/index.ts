@@ -9,6 +9,7 @@ export { CandleUpdate } from "./core/create-candle-updates";
 export { ProgressHandler } from "./core/progress-handler";
 export * from "./core/type-guards";
 export * from "./core/types";
+export * from "./data";
 export * from "./high-level-api/types";
 export * from "./high-level-api/with-staker";
 export * from "./indicators/";
