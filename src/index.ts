@@ -13,6 +13,7 @@ export * from "./data";
 export * from "./high-level-api/types";
 export * from "./high-level-api/with-staker";
 export * from "./indicators/";
+export * from "./persistence";
 export * from "./stakers/all-in-staker";
 export * from "./stakers/common-staker";
 export * from "./strategies/donchian-breakout-strat";
