@@ -65,6 +65,12 @@ export interface BacktestArgs {
    * than `to`.
    */
   to?: Moment;
+  /**
+   * The number of candles to keep in memory during the backtest. When
+   * bufferSize is reached, the oldest candles will be removed as new ones are
+   * added. Defaults to 10000.
+   */
+  bufferSize?: number;
 }
 
 /**
@@ -175,6 +181,7 @@ export function adjustArgs(
     from: 0,
     to: Infinity,
     progressHandler: createProgressBar(),
+    bufferSize: 10000,
     ...args,
   };
   return {

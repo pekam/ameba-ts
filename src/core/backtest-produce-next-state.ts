@@ -26,7 +26,7 @@ export function produceNextState(
   return pipe(
     state,
     initMissingAssetStates(candleUpdate),
-    addNextCandles(candleUpdate),
+    updateCandlesAndTime(candleUpdate),
 
     candleUpdate.time < state.args.from
       ? identity
@@ -68,15 +68,19 @@ const initMissingAssetStates =
     };
   };
 
-const addNextCandles =
+const updateCandlesAndTime =
   ({ time, nextCandles }: CandleUpdate) =>
   (state: InternalTradeState): InternalTradeState => {
     const symbols = map(nextCandles, ({ symbol }) => symbol);
     // Mutating the candle arrays for performance. Copying an array has O(N)
     // complexity which is a real issue when backtesting big datasets.
-    nextCandles.forEach(({ symbol, candle }) =>
-      state.assets[symbol].series.push(candle)
-    );
+    nextCandles.forEach(({ symbol, candle }) => {
+      const series = state.assets[symbol].series;
+      series.push(candle);
+      while (series.length > state.args.bufferSize) {
+        series.shift();
+      }
+    });
     return {
       ...state,
       updated: symbols,
