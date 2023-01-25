@@ -1,7 +1,7 @@
 import { createPipe, filter, identity, map, mapToObj, pipe } from "remeda";
 import { Dictionary, Nullable } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
-import { BacktestState, updateAsset } from "./backtest";
+import { BacktestState } from "./backtest";
 import { handleOrders } from "./backtest-order-execution";
 import { CandleUpdate } from "./create-candle-updates";
 import {
@@ -11,6 +11,7 @@ import {
   FullTradingStrategy,
   SingleAssetStrategyUpdate,
 } from "./types";
+import { updateAsset } from "./update-asset";
 
 export function produceNextState(
   state: BacktestState,

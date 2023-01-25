@@ -1,8 +1,9 @@
 import { flatMap, max, min, sortBy, sumBy } from "lodash";
 import { map, pipe, values } from "remeda";
-import { BacktestState, updateAsset } from "./backtest";
+import { BacktestState } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { Candle, Range, Trade } from "./types";
+import { updateAsset } from "./update-asset";
 
 export interface BacktestStatistics {
   initialBalance: number;
