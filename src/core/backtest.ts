@@ -1,7 +1,12 @@
 import { findLast } from "lodash";
 import { pipe } from "remeda";
-import { CommissionProvider, Persister } from "..";
-import { Moment, toTimestamp } from "../time";
+import {
+  CandleDataProvider,
+  CommissionProvider,
+  createAsyncCandleProvider,
+  Persister,
+} from "..";
+import { Moment, Timeframe, toTimestamp } from "../time";
 import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
 import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import {
@@ -84,20 +89,38 @@ export type CommonBacktestArgs = Omit<BacktestArgs, "series">;
 
 export interface AsyncBacktestArgs extends CommonBacktestArgs {
   /**
-   * A function that should return the next set of candles for the backtester
-   * each time when called. All candles which have the same timestamp (one per
-   * asset) should be included in the same return value. Each return value
-   * should include newer candles than the previous one.
-   *
-   * The function should return null or undefined when the backtest should
-   * finish. The backtest can also end if the optional 'to'-parameter is
-   * provided and this moment is reached.
-   *
-   * The return value is a Promise, so the implementation can for example fetch
-   * a batch of data from a web service or a database when needed, and there's
-   * no need to keep old data in memory.
+   * A function that the backtester will use to fetch candlestick price data as
+   * needed. Candles are fetched in batches and the number of candles attempted
+   * to fetch each time is defined by the batchSize argument (defaults to 1000).
    */
-  candleProvider: AsyncCandleUpdateProvider;
+  dataProvider: CandleDataProvider;
+  /**
+   * Symbols of the assets to backtest with.
+   */
+  symbols: string[];
+  /**
+   * Resolution of the candlestick data (OHLCV) that is loaded from data
+   * provider for the backtest.
+   */
+  timeframe: Timeframe;
+  /**
+   * The start time of the backtest. The data provider will load price data
+   * starting from this moment.
+   */
+  from: Moment;
+  /**
+   * The end time of the backtest. The data provider will load price data up to
+   * this moment.
+   */
+  to: Moment;
+  /**
+   * The number of candles to fetch from the data provider when more data is
+   * needed. To be more precise, candles are requested for a time window which
+   * is based on timeframe and batch size, and the number of candles returned
+   * from that time window may be less than batch size, for example if the
+   * market is closed during that time window. Defaults to 1000.
+   */
+  batchSize?: number;
   /**
    * If defined, the backtest state will be persisted periodically, allowing to
    * resume the backtest later. This can be useful when backtesting with big
@@ -184,11 +207,19 @@ export function backtest(
       convertToBacktestResult
     );
   } else {
+    const candleProvider = createAsyncCandleProvider({
+      dataProvider: originalArgs.dataProvider,
+      symbols: originalArgs.symbols,
+      timeframe: originalArgs.timeframe,
+      from: originalArgs.from,
+      to: originalArgs.to,
+      batchSize: originalArgs.batchSize,
+    });
     return pipe(
       state,
       addFinishTime(originalArgs.to),
       initBacktestPersistence,
-      then(produceFinalStateAsync(originalArgs.candleProvider)),
+      then(produceFinalStateAsync(candleProvider)),
       then(convertToBacktestResult)
     );
   }

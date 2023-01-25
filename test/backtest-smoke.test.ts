@@ -3,13 +3,13 @@ import { pipe } from "remeda";
 import {
   allInStaker,
   AssetState,
-  AsyncCandleProvider,
+  AsyncBacktestArgs,
   backtest,
   BacktestResult,
   CandleDataProvider,
   CandleSeries,
-  createAsyncCandleProvider,
   Persister,
+  toTimestamp,
   TradingStrategy,
   withStaker,
 } from "../src";
@@ -82,25 +82,6 @@ it("should produce a backtest result", () => {
   assertBacktestResult(result);
 });
 
-it("should produce a backtest result (async)", async () => {
-  const result: BacktestResult = await backtest({
-    ...args,
-    candleProvider: (previousCandleTime) => {
-      const candle = previousCandleTime
-        ? series.find((c) => c.time > previousCandleTime)
-        : series[0];
-      if (!candle) {
-        return Promise.resolve(undefined);
-      }
-      return Promise.resolve({
-        time: candle.time,
-        nextCandles: [{ symbol: "BTC", candle }],
-      });
-    },
-  });
-  assertBacktestResult(result);
-});
-
 const dataProvider: CandleDataProvider = ({ symbol, from, to, timeframe }) => {
   if (symbol !== "BTC") {
     throw Error("Unexpected symbol requested " + symbol);
@@ -116,35 +97,31 @@ const dataProvider: CandleDataProvider = ({ symbol, from, to, timeframe }) => {
   return Promise.resolve(candles);
 };
 
-const createCandleProvider = () =>
-  createAsyncCandleProvider({
-    dataProvider,
-    symbols: ["BTC"],
-    timeframe: "1h",
-    batchSize: 10,
-    ...backtestRange,
-  });
+const asyncArgs: AsyncBacktestArgs = {
+  ...args,
+  dataProvider,
+  symbols: ["BTC"],
+  timeframe: "1h",
+  batchSize: 10,
+  ...backtestRange,
+};
 
 it("should produce a backtest result (async data provider)", async () => {
-  const result: BacktestResult = await backtest({
-    ...args,
-    candleProvider: createCandleProvider(),
-  });
+  const result: BacktestResult = await backtest(asyncArgs);
   assertBacktestResult(result);
 });
 
 it("should produce a backtest result (persister)", async () => {
   let errorCount = 0;
   let persistedStateFetchedCount = 0;
-  const errorOnTimestamps = [50, 51, 100, 150].map((i) => series[i].time);
+  const errorOnTimestamps = [50, 100, 101, 150].map((i) => series[i].time);
 
-  const candleProvider = createCandleProvider();
-  const erroringCandleProvider: AsyncCandleProvider = (previousCandleTime) => {
-    if (errorOnTimestamps[errorCount] === previousCandleTime) {
+  const erroringCandleProvider: CandleDataProvider = (args) => {
+    if (toTimestamp(args.to) > errorOnTimestamps[errorCount]) {
       errorCount++;
       throw Error("intentional error to test persistence");
     }
-    return candleProvider(previousCandleTime);
+    return dataProvider(args);
   };
 
   const fakePersister: Persister = (() => {
@@ -170,8 +147,8 @@ it("should produce a backtest result (persister)", async () => {
   while (!result) {
     try {
       result = await backtest({
-        ...args,
-        candleProvider: erroringCandleProvider,
+        ...asyncArgs,
+        dataProvider: erroringCandleProvider,
         persistence: {
           persister: fakePersister,
           interval: 2,
