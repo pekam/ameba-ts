@@ -7,7 +7,6 @@ export {
 } from "./backtest/backtest";
 export { BacktestResult, BacktestStatistics } from "./backtest/backtest-result";
 export { ProgressHandler } from "./backtest/progress-handler";
-export * from "./core/type-guards";
 export * from "./core/types";
 export * from "./data";
 export * from "./high-level-api/types";
@@ -25,3 +24,4 @@ export * from "./strategies/strat-util";
 export * from "./strategies/volatility-strat";
 export * from "./time";
 export * from "./util/conversions";
+export * from "./util/type-guards";

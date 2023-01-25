@@ -5,7 +5,7 @@ import {
   ORDER_TYPES,
   PositionSide,
   POSITION_SIDES,
-} from "./types";
+} from "../core/types";
 
 export const isOrderSide = (s: string): s is OrderSide =>
   ORDER_SIDES.includes(s as OrderSide);
