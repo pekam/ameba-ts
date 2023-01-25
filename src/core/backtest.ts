@@ -1,5 +1,4 @@
-import { findLast } from "lodash";
-import { pipe } from "remeda";
+import { first, last, pipe } from "remeda";
 import {
   CandleDataProvider,
   CommissionProvider,
@@ -152,39 +151,32 @@ export interface AsyncBacktestArgs extends CommonBacktestArgs {
   };
 }
 
-export type AsyncCandleUpdateProvider = (
-  lastCandleTime: number | undefined
-) => Promise<Nullable<CandleUpdate>>;
-
+/**
+ * Called on each iteration of the backtester to provides the next set of
+ * candles (max one per symbol, each with the same timestamp).
+ */
 export type CandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Nullable<CandleUpdate>;
+/**
+ * Called on each iteration of the backtester to provides the next set of
+ * candles (max one per symbol, each with the same timestamp).
+ */
+export type AsyncCandleUpdateProvider = (
+  lastCandleTime: number | undefined
+) => Promise<Nullable<CandleUpdate>>;
 
 function isSynchronous(a: BacktestArgs | AsyncBacktestArgs): a is BacktestArgs {
   return !!(a as BacktestArgs).series;
 }
 
-type AdjustedBacktestArgs = OverrideProps<
-  Required<CommonBacktestArgs>,
-  { from: number; to: number }
-> &
-  Pick<AsyncBacktestArgs, "persistence">;
-
 // Additional props that should not be visible to the Strategy implementor
-export interface InternalTradeState extends FullTradeState {
-  args: AdjustedBacktestArgs;
-  finished: boolean;
-  /**
-   * Timestamp of the first included candle if known.
-   */
-  startTime?: number;
-  /**
-   * Timestamp of the last included candle if known, or an estimate of it.
-   */
-  finishTime?: number;
-  firstAndLastCandles: Dictionary<[Candle, Candle]>;
-  persistence?: BacktestPersistenceState;
-}
+export type InternalTradeState = FullTradeState &
+  OverrideProps<Required<CommonBacktestArgs>, { from: number; to: number }> & {
+    finished: boolean;
+    firstAndLastCandles: Dictionary<[Candle, Candle]>;
+    persistence?: BacktestPersistenceState;
+  };
 
 /**
  * Tests how the given trading strategy would have performed with the provided
@@ -193,32 +185,38 @@ export interface InternalTradeState extends FullTradeState {
 export function backtest(args: BacktestArgs): BacktestResult;
 export function backtest(args: AsyncBacktestArgs): Promise<BacktestResult>;
 export function backtest(
-  originalArgs: BacktestArgs | AsyncBacktestArgs
+  args: BacktestArgs | AsyncBacktestArgs
 ): BacktestResult | Promise<BacktestResult> {
-  const state: InternalTradeState = initState(adjustArgs(originalArgs));
-
-  if (isSynchronous(originalArgs)) {
-    const candleUpdates = createCandleUpdates(originalArgs.series);
+  if (isSynchronous(args)) {
+    const candleUpdates = createCandleUpdates(args.series);
+    if (!candleUpdates.length) {
+      throw Error("No candles provided");
+    }
+    const from = Math.max(
+      args.from ? toTimestamp(args.from) : -Infinity,
+      first(candleUpdates)!.time
+    );
+    const to = Math.min(
+      args.to ? toTimestamp(args.to) : Infinity,
+      last(candleUpdates)!.time
+    );
+    const state: InternalTradeState = initState(args, from, to);
     const candleProvider = toCandleProvider(candleUpdates);
     return pipe(
       state,
-      addFinishTimeFromCandleUpdates(candleUpdates),
       produceFinalState(candleProvider),
       convertToBacktestResult
     );
   } else {
-    const candleProvider = createAsyncCandleProvider({
-      dataProvider: originalArgs.dataProvider,
-      symbols: originalArgs.symbols,
-      timeframe: originalArgs.timeframe,
-      from: originalArgs.from,
-      to: originalArgs.to,
-      batchSize: originalArgs.batchSize,
-    });
+    const state: InternalTradeState = initState(
+      args,
+      toTimestamp(args.from),
+      toTimestamp(args.to)
+    );
+    const candleProvider = createAsyncCandleProvider(args);
     return pipe(
       state,
-      addFinishTime(originalArgs.to),
-      initBacktestPersistence,
+      initBacktestPersistence(args.persistence),
       then(produceFinalStateAsync(candleProvider)),
       then(convertToBacktestResult)
     );
@@ -239,52 +237,31 @@ const produceFinalStateAsync = (candleProvider: AsyncCandleUpdateProvider) =>
     (state: InternalTradeState) => state.finished
   );
 
-function adjustArgs(args: CommonBacktestArgs): AdjustedBacktestArgs {
-  const withDefaults: Required<CommonBacktestArgs> = {
+function initState(
+  args: CommonBacktestArgs,
+  from: number,
+  to: number
+): InternalTradeState {
+  const argsWithDefaults = {
     initialBalance: 10000,
     commissionProvider: () => 0,
-    from: 0,
-    to: Infinity,
     progressHandler: createProgressBar(),
     bufferSize: 10000,
+
     ...args,
   };
   return {
-    ...withDefaults,
-    // Enforce timestamps as numbers:
-    from: toTimestamp(withDefaults.from),
-    to: toTimestamp(withDefaults.to),
-  };
-}
-
-function initState(args: InternalTradeState["args"]): InternalTradeState {
-  return {
-    cash: args.initialBalance,
+    ...argsWithDefaults,
+    cash: argsWithDefaults.initialBalance,
     assets: {},
     updated: [],
     time: 0,
-    args,
     finished: false,
     firstAndLastCandles: {},
+    from,
+    to,
   };
 }
-
-const addFinishTimeFromCandleUpdates =
-  (candleUpdates: CandleUpdate[]) =>
-  (state: InternalTradeState): InternalTradeState =>
-    addFinishTime(
-      findLast(
-        candleUpdates,
-        (candleUpdate) => !state.args.to || candleUpdate.time <= state.args.to
-      )?.time
-    )(state);
-
-const addFinishTime =
-  (finishTime: Moment | undefined) =>
-  (state: InternalTradeState): InternalTradeState => ({
-    ...state,
-    finishTime: finishTime === undefined ? finishTime : toTimestamp(finishTime),
-  });
 
 function toCandleProvider(candleUpdates: CandleUpdate[]): CandleUpdateProvider {
   // Stateful for performance. The correctness of this helper value is still

@@ -1,4 +1,4 @@
-import { flatMap, sortBy, sumBy } from "lodash";
+import { flatMap, max, min, sortBy, sumBy } from "lodash";
 import { map, pipe, values } from "remeda";
 import { InternalTradeState, updateAsset } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
@@ -60,7 +60,7 @@ export function convertToBacktestResult(
   // close all open trades with the current market price, but exiting against
   // the strategy's logic would be skew the result in a worse way.
   return pipe(finalState, revertUnclosedTrades, (finalState) => {
-    const initialBalance = finalState.args.initialBalance;
+    const initialBalance = finalState.initialBalance;
     const trades = getTradesInOrder(finalState);
 
     const endBalance = finalState.cash;
@@ -134,11 +134,12 @@ const getBuyAndHoldProfitAndDuration = (
 };
 
 const getRange = (finalState: InternalTradeState): Range | undefined => {
-  if (finalState.startTime && finalState.time) {
-    return {
-      from: finalState.startTime,
-      to: finalState.time,
-    };
+  const firstAndLastCandles = values(finalState.firstAndLastCandles);
+  if (!firstAndLastCandles.length) {
+    return undefined;
   }
-  return undefined;
+  return {
+    from: min(firstAndLastCandles.map(([first, last]) => first.time))!,
+    to: max(firstAndLastCandles.map(([first, last]) => last.time))!,
+  };
 };

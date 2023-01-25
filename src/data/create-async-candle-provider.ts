@@ -1,6 +1,6 @@
 import { dropRightWhile, dropWhile } from "lodash/fp";
 import { pipe, reverse } from "remeda";
-import { AsyncCandleProvider } from "..";
+import { AsyncCandleUpdateProvider } from "../core/backtest";
 import {
   CandleUpdate,
   createCandleUpdates,
@@ -21,7 +21,7 @@ export function createAsyncCandleProvider(args: {
   timeframe: Timeframe;
   symbols: string[];
   batchSize?: number;
-}): AsyncCandleProvider {
+}): AsyncCandleUpdateProvider {
   const { dataProvider, timeframe, symbols } = args;
   const timeframeAsPeriod = timeframeToPeriod(timeframe);
   const fullRange: Range = {

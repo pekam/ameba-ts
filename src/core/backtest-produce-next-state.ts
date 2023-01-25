@@ -17,7 +17,7 @@ export function produceNextState(
   state: InternalTradeState,
   candleUpdate: Nullable<CandleUpdate>
 ): InternalTradeState {
-  if (!candleUpdate || candleUpdate.time > state.args.to) {
+  if (!candleUpdate || candleUpdate.time > state.to) {
     return pipe(
       state,
       (state) => ({ ...state, finished: true, finishTime: state.time }),
@@ -29,12 +29,11 @@ export function produceNextState(
     initMissingAssetStates(candleUpdate),
     updateCandlesAndTime(candleUpdate),
 
-    candleUpdate.time < state.args.from
+    candleUpdate.time < state.from
       ? identity
       : createPipe(
-          updateStartTime(candleUpdate),
           handleAllOrders,
-          applyStrategy(state.args.strategy),
+          applyStrategy(state.strategy),
           updateFirstAndLastCandles(candleUpdate),
           notifyProgressHandler
         ),
@@ -62,7 +61,7 @@ const initMissingAssetStates =
           transactions: [],
           trades: [],
           data: {},
-          bufferSize: state.args.bufferSize,
+          bufferSize: state.bufferSize,
         },
       ])
     );
@@ -81,7 +80,7 @@ const updateCandlesAndTime =
     nextCandles.forEach(({ symbol, candle }) => {
       const series = state.assets[symbol].series;
       series.push(candle);
-      while (series.length > state.args.bufferSize) {
+      while (series.length > state.bufferSize) {
         series.shift();
       }
     });
@@ -97,7 +96,7 @@ function handleAllOrders(state: InternalTradeState): InternalTradeState {
     const { asset, cash } = handleOrders({
       asset: state.assets[symbol],
       cash: state.cash,
-      commissionProvider: state.args.commissionProvider,
+      commissionProvider: state.commissionProvider,
     });
     return updateAsset(state, symbol, asset, cash);
   }, state);
@@ -153,17 +152,12 @@ const updateFirstAndLastCandles =
   };
 
 function notifyProgressHandler(state: InternalTradeState): InternalTradeState {
-  if (state.args.progressHandler && state.startTime) {
-    state.args.progressHandler({
+  if (state.progressHandler) {
+    state.progressHandler({
       currentTime: state.time,
-      startTime: state.startTime,
-      finishTime: state.finished ? state.time : state.finishTime,
+      startTime: state.from,
+      finishTime: state.finished ? state.time : state.to,
     });
   }
   return state;
 }
-
-const updateStartTime =
-  (candleUpdate: CandleUpdate) =>
-  (state: InternalTradeState): InternalTradeState =>
-    state.startTime ? state : { ...state, startTime: candleUpdate.time };
