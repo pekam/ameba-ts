@@ -1,14 +1,14 @@
 import { dropLast, identity, pipe } from "remeda";
-import { last } from "../util/util";
 import {
   AssetState,
   Candle,
-  CommissionProvider,
   MarketPosition,
   Order,
   Trade,
   Transaction,
-} from "./types";
+} from "../core/types";
+import { last } from "../util/util";
+import { CommissionProvider } from "./backtest";
 
 // This module deals with the combination of a single asset's state (position,
 // orders, candles, etc.) and the account's cash balance.

@@ -1,28 +1,32 @@
 import { first, last, pipe } from "remeda";
+import { CandleDataProvider, Persister } from "..";
 import {
-  CandleDataProvider,
-  CommissionProvider,
-  createAsyncCandleProvider,
-  Persister,
-} from "..";
+  Candle,
+  FullTradeState,
+  FullTradingStrategy,
+  SeriesMap,
+  Transaction,
+} from "../core/types";
 import { Moment, Timeframe, toTimestamp } from "../time";
-import { Dictionary, Nullable } from "../util/type-util";
+import { Dictionary } from "../util/type-util";
 import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import {
   BacktestPersistenceState,
   initBacktestPersistence,
   persistIfNeeded,
 } from "./backtest-persistence";
-import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
-import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
-import { createProgressBar, ProgressHandler } from "./progress-handler";
 import {
-  Candle,
-  FullTradeState,
-  FullTradingStrategy,
-  SeriesMap,
-} from "./types";
+  AsyncCandleUpdateProvider,
+  createAsyncCandleProvider,
+} from "./candle-update-provider-async";
+import {
+  createSyncCandleProvider,
+  SyncCandleUpdateProvider,
+} from "./candle-update-provider-sync";
+import { createCandleUpdates } from "./create-candle-updates";
+import { produceNextState } from "./produce-next-state";
+import { createProgressBar, ProgressHandler } from "./progress-handler";
 
 /**
  * Args used by both synchronous and asynchronous backtest.
@@ -153,22 +157,29 @@ export interface BacktestAsyncArgs extends CommonBacktestArgs {
 }
 
 /**
- * Called on each iteration of the backtester to provides the next set of
- * candles (max one per symbol, each with the same timestamp).
+ * Function that provides simulated commissions (transaction costs) for the
+ * backtester.
+ *
+ * For example, if the commission is 0.1% of the transaction's cash value:
+ * ```
+ * const commissionProvider = (transaction: Transaction) =>
+ *   transaction.size * transaction.price * 0.001
+ * ```
+ * Or if you want to simulate a stock broker which charges $0.005 per share, but
+ * min $1 per transaction, and max 1% of the transaction's value:
+ * ```
+ * const commissionProvider = (transaction: Transaction) =>
+ *   Math.max(
+ *     Math.min(transaction.size * 0.005, 1),
+ *     0.01 * transaction.size * transaction.price)
+ * ```
  */
-export type SyncCandleUpdateProvider = (
-  lastCandleTime: number | undefined
-) => Nullable<CandleUpdate>;
-/**
- * Called on each iteration of the backtester to provides the next set of
- * candles (max one per symbol, each with the same timestamp).
- */
-export type AsyncCandleUpdateProvider = (
-  lastCandleTime: number | undefined
-) => Promise<Nullable<CandleUpdate>>;
+export type CommissionProvider = (
+  transaction: Omit<Transaction, "commission">
+) => number;
 
 export type BacktestState = FullTradeState &
-  Required<CommonBacktestArgs & { from: number; to: number }> & {
+  Required<CommonBacktestArgs> & { from: number; to: number } & {
     finished: boolean;
     firstAndLastCandles: Dictionary<[Candle, Candle]>;
     persistence?: BacktestPersistenceState;
@@ -217,7 +228,7 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
     last(candleUpdates)!.time
   );
   const state: BacktestState = initState(args, from, to);
-  const candleProvider = toSyncCandleProvider(candleUpdates);
+  const candleProvider = createSyncCandleProvider(candleUpdates);
   return pipe(
     state,
     produceFinalStateSync(candleProvider),
@@ -266,29 +277,5 @@ function initState(
     firstAndLastCandles: {},
     from,
     to,
-  };
-}
-
-function toSyncCandleProvider(
-  candleUpdates: CandleUpdate[]
-): SyncCandleUpdateProvider {
-  // Stateful for performance. The correctness of this helper value is still
-  // verified each time, so the function works correctly even if it gets out of
-  // sync with the backtest process (for example, if the bactest execution is
-  // resumed by using a persisted backtest state).
-  let candleIndex = 0;
-
-  return (lastCandleTime: number | undefined) => {
-    if (!lastCandleTime) {
-      candleIndex = 0;
-    } else {
-      const isCorrect = candleUpdates[candleIndex - 1]?.time === lastCandleTime;
-      if (!isCorrect) {
-        candleIndex = candleUpdates.findIndex(
-          (update) => update.time > lastCandleTime
-        );
-      }
-    }
-    return candleUpdates[candleIndex++];
   };
 }

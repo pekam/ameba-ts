@@ -1,4 +1,3 @@
-import {} from "../core/backtest";
 import {
   AssetState,
   FullTradeState,

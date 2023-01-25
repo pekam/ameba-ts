@@ -14,7 +14,7 @@ import {
   TradingStrategy,
   withStaker,
 } from "../src";
-import { CommonBacktestArgs } from "../src/core/backtest";
+import { CommonBacktestArgs } from "../src/backtest/backtest";
 import { Dictionary } from "../src/util/type-util";
 import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";

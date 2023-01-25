@@ -3,9 +3,10 @@ export {
   BacktestAsyncArgs,
   backtestSync,
   BacktestSyncArgs,
-} from "./core/backtest";
-export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
-export { ProgressHandler } from "./core/progress-handler";
+  CommissionProvider,
+} from "./backtest/backtest";
+export { BacktestResult, BacktestStatistics } from "./backtest/backtest-result";
+export { ProgressHandler } from "./backtest/progress-handler";
 export * from "./core/type-guards";
 export * from "./core/types";
 export * from "./data";

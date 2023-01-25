@@ -275,29 +275,6 @@ export interface FullTradeState {
 }
 
 /**
- * Function that provides simulated commissions (transaction costs) for the
- * backtester.
- *
- * For example, if the commission is 0.1% of the transaction's cash value:
- * ```
- * const commissionProvider = (transaction: Transaction) =>
- *   transaction.size * transaction.price * 0.001
- * ```
- * Or if you want to simulate a stock broker which charges $0.005 per share, but
- * min $1 per transaction, and max 1% of the transaction's value:
- * ```
- * const commissionProvider = (transaction: Transaction) =>
- *   Math.max(
- *     Math.min(transaction.size * 0.005, 1),
- *     0.01 * transaction.size * transaction.price)
- * ```
- * (based on a real commission plan of a particular stock broker)
- */
-export type CommissionProvider = (
-  transaction: Omit<Transaction, "commission">
-) => number;
-
-/**
  * Mapping from a symbol to the corresponding asset state.
  */
 export type AssetMap = { [symbol: string]: AssetState };

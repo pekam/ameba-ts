@@ -1,5 +1,5 @@
 import { flatMap, groupBy, map, pipe, sortBy } from "remeda";
-import { Candle, CandleSeries, SeriesMap } from "./types";
+import { Candle, CandleSeries, SeriesMap } from "../core/types";
 
 export interface SymbolCandlePair {
   symbol: string;

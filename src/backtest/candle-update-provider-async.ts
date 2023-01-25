@@ -1,14 +1,22 @@
 import { dropRightWhile, dropWhile } from "lodash/fp";
 import { pipe, reverse } from "remeda";
-import { AsyncCandleUpdateProvider } from "../core/backtest";
-import {
-  CandleUpdate,
-  createCandleUpdates,
-} from "../core/create-candle-updates";
 import { Range } from "../core/types";
+import {
+  CandleDataProvider,
+  getMultiCandles,
+} from "../data/candle-data-provider";
 import { Moment, Timeframe, timeframeToPeriod, toTimestamp } from "../time";
+import { Nullable } from "../util/type-util";
 import { then } from "../util/util";
-import { CandleDataProvider, getMultiCandles } from "./candle-data-provider";
+import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
+
+/**
+ * Called on each iteration of the backtester to provides the next set of
+ * candles (max one per symbol, each with the same timestamp).
+ */
+export type AsyncCandleUpdateProvider = (
+  lastCandleTime: number | undefined
+) => Promise<Nullable<CandleUpdate>>;
 
 /**
  * Creates a backtester-compatible candle provider that fetches new candles on

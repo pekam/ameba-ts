@@ -1,5 +1,5 @@
+import { AssetState } from "../core/types";
 import { BacktestState } from "./backtest";
-import { AssetState } from "./types";
 
 /**
  * Returns a new state after applying {@link update} to the asset with

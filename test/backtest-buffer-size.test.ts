@@ -1,7 +1,5 @@
 import { range } from "remeda";
-import { getSma } from "../src";
-import { backtestSync } from "../src/core/backtest";
-import { FullTradingStrategy, SeriesMap } from "../src/core/types";
+import { backtestSync, FullTradingStrategy, getSma, SeriesMap } from "../src";
 import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
