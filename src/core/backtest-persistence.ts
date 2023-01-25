@@ -54,12 +54,14 @@ export interface BacktestPersistenceState {
   updatesSincePersist: number;
 }
 
-export function persistIfNeeded(state: BacktestState): BacktestState {
+export async function persistIfNeeded(
+  state: BacktestState
+): Promise<BacktestState> {
   if (!state.persistence) {
     return state;
   }
 
-  const nextCounter = persistIfNeededAndGetNextCounter(
+  const nextCounter = await persistIfNeededAndGetNextCounter(
     state,
     state.persistence
   );
@@ -70,7 +72,7 @@ export function persistIfNeeded(state: BacktestState): BacktestState {
   };
 }
 
-function persistIfNeededAndGetNextCounter(
+async function persistIfNeededAndGetNextCounter(
   state: BacktestState,
   persistence: BacktestPersistenceState
 ) {
@@ -81,8 +83,7 @@ function persistIfNeededAndGetNextCounter(
     updatesSincePersist,
   } = persistence;
   if (updatesSincePersist >= persistInterval) {
-    // NOTE: does not wait for it to finish if async
-    persister.set(key, convertToPersistence(state));
+    await persister.set(key, convertToPersistence(state));
     return 0;
   } else {
     return updatesSincePersist + 1;

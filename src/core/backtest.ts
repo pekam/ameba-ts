@@ -11,6 +11,7 @@ import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import {
   BacktestPersistenceState,
   initBacktestPersistence,
+  persistIfNeeded,
 } from "./backtest-persistence";
 import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
@@ -227,8 +228,12 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
 
 const produceFinalStateAsync = (candleProvider: AsyncCandleUpdateProvider) =>
   repeatUntilAsync(
-    async (state: BacktestState) =>
-      produceNextState(state, await candleProvider(state.time || undefined)),
+    (state: BacktestState) =>
+      pipe(
+        candleProvider(state.time || undefined),
+        then((candleUpdate) => produceNextState(state, candleUpdate)),
+        then(persistIfNeeded)
+      ),
     (state: BacktestState) => state.finished
   );
 
