@@ -1,6 +1,6 @@
 import { flatMap, max, min, sortBy, sumBy } from "lodash";
 import { map, pipe, values } from "remeda";
-import { InternalTradeState, updateAsset } from "./backtest";
+import { BacktestState, updateAsset } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { Candle, Range, Trade } from "./types";
 
@@ -54,7 +54,7 @@ export interface BacktestResult {
 }
 
 export function convertToBacktestResult(
-  finalState: InternalTradeState
+  finalState: BacktestState
 ): BacktestResult {
   // Only finished trades are included in the result. Another option would be to
   // close all open trades with the current market price, but exiting against
@@ -79,7 +79,7 @@ export function convertToBacktestResult(
   });
 }
 
-function revertUnclosedTrades(state: InternalTradeState) {
+function revertUnclosedTrades(state: BacktestState) {
   return Object.values(state.assets)
     .filter((a) => a.position)
     .reduce((state, asset) => {
@@ -92,14 +92,14 @@ function revertUnclosedTrades(state: InternalTradeState) {
     }, state);
 }
 
-function getTradesInOrder(state: InternalTradeState) {
+function getTradesInOrder(state: BacktestState) {
   return sortBy(
     flatMap(state.assets, (a) => a.trades),
     (t) => t.entry.time
   );
 }
 
-function getBuyAndHoldProfit(state: InternalTradeState): number {
+function getBuyAndHoldProfit(state: BacktestState): number {
   const profitsAndDurations: [number, number][] = pipe(
     state.firstAndLastCandles,
     values,
@@ -133,7 +133,7 @@ const getBuyAndHoldProfitAndDuration = (
   return [profit, duration];
 };
 
-const getRange = (finalState: InternalTradeState): Range | undefined => {
+const getRange = (finalState: BacktestState): Range | undefined => {
   const firstAndLastCandles = values(finalState.firstAndLastCandles);
   if (!firstAndLastCandles.length) {
     return undefined;

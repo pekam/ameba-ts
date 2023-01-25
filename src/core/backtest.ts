@@ -167,8 +167,7 @@ export type AsyncCandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Promise<Nullable<CandleUpdate>>;
 
-// Additional props that should not be visible to the Strategy implementor
-export type InternalTradeState = FullTradeState &
+export type BacktestState = FullTradeState &
   Required<CommonBacktestArgs & { from: number; to: number }> & {
     finished: boolean;
     firstAndLastCandles: Dictionary<[Candle, Candle]>;
@@ -183,7 +182,7 @@ export type InternalTradeState = FullTradeState &
  * {@link backtestSync} instead.
  */
 export function backtest(args: BacktestAsyncArgs): Promise<BacktestResult> {
-  const state: InternalTradeState = initState(
+  const state: BacktestState = initState(
     args,
     toTimestamp(args.from),
     toTimestamp(args.to)
@@ -217,7 +216,7 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
     args.to ? toTimestamp(args.to) : Infinity,
     last(candleUpdates)!.time
   );
-  const state: InternalTradeState = initState(args, from, to);
+  const state: BacktestState = initState(args, from, to);
   const candleProvider = toSyncCandleProvider(candleUpdates);
   return pipe(
     state,
@@ -228,23 +227,23 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
 
 const produceFinalStateAsync = (candleProvider: AsyncCandleUpdateProvider) =>
   repeatUntilAsync(
-    async (state: InternalTradeState) =>
+    async (state: BacktestState) =>
       produceNextState(state, await candleProvider(state.time || undefined)),
-    (state: InternalTradeState) => state.finished
+    (state: BacktestState) => state.finished
   );
 
 const produceFinalStateSync = (candleProvider: SyncCandleUpdateProvider) =>
   repeatUntil(
-    (state: InternalTradeState) =>
+    (state: BacktestState) =>
       produceNextState(state, candleProvider(state.time || undefined)),
-    (state: InternalTradeState) => state.finished
+    (state: BacktestState) => state.finished
   );
 
 function initState(
   args: CommonBacktestArgs,
   from: number,
   to: number
-): InternalTradeState {
+): BacktestState {
   const argsWithDefaults = {
     initialBalance: 10000,
     commissionProvider: () => 0,
@@ -296,11 +295,11 @@ function toSyncCandleProvider(
  * value as {@link cash}.
  */
 export function updateAsset(
-  state: InternalTradeState,
+  state: BacktestState,
   symbol: string,
   update: Partial<AssetState>,
   cash?: number
-): InternalTradeState {
+): BacktestState {
   return {
     ...state,
     cash: cash !== undefined ? cash : state.cash,

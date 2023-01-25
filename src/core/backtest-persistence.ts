@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { identity, mapValues, omit, pipe } from "remeda";
 import { indicatorDataKey } from "../indicators/indicator";
 import { Persister, PersisterKey } from "../persistence";
-import { BacktestAsyncArgs, InternalTradeState } from "./backtest";
+import { BacktestAsyncArgs, BacktestState } from "./backtest";
 
 /**
  * Sets up persistence state.
@@ -12,7 +12,7 @@ import { BacktestAsyncArgs, InternalTradeState } from "./backtest";
  */
 export const initBacktestPersistence =
   (persistenceArgs: BacktestAsyncArgs["persistence"]) =>
-  async (initialState: InternalTradeState): Promise<InternalTradeState> => {
+  async (initialState: BacktestState): Promise<BacktestState> => {
     if (!persistenceArgs) {
       return initialState;
     }
@@ -54,7 +54,7 @@ export interface BacktestPersistenceState {
   updatesSincePersist: number;
 }
 
-export function persistIfNeeded(state: InternalTradeState): InternalTradeState {
+export function persistIfNeeded(state: BacktestState): BacktestState {
   if (!state.persistence) {
     return state;
   }
@@ -71,7 +71,7 @@ export function persistIfNeeded(state: InternalTradeState): InternalTradeState {
 }
 
 function persistIfNeededAndGetNextCounter(
-  state: InternalTradeState,
+  state: BacktestState,
   persistence: BacktestPersistenceState
 ) {
   const {
@@ -90,12 +90,12 @@ function persistIfNeededAndGetNextCounter(
 }
 
 type PersistedInternalTradeState = Omit<
-  InternalTradeState,
+  BacktestState,
   "strategy" | "commissionProvider" | "progressHandler" | "persistence"
 >;
 
 function convertToPersistence(
-  state: InternalTradeState
+  state: BacktestState
 ): PersistedInternalTradeState {
   return pipe(
     state,
@@ -110,7 +110,7 @@ function convertToPersistence(
  * Indicators are stored as functions (not serializable), and they should not
  * change when re-computed if resuming a backtest.
  */
-function clearIndicators(state: InternalTradeState): InternalTradeState {
+function clearIndicators(state: BacktestState): BacktestState {
   return {
     ...state,
     assets: mapValues(state.assets, (a) => ({
