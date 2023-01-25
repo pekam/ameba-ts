@@ -3,15 +3,18 @@ import { pipe } from "remeda";
 import {
   allInStaker,
   AssetState,
+  AsyncCandleProvider,
   backtest,
   BacktestResult,
   CandleDataProvider,
   CandleSeries,
   createAsyncCandleProvider,
+  Persister,
   TradingStrategy,
   withStaker,
 } from "../src";
 import { CommonBacktestArgs } from "../src/core/backtest";
+import { Dictionary } from "../src/util/type-util";
 import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
@@ -98,36 +101,88 @@ it("should produce a backtest result (async)", async () => {
   assertBacktestResult(result);
 });
 
-it("should produce a backtest result (async data provider)", async () => {
-  const dataProvider: CandleDataProvider = ({
-    symbol,
-    from,
-    to,
-    timeframe,
-  }) => {
-    if (symbol !== "BTC") {
-      throw Error("Unexpected symbol requested " + symbol);
-    }
-    if (timeframe !== "1h") {
-      throw Error("Unexpected timeframe requested " + timeframe);
-    }
-    const candles = pipe(
-      series,
-      dropWhile((c) => c.time < from),
-      takeWhile((c) => c.time <= to)
-    );
-    return Promise.resolve(candles);
-  };
+const dataProvider: CandleDataProvider = ({ symbol, from, to, timeframe }) => {
+  if (symbol !== "BTC") {
+    throw Error("Unexpected symbol requested " + symbol);
+  }
+  if (timeframe !== "1h") {
+    throw Error("Unexpected timeframe requested " + timeframe);
+  }
+  const candles = pipe(
+    series,
+    dropWhile((c) => c.time < from),
+    takeWhile((c) => c.time <= to)
+  );
+  return Promise.resolve(candles);
+};
 
+const createCandleProvider = () =>
+  createAsyncCandleProvider({
+    dataProvider,
+    symbols: ["BTC"],
+    timeframe: "1h",
+    batchSize: 10,
+    ...backtestRange,
+  });
+
+it("should produce a backtest result (async data provider)", async () => {
   const result: BacktestResult = await backtest({
     ...args,
-    candleProvider: createAsyncCandleProvider({
-      dataProvider,
-      symbols: ["BTC"],
-      timeframe: "1h",
-      batchSize: 10,
-      ...backtestRange,
-    }),
+    candleProvider: createCandleProvider(),
   });
   assertBacktestResult(result);
+});
+
+it("should produce a backtest result (persister)", async () => {
+  let errorCount = 0;
+  let persistedStateFetchedCount = 0;
+  const errorOnTimestamps = [50, 51, 100, 150].map((i) => series[i].time);
+
+  const candleProvider = createCandleProvider();
+  const erroringCandleProvider: AsyncCandleProvider = (previousCandleTime) => {
+    if (errorOnTimestamps[errorCount] === previousCandleTime) {
+      errorCount++;
+      throw Error("intentional error to test persistence");
+    }
+    return candleProvider(previousCandleTime);
+  };
+
+  const fakePersister: Persister = (() => {
+    const store: Dictionary<string> = {};
+
+    return {
+      async get(key) {
+        const s = store[JSON.stringify(key)];
+        if (s) {
+          persistedStateFetchedCount++;
+          return JSON.parse(s);
+        }
+        return null;
+      },
+      async set(key, value) {
+        store[JSON.stringify(key)] = JSON.stringify(value);
+      },
+    };
+  })();
+
+  let result: BacktestResult | undefined = undefined;
+
+  while (!result) {
+    try {
+      result = await backtest({
+        ...args,
+        candleProvider: erroringCandleProvider,
+        persistence: {
+          persister: fakePersister,
+          interval: 2,
+          key: "foo",
+        },
+      });
+    } catch (e) {
+      // expected
+    }
+  }
+  assertBacktestResult(result);
+  expect(errorCount).toBe(errorOnTimestamps.length);
+  expect(persistedStateFetchedCount).toBe(errorOnTimestamps.length);
 });

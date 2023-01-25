@@ -3,6 +3,7 @@ import { Dictionary, Nullable } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
 import { InternalTradeState, updateAsset } from "./backtest";
 import { handleOrders } from "./backtest-order-execution";
+import { persistIfNeeded } from "./backtest-persistence";
 import { CandleUpdate } from "./create-candle-updates";
 import {
   AssetMap,
@@ -36,7 +37,9 @@ export function produceNextState(
           applyStrategy(state.args.strategy),
           updateFirstAndLastCandles(candleUpdate),
           notifyProgressHandler
-        )
+        ),
+
+    persistIfNeeded
   );
 }
 

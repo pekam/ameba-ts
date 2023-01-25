@@ -1,9 +1,13 @@
 import { findLast } from "lodash";
 import { pipe } from "remeda";
-import { CommissionProvider } from "..";
+import { CommissionProvider, Persister } from "..";
 import { Moment, toTimestamp } from "../time";
 import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
 import { repeatUntil, repeatUntilAsync, then } from "../util/util";
+import {
+  BacktestPersistenceState,
+  initBacktestPersistence,
+} from "./backtest-persistence";
 import { produceNextState } from "./backtest-produce-next-state";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
@@ -94,6 +98,35 @@ export interface AsyncBacktestArgs extends CommonBacktestArgs {
    * no need to keep old data in memory.
    */
   candleProvider: AsyncCandleProvider;
+  /**
+   * If defined, the backtest state will be persisted periodically, allowing to
+   * resume the backtest later. This can be useful when backtesting with big
+   * data sets fetched on demand from an external API, when an error in the API
+   * call could otherwise cause a need to restart the entire backtest.
+   *
+   * If persistence.key matches a previously persisted backtest state, the
+   * matching state is loaded to resume that backtest run. In this case, you
+   * should make sure to pass the same arguments to backtest as previously.
+   */
+  persistence?: {
+    /**
+     * The persister used to store the backtest state periodically.
+     */
+    persister: Persister;
+    /**
+     * The number of updates to run between each persisting.
+     */
+    interval: number;
+    /**
+     * Identifier for this backtest run, used with the persister. If it's an
+     * existing key matching a previously started backtest, the backtest state
+     * is loaded from the persister and used to resume the backtest run.
+     *
+     * If not provided, the backtest's start time as ISO date string is used as
+     * the key.
+     */
+    key?: string;
+  };
 }
 
 export type AsyncCandleProvider = (
@@ -111,7 +144,8 @@ function isSynchronous(a: BacktestArgs | AsyncBacktestArgs): a is BacktestArgs {
 type AdjustedBacktestArgs = OverrideProps<
   Required<CommonBacktestArgs>,
   { from: number; to: number }
->;
+> &
+  Pick<AsyncBacktestArgs, "persistence">;
 
 // Additional props that should not be visible to the Strategy implementor
 export interface InternalTradeState extends FullTradeState {
@@ -126,6 +160,7 @@ export interface InternalTradeState extends FullTradeState {
    */
   finishTime?: number;
   firstAndLastCandles: Dictionary<[Candle, Candle]>;
+  persistence?: BacktestPersistenceState;
 }
 
 /**
@@ -152,7 +187,8 @@ export function backtest(
     return pipe(
       state,
       addFinishTime(originalArgs.to),
-      produceFinalStateAsync(originalArgs.candleProvider),
+      initBacktestPersistence,
+      then(produceFinalStateAsync(originalArgs.candleProvider)),
       then(convertToBacktestResult)
     );
   }
@@ -172,9 +208,7 @@ const produceFinalStateAsync = (candleProvider: AsyncCandleProvider) =>
     (state: InternalTradeState) => state.finished
   );
 
-export function adjustArgs(
-  args: CommonBacktestArgs
-): OverrideProps<Required<CommonBacktestArgs>, { from: number; to: number }> {
+function adjustArgs(args: CommonBacktestArgs): AdjustedBacktestArgs {
   const withDefaults: Required<CommonBacktestArgs> = {
     initialBalance: 10000,
     commissionProvider: () => 0,

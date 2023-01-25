@@ -28,6 +28,11 @@ export type IndicatorInputState = Pick<
 >;
 
 /**
+ * Property key that is used to store indicator data in AssetState.data
+ */
+export const indicatorDataKey = "_indicators";
+
+/**
  * Gets the value of an indicator, or `undefined` if there's not been enough
  * data to calculate the indicator yet.
  *
@@ -80,7 +85,7 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
 }
 
 function getIndicatorStore(state: IndicatorInputState): Dictionary<any> {
-  return computeIfAbsent(state.data, "_indicators", () => ({}));
+  return computeIfAbsent(state.data, indicatorDataKey, () => ({}));
 }
 
 function computeIfAbsent<T>(

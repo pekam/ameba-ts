@@ -58,6 +58,7 @@ export function createAsyncCandleProvider(args: {
   let startTime = toTimestamp(fullRange.from);
 
   return async (previousCandleTime) => {
+    startTime = Math.max(startTime, previousCandleTime || -Infinity);
     while (!candleUpdates.length && startTime < fullRange.to) {
       const endTime = startTime + periodToFetch;
       candleUpdates = await getNextBatch(

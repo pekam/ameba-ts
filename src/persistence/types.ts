@@ -1,13 +1,15 @@
+import { Nullable } from "../util/type-util";
+
 /**
  * Key-value-pair store for saving values on disk. Can be implemented e.g. by
  * writing to a file or storing into a database.
  */
 export interface Persister {
   /**
-   * Returns the persisted value, or null if the provided key does not map to an
-   * existing value.
+   * Returns the persisted value, or null/undefined if the provided key does not
+   * map to an existing value.
    */
-  get: (key: PersisterKey) => Promise<object | null>;
+  get: (key: PersisterKey) => Promise<Nullable<object>>;
   /**
    * Persists the given value identified by the given key. Overrides any
    * existing value that has the same key.
