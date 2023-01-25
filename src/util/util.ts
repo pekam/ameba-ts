@@ -123,7 +123,9 @@ export const mapValues =
  * Enables using Promise.then in pipe without arrow functions.
  */
 export const then =
-  <T, R>(fn: (arg: T) => R): ((arg: Promise<T>) => Promise<R>) =>
+  <T, R>(
+    fn: ((arg: T) => Promise<R>) | ((arg: T) => R)
+  ): ((arg: Promise<T>) => Promise<R>) =>
   (arg: Promise<T>) =>
     arg.then(fn);
 
