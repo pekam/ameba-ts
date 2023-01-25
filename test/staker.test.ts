@@ -1,7 +1,7 @@
 import { mapValues } from "remeda";
 import {
   AssetState,
-  backtest,
+  backtestSync,
   createStaker,
   TradingStrategy,
   Transaction,
@@ -56,7 +56,7 @@ it("should set position sizes by max risk per trade and max exposure", () => {
       return {};
     }
   };
-  backtest({
+  backtestSync({
     strategy: withStaker(strategy, staker),
     series,
     initialBalance,

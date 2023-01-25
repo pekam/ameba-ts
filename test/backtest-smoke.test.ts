@@ -3,9 +3,10 @@ import { pipe } from "remeda";
 import {
   allInStaker,
   AssetState,
-  AsyncBacktestArgs,
   backtest,
+  BacktestAsyncArgs,
   BacktestResult,
+  backtestSync,
   CandleDataProvider,
   CandleSeries,
   Persister,
@@ -72,8 +73,8 @@ function assertBacktestResult(result: BacktestResult) {
   });
 }
 
-it("should produce a backtest result", () => {
-  const result: BacktestResult = backtest({
+it("should produce a backtest result (sync)", () => {
+  const result: BacktestResult = backtestSync({
     ...args,
     series: {
       BTC: series,
@@ -97,7 +98,7 @@ const dataProvider: CandleDataProvider = ({ symbol, from, to, timeframe }) => {
   return Promise.resolve(candles);
 };
 
-const asyncArgs: AsyncBacktestArgs = {
+const asyncArgs: BacktestAsyncArgs = {
   ...args,
   dataProvider,
   symbols: ["BTC"],

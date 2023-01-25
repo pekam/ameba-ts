@@ -6,7 +6,7 @@ import {
   Persister,
 } from "..";
 import { Moment, Timeframe, toTimestamp } from "../time";
-import { Dictionary, Nullable, OverrideProps } from "../util/type-util";
+import { Dictionary, Nullable } from "../util/type-util";
 import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import {
   BacktestPersistenceState,
@@ -24,20 +24,14 @@ import {
   SeriesMap,
 } from "./types";
 
-export interface BacktestArgs {
+/**
+ * Args used by both synchronous and asynchronous backtest.
+ */
+export interface CommonBacktestArgs {
   /**
    * The strategy to backtest.
    */
   strategy: FullTradingStrategy;
-  /**
-   * The historical price data used to simulate what trades the strategy would
-   * have made. The keys of this object should be the symbols identifying the
-   * particular asset.
-   *
-   * The object can contain only one entry for trading only a single asset, or
-   * many for multi-asset trading.
-   */
-  series: SeriesMap;
   /**
    * The initial cash balance of the account. Defaults to 10000.
    */
@@ -58,6 +52,24 @@ export interface BacktestArgs {
    */
   progressHandler?: ProgressHandler | null;
   /**
+   * The number of candles and indicators to keep in memory during the backtest.
+   * When bufferSize is reached, the oldest candles and indicators will be
+   * removed as new ones are added. Defaults to 10000.
+   */
+  bufferSize?: number;
+}
+
+export interface BacktestSyncArgs extends CommonBacktestArgs {
+  /**
+   * The historical price data used to simulate what trades the strategy would
+   * have made. The keys of this object should be the symbols identifying the
+   * particular asset.
+   *
+   * The object can contain only one entry for trading only a single asset, or
+   * many for multi-asset trading.
+   */
+  series: SeriesMap;
+  /**
    * If provided, the strategy will first be called with a series including all
    * the candles up to and including the first candle which has a timestamp
    * greater or equal to `from`.
@@ -73,20 +85,9 @@ export interface BacktestArgs {
    * than `to`.
    */
   to?: Moment;
-  /**
-   * The number of candles and indicators to keep in memory during the backtest.
-   * When bufferSize is reached, the oldest candles and indicators will be
-   * removed as new ones are added. Defaults to 10000.
-   */
-  bufferSize?: number;
 }
 
-/**
- * Args used by both synchronous and asynchronous backtest
- */
-export type CommonBacktestArgs = Omit<BacktestArgs, "series">;
-
-export interface AsyncBacktestArgs extends CommonBacktestArgs {
+export interface BacktestAsyncArgs extends CommonBacktestArgs {
   /**
    * A function that the backtester will use to fetch candlestick price data as
    * needed. Candles are fetched in batches and the number of candles attempted
@@ -155,7 +156,7 @@ export interface AsyncBacktestArgs extends CommonBacktestArgs {
  * Called on each iteration of the backtester to provides the next set of
  * candles (max one per symbol, each with the same timestamp).
  */
-export type CandleUpdateProvider = (
+export type SyncCandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Nullable<CandleUpdate>;
 /**
@@ -166,74 +167,76 @@ export type AsyncCandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Promise<Nullable<CandleUpdate>>;
 
-function isSynchronous(a: BacktestArgs | AsyncBacktestArgs): a is BacktestArgs {
-  return !!(a as BacktestArgs).series;
-}
-
 // Additional props that should not be visible to the Strategy implementor
 export type InternalTradeState = FullTradeState &
-  OverrideProps<Required<CommonBacktestArgs>, { from: number; to: number }> & {
+  Required<CommonBacktestArgs & { from: number; to: number }> & {
     finished: boolean;
     firstAndLastCandles: Dictionary<[Candle, Candle]>;
     persistence?: BacktestPersistenceState;
   };
 
 /**
- * Tests how the given trading strategy would have performed with the provided
- * historical price data.
+ * Tests how the given trading strategy would have performed with historical
+ * price data fetched from the given data provider.
+ *
+ * To backtest synchronously with in-memory data, you can use
+ * {@link backtestSync} instead.
  */
-export function backtest(args: BacktestArgs): BacktestResult;
-export function backtest(args: AsyncBacktestArgs): Promise<BacktestResult>;
-export function backtest(
-  args: BacktestArgs | AsyncBacktestArgs
-): BacktestResult | Promise<BacktestResult> {
-  if (isSynchronous(args)) {
-    const candleUpdates = createCandleUpdates(args.series);
-    if (!candleUpdates.length) {
-      throw Error("No candles provided");
-    }
-    const from = Math.max(
-      args.from ? toTimestamp(args.from) : -Infinity,
-      first(candleUpdates)!.time
-    );
-    const to = Math.min(
-      args.to ? toTimestamp(args.to) : Infinity,
-      last(candleUpdates)!.time
-    );
-    const state: InternalTradeState = initState(args, from, to);
-    const candleProvider = toCandleProvider(candleUpdates);
-    return pipe(
-      state,
-      produceFinalState(candleProvider),
-      convertToBacktestResult
-    );
-  } else {
-    const state: InternalTradeState = initState(
-      args,
-      toTimestamp(args.from),
-      toTimestamp(args.to)
-    );
-    const candleProvider = createAsyncCandleProvider(args);
-    return pipe(
-      state,
-      initBacktestPersistence(args.persistence),
-      then(produceFinalStateAsync(candleProvider)),
-      then(convertToBacktestResult)
-    );
-  }
+export function backtest(args: BacktestAsyncArgs): Promise<BacktestResult> {
+  const state: InternalTradeState = initState(
+    args,
+    toTimestamp(args.from),
+    toTimestamp(args.to)
+  );
+  const candleProvider = createAsyncCandleProvider(args);
+  return pipe(
+    state,
+    initBacktestPersistence(args.persistence),
+    then(produceFinalStateAsync(candleProvider)),
+    then(convertToBacktestResult)
+  );
 }
 
-const produceFinalState = (candleProvider: CandleUpdateProvider) =>
-  repeatUntil(
-    (state: InternalTradeState) =>
-      produceNextState(state, candleProvider(state.time || undefined)),
-    (state: InternalTradeState) => state.finished
+/**
+ * Tests how the given trading strategy would have performed with the provided
+ * historical price data.
+ *
+ * To backtest asynchronously with lazy loaded price data, you can use
+ * {@link backtest} instead.
+ */
+export function backtestSync(args: BacktestSyncArgs): BacktestResult {
+  const candleUpdates = createCandleUpdates(args.series);
+  if (!candleUpdates.length) {
+    throw Error("No candles provided");
+  }
+  const from = Math.max(
+    args.from ? toTimestamp(args.from) : -Infinity,
+    first(candleUpdates)!.time
   );
+  const to = Math.min(
+    args.to ? toTimestamp(args.to) : Infinity,
+    last(candleUpdates)!.time
+  );
+  const state: InternalTradeState = initState(args, from, to);
+  const candleProvider = toSyncCandleProvider(candleUpdates);
+  return pipe(
+    state,
+    produceFinalStateSync(candleProvider),
+    convertToBacktestResult
+  );
+}
 
 const produceFinalStateAsync = (candleProvider: AsyncCandleUpdateProvider) =>
   repeatUntilAsync(
     async (state: InternalTradeState) =>
       produceNextState(state, await candleProvider(state.time || undefined)),
+    (state: InternalTradeState) => state.finished
+  );
+
+const produceFinalStateSync = (candleProvider: SyncCandleUpdateProvider) =>
+  repeatUntil(
+    (state: InternalTradeState) =>
+      produceNextState(state, candleProvider(state.time || undefined)),
     (state: InternalTradeState) => state.finished
   );
 
@@ -263,7 +266,9 @@ function initState(
   };
 }
 
-function toCandleProvider(candleUpdates: CandleUpdate[]): CandleUpdateProvider {
+function toSyncCandleProvider(
+  candleUpdates: CandleUpdate[]
+): SyncCandleUpdateProvider {
   // Stateful for performance. The correctness of this helper value is still
   // verified each time, so the function works correctly even if it gets out of
   // sync with the backtest process (for example, if the bactest execution is

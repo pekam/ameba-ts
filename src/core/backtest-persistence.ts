@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { identity, mapValues, omit, pipe } from "remeda";
 import { indicatorDataKey } from "../indicators/indicator";
 import { Persister, PersisterKey } from "../persistence";
-import { AsyncBacktestArgs, InternalTradeState } from "./backtest";
+import { BacktestAsyncArgs, InternalTradeState } from "./backtest";
 
 /**
  * Sets up persistence state.
@@ -11,7 +11,7 @@ import { AsyncBacktestArgs, InternalTradeState } from "./backtest";
  * to state.
  */
 export const initBacktestPersistence =
-  (persistenceArgs: AsyncBacktestArgs["persistence"]) =>
+  (persistenceArgs: BacktestAsyncArgs["persistence"]) =>
   async (initialState: InternalTradeState): Promise<InternalTradeState> => {
     if (!persistenceArgs) {
       return initialState;

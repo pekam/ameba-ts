@@ -1,5 +1,5 @@
 import { flatMap } from "remeda";
-import { backtest, CommissionProvider, FullTradingStrategy } from "../src";
+import { backtestSync, CommissionProvider, FullTradingStrategy } from "../src";
 import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
@@ -36,7 +36,7 @@ it("should charge commissions by the commission provider", () => {
     }
   };
 
-  const result = backtest({
+  const result = backtestSync({
     series,
     strategy,
     commissionProvider,

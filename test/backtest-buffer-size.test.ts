@@ -1,6 +1,6 @@
 import { range } from "remeda";
 import { getSma } from "../src";
-import { backtest } from "../src/core/backtest";
+import { backtestSync } from "../src/core/backtest";
 import { FullTradingStrategy, SeriesMap } from "../src/core/types";
 import { last } from "../src/util/util";
 import { testData } from "./test-data/testData";
@@ -34,7 +34,7 @@ it("should remove old candles when bufferSize reached", () => {
     return {};
   };
 
-  backtest({
+  backtestSync({
     series,
     strategy,
     progressHandler: null,
@@ -77,7 +77,7 @@ it("should remove old indicator values when bufferSize reached", () => {
     return {};
   };
 
-  backtest({
+  backtestSync({
     series,
     strategy,
     progressHandler: null,

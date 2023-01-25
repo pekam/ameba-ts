@@ -1,5 +1,5 @@
 import { last } from "lodash/fp";
-import { backtest } from "../src/core/backtest";
+import { backtestSync } from "../src";
 import { Candle, FullTradingStrategy, SeriesMap } from "../src/core/types";
 
 it("should add the next candles with equal timestamps for each iteration", () => {
@@ -48,7 +48,7 @@ it("should add the next candles with equal timestamps for each iteration", () =>
     return {};
   };
 
-  backtest({
+  backtestSync({
     series,
     strategy,
     progressHandler: null,

@@ -1,4 +1,9 @@
-export { AsyncBacktestArgs, backtest, BacktestArgs } from "./core/backtest";
+export {
+  backtest,
+  BacktestAsyncArgs,
+  backtestSync,
+  BacktestSyncArgs,
+} from "./core/backtest";
 export { BacktestResult, BacktestStatistics } from "./core/backtest-result";
 export { ProgressHandler } from "./core/progress-handler";
 export * from "./core/type-guards";

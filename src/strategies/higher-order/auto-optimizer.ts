@@ -2,7 +2,7 @@ import { maxBy } from "lodash";
 import {
   allInStaker,
   AssetState,
-  backtest,
+  backtestSync,
   TradingStrategy,
   withStaker,
 } from "../..";
@@ -21,7 +21,7 @@ export function autoOptimizer(settings: {
   function optimize({ series }: AssetState): TradingStrategy {
     const withProfits = settings.stratPool.map((strategy) => {
       const from = last(series).time - settings.optimizePeriod;
-      const result = backtest({
+      const result = backtestSync({
         strategy: withStaker(strategy, allInStaker),
         series: { _: series.slice(-10000) },
         progressHandler: null,

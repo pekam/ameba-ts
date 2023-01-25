@@ -1,7 +1,7 @@
 import {
   allInStaker,
   AssetState,
-  backtest,
+  backtestSync,
   cancelEntry,
   StrategyUpdate,
   TradingStrategy,
@@ -55,7 +55,7 @@ export function tradeOnlyRecentlyProfitable(
       time - stratData.lastBacktested >= backtestInterval &&
       series.length >= backtestCandleCount
     ) {
-      const backtestResult = backtest({
+      const backtestResult = backtestSync({
         strategy: withStaker(strategy, allInStaker),
         series: { _: series.slice(-backtestCandleCount) },
         progressHandler: null,
