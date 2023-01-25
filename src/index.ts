@@ -1,6 +1,6 @@
 export {
   AsyncBacktestArgs,
-  AsyncCandleProvider,
+  AsyncCandleUpdateProvider as AsyncCandleProvider,
   backtest,
   BacktestArgs,
 } from "./core/backtest";

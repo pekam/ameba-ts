@@ -97,7 +97,7 @@ export interface AsyncBacktestArgs extends CommonBacktestArgs {
    * a batch of data from a web service or a database when needed, and there's
    * no need to keep old data in memory.
    */
-  candleProvider: AsyncCandleProvider;
+  candleProvider: AsyncCandleUpdateProvider;
   /**
    * If defined, the backtest state will be persisted periodically, allowing to
    * resume the backtest later. This can be useful when backtesting with big
@@ -129,11 +129,11 @@ export interface AsyncBacktestArgs extends CommonBacktestArgs {
   };
 }
 
-export type AsyncCandleProvider = (
+export type AsyncCandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Promise<Nullable<CandleUpdate>>;
 
-export type CandleProvider = (
+export type CandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Nullable<CandleUpdate>;
 
@@ -194,14 +194,14 @@ export function backtest(
   }
 }
 
-const produceFinalState = (candleProvider: CandleProvider) =>
+const produceFinalState = (candleProvider: CandleUpdateProvider) =>
   repeatUntil(
     (state: InternalTradeState) =>
       produceNextState(state, candleProvider(state.time || undefined)),
     (state: InternalTradeState) => state.finished
   );
 
-const produceFinalStateAsync = (candleProvider: AsyncCandleProvider) =>
+const produceFinalStateAsync = (candleProvider: AsyncCandleUpdateProvider) =>
   repeatUntilAsync(
     async (state: InternalTradeState) =>
       produceNextState(state, await candleProvider(state.time || undefined)),
@@ -255,7 +255,7 @@ const addFinishTime =
     finishTime: finishTime === undefined ? finishTime : toTimestamp(finishTime),
   });
 
-function toCandleProvider(candleUpdates: CandleUpdate[]): CandleProvider {
+function toCandleProvider(candleUpdates: CandleUpdate[]): CandleUpdateProvider {
   // Stateful for performance. The correctness of this helper value is still
   // verified each time, so the function works correctly even if it gets out of
   // sync with the backtest process (for example, if the bactest execution is
