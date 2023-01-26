@@ -1,3 +1,4 @@
+import { tap } from "lodash/fp";
 import { first, last, pipe } from "remeda";
 import { CandleDataProvider, Persister } from "..";
 import {
@@ -13,6 +14,7 @@ import { repeatUntil, repeatUntilAsync, then } from "../util/util";
 import {
   BacktestPersistenceState,
   initBacktestPersistence,
+  persistBacktestResultIfNeeded,
   persistIfNeeded,
 } from "./backtest-persistence";
 import { BacktestResult, convertToBacktestResult } from "./backtest-result";
@@ -192,18 +194,28 @@ export type BacktestState = FullTradeState &
  * To backtest synchronously with in-memory data, you can use
  * {@link backtestSync} instead.
  */
-export function backtest(args: BacktestAsyncArgs): Promise<BacktestResult> {
-  const state: BacktestState = initState(
+export async function backtest(
+  args: BacktestAsyncArgs
+): Promise<BacktestResult> {
+  const stateOrResult = await pipe(
     args,
-    toTimestamp(args.from),
-    toTimestamp(args.to)
+    initState(toTimestamp(args.from), toTimestamp(args.to)),
+    initBacktestPersistence(args.persistence)
   );
-  const candleProvider = createAsyncCandleProvider(args);
+  if (stateOrResult.finished) {
+    // Backtest with this persistence key is already finished
+    return stateOrResult.result;
+  }
   return pipe(
-    state,
-    initBacktestPersistence(args.persistence),
-    then(produceFinalStateAsync(candleProvider)),
-    then(convertToBacktestResult)
+    stateOrResult.state,
+    produceFinalStateAsync(createAsyncCandleProvider(args)),
+    then((state) =>
+      pipe(
+        state,
+        convertToBacktestResult,
+        tap(persistBacktestResultIfNeeded(state))
+      )
+    )
   );
 }
 
@@ -227,11 +239,10 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
     args.to ? toTimestamp(args.to) : Infinity,
     last(candleUpdates)!.time
   );
-  const state: BacktestState = initState(args, from, to);
-  const candleProvider = createSyncCandleProvider(candleUpdates);
   return pipe(
-    state,
-    produceFinalStateSync(candleProvider),
+    args,
+    initState(from, to),
+    produceFinalStateSync(createSyncCandleProvider(candleUpdates)),
     convertToBacktestResult
   );
 }
@@ -254,28 +265,26 @@ const produceFinalStateSync = (candleProvider: SyncCandleUpdateProvider) =>
     (state: BacktestState) => state.finished
   );
 
-function initState(
-  args: CommonBacktestArgs,
-  from: number,
-  to: number
-): BacktestState {
-  const argsWithDefaults = {
-    initialBalance: 10000,
-    commissionProvider: () => 0,
-    progressHandler: createProgressBar(),
-    bufferSize: 10000,
+const initState =
+  (from: number, to: number) =>
+  (args: CommonBacktestArgs): BacktestState => {
+    const argsWithDefaults = {
+      initialBalance: 10000,
+      commissionProvider: () => 0,
+      progressHandler: createProgressBar(),
+      bufferSize: 10000,
 
-    ...args,
+      ...args,
+    };
+    return {
+      ...argsWithDefaults,
+      cash: argsWithDefaults.initialBalance,
+      assets: {},
+      updated: [],
+      time: 0,
+      finished: false,
+      firstAndLastCandles: {},
+      from,
+      to,
+    };
   };
-  return {
-    ...argsWithDefaults,
-    cash: argsWithDefaults.initialBalance,
-    assets: {},
-    updated: [],
-    time: 0,
-    finished: false,
-    firstAndLastCandles: {},
-    from,
-    to,
-  };
-}

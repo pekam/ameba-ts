@@ -9,12 +9,12 @@ export interface Persister {
    * Returns the persisted value, or null/undefined if the provided key does not
    * map to an existing value.
    */
-  get: (key: PersisterKey) => Promise<Nullable<object>>;
+  get: <T>(key: PersisterKey) => Promise<Nullable<T>>;
   /**
    * Persists the given value identified by the given key. Overrides any
    * existing value that has the same key.
    */
-  set: (key: PersisterKey, value: object) => Promise<void>;
+  set: <T>(key: PersisterKey, value: T) => Promise<void>;
 }
 
 /**

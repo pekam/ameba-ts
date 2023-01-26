@@ -9,6 +9,7 @@ import {
   backtestSync,
   CandleDataProvider,
   CandleSeries,
+  getPersistedBacktestResult,
   Persister,
   toTimestamp,
   TradingStrategy,
@@ -145,17 +146,20 @@ it("should produce a backtest result (persister)", async () => {
 
   let result: BacktestResult | undefined = undefined;
 
+  const doBacktest = () =>
+    backtest({
+      ...asyncArgs,
+      dataProvider: erroringCandleProvider,
+      persistence: {
+        persister: fakePersister,
+        interval: 2,
+        key: "foo",
+      },
+    });
+
   while (!result) {
     try {
-      result = await backtest({
-        ...asyncArgs,
-        dataProvider: erroringCandleProvider,
-        persistence: {
-          persister: fakePersister,
-          interval: 2,
-          key: "foo",
-        },
-      });
+      result = await doBacktest();
     } catch (e) {
       // expected
     }
@@ -163,4 +167,14 @@ it("should produce a backtest result (persister)", async () => {
   assertBacktestResult(result);
   expect(errorCount).toBe(errorOnTimestamps.length);
   expect(persistedStateFetchedCount).toBe(errorOnTimestamps.length);
+
+  // After finishing, the result should be persisted, so let's make sure that it
+  // is correct as well:
+  assertBacktestResult(
+    (await getPersistedBacktestResult(fakePersister, "foo"))!
+  );
+
+  // When result exists for this backtest key, backtest should return the result
+  // immediately without running again. Let's test this path as well.
+  assertBacktestResult(await doBacktest());
 });
