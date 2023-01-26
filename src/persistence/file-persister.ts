@@ -6,9 +6,16 @@ import { Persister, PersisterKey } from "./types";
  * Returns a Persister that stores values in the file system. Each value has a
  * dedicated file, with path equal to '[baseDir]/[category]/[key].json'.
  *
- * The directories, including baseDir, are created on demand.
+ * The provided baseDir must already exist. It's not created automatically to
+ * avoid recursively creating directory structures in weird places if there's a
+ * typo in the dir path.
  */
 export const filePersister = (baseDir: string): Persister => {
+  if (!fs.existsSync(baseDir)) {
+    throw Error(
+      `File persister needs an existing directory to store data, and ${baseDir} does not exist.`
+    );
+  }
   const toFilePath = ({ category, key }: PersisterKey) => ({
     dir: path.join(baseDir, category),
     fileName: key + ".json",
