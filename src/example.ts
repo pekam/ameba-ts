@@ -1,9 +1,13 @@
-import { backtest } from "./core/backtest";
-import { AssetState, CandleSeries } from "./core/types";
-import { TradingStrategy } from "./high-level-api/types";
-import { withStaker } from "./high-level-api/with-staker";
-import { getSma } from "./indicators";
-import { createStaker } from "./stakers/common-staker";
+import {
+  AssetState,
+  backtest,
+  Candle,
+  CandleDataProvider,
+  createStaker,
+  getSma,
+  TradingStrategy,
+  withStaker,
+} from "./";
 
 /**
  * A strategy that buys the breakout of previous candle's high if the price is
@@ -30,6 +34,7 @@ const exampleStrategy: TradingStrategy = (state: AssetState) => {
     }
 
     return {
+      // Enter if breaking previous candle's high
       entryOrder: {
         side: "buy",
         type: "stop",
@@ -47,40 +52,21 @@ const exampleStrategy: TradingStrategy = (state: AssetState) => {
   }
 };
 
-/**
- * Just an example showing how the data should be provided as a
- * symbol-to-candles dictionary. Data fetching APIs are not included in this
- * project.
- */
-async function getCryptoSeries() {
-  return {
-    BTC: await loadCandles({
-      market: "BTC/USD",
-      from: "2021-01-01",
-      to: "2021-12-01",
-      resolution: "1h",
-    }),
-    ETH: await loadCandles({
-      market: "ETH/USD",
-      from: "2021-01-01",
-      to: "2021-12-01",
-      resolution: "1h",
-    }),
-  };
-}
+const dataProvider: CandleDataProvider = async ({
+  symbol,
+  timeframe,
+  from,
+  to,
+}): Promise<Candle[]> => {
+  // You need to implement a data provider e.g. by fetching from your broker's
+  // API or by using your local data.
+  throw Error("Not implemented.");
+};
 
-async function loadCandles(args: {
-  market: string;
-  from: string;
-  to: string;
-  resolution: string;
-}): Promise<CandleSeries> {
-  throw Error("This project does not include any data APIs at the moment.");
-}
-
-// Backtest the example strategy with the crypto data
+// Backtest the example strategy with BTC and ETH hourly data between January
+// and December 2021.
 (async () => {
-  const result = backtest({
+  const result = await backtest({
     strategy: withStaker(
       exampleStrategy,
       // Staker handles position sizing/risk management
@@ -90,7 +76,11 @@ async function loadCandles(args: {
         allowFractions: true, // Cryptos allow non-whole-number position sizes
       })
     ),
-    series: await getCryptoSeries(),
+    dataProvider,
+    symbols: ["BTC", "ETH"],
+    timeframe: "1h",
+    from: "2021-01-01",
+    to: "2021-12-01",
   });
 
   console.log(result.stats);
@@ -107,7 +97,7 @@ async function loadCandles(args: {
 
   222% profit looks awesome, until comparing to the buy-and-hold profit,
   which is 312% on average for these two cryptos. Also, transaction costs
-  and slippage (to be implemented) for 2183 trades could very well turn
-  this result negative.
+  and slippage (can be simulated with commissionProvider) for 2183 trades
+  could turn this result negative.
   */
 })();
