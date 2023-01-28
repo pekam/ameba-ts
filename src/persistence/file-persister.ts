@@ -16,8 +16,11 @@ export const filePersister = (baseDir: string): Persister => {
       `File persister needs an existing directory to store data, and ${baseDir} does not exist.`
     );
   }
+
+  const toCategoryDirPath = (category: string) => path.join(baseDir, category);
+
   const toFilePath = ({ category, key }: PersisterKey) => ({
-    dir: path.join(baseDir, category),
+    dir: toCategoryDirPath(category),
     fileName: key + ".json",
   });
 
@@ -27,6 +30,9 @@ export const filePersister = (baseDir: string): Persister => {
     },
     async set(key, value) {
       writeDataToFile({ ...toFilePath(key), data: value });
+    },
+    async getKeys(category) {
+      return getJsonFileNamesInDir(toCategoryDirPath(category));
     },
   };
 };
@@ -58,4 +64,12 @@ function readDataFromFile({
     return null;
   }
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function getJsonFileNamesInDir(dir: string) {
+  return fs
+    .readdirSync(dir)
+    .map(path.parse)
+    .filter((path) => path.ext === ".json")
+    .map((path) => path.name);
 }

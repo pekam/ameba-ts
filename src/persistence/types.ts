@@ -15,6 +15,10 @@ export interface Persister {
    * existing value that has the same key.
    */
   set: <T>(key: PersisterKey, value: T) => Promise<void>;
+  /**
+   * Returns keys of all the values stored in the given category.
+   */
+  getKeys: (category: string) => Promise<string[]>;
 }
 
 /**
