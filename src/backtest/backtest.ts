@@ -212,7 +212,7 @@ export async function backtest(
     then((state) =>
       pipe(
         state,
-        convertToBacktestResult,
+        convertToBacktestResult(args.timeframe),
         tap(persistBacktestResultIfNeeded(state))
       )
     )
@@ -243,7 +243,7 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
     args,
     initState(from, to),
     produceFinalStateSync(createSyncCandleProvider(candleUpdates)),
-    convertToBacktestResult
+    convertToBacktestResult(undefined)
   );
 }
 

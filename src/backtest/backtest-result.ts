@@ -1,6 +1,7 @@
 import { flatMap, max, min, sortBy, sumBy } from "lodash";
 import { map, pipe, values } from "remeda";
 import { Candle, Range, Trade } from "../core/types";
+import { Timeframe } from "../time";
 import { BacktestState } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { updateAsset } from "./update-asset";
@@ -40,6 +41,10 @@ export interface BacktestStatistics {
    * inclusive). Not defined if the backtest didn't use any candles.
    */
   range: Range | undefined;
+  /**
+   * Timeframe of the data used in the backtest, if known.
+   */
+  timeframe?: Timeframe;
 }
 
 export interface BacktestResult {
@@ -54,31 +59,32 @@ export interface BacktestResult {
   stats: BacktestStatistics;
 }
 
-export function convertToBacktestResult(
-  finalState: BacktestState
-): BacktestResult {
-  // Only finished trades are included in the result. Another option would be to
-  // close all open trades with the current market price, but exiting against
-  // the strategy's logic would be skew the result in a worse way.
-  return pipe(finalState, revertUnclosedTrades, (finalState) => {
-    const initialBalance = finalState.initialBalance;
-    const trades = getTradesInOrder(finalState);
+export const convertToBacktestResult =
+  (timeframe: Timeframe | undefined) =>
+  (finalState: BacktestState): BacktestResult => {
+    // Only finished trades are included in the result. Another option would be to
+    // close all open trades with the current market price, but exiting against
+    // the strategy's logic would be skew the result in a worse way.
+    return pipe(finalState, revertUnclosedTrades, (finalState) => {
+      const initialBalance = finalState.initialBalance;
+      const trades = getTradesInOrder(finalState);
 
-    const endBalance = finalState.cash;
+      const endBalance = finalState.cash;
 
-    const stats: BacktestStatistics = {
-      initialBalance,
-      endBalance,
-      relativeProfit: (endBalance - initialBalance) / initialBalance,
-      tradeCount: trades.length,
-      successRate:
-        trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
-      buyAndHoldProfit: getBuyAndHoldProfit(finalState),
-      range: getRange(finalState),
-    };
-    return { trades, stats };
-  });
-}
+      const stats: BacktestStatistics = {
+        initialBalance,
+        endBalance,
+        relativeProfit: (endBalance - initialBalance) / initialBalance,
+        tradeCount: trades.length,
+        successRate:
+          trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
+        buyAndHoldProfit: getBuyAndHoldProfit(finalState),
+        range: getRange(finalState),
+        timeframe,
+      };
+      return { trades, stats };
+    });
+  };
 
 function revertUnclosedTrades(state: BacktestState) {
   return Object.values(state.assets)
