@@ -16,7 +16,8 @@ import { AccountStats, getAccountStats, getExpectedExposure } from "./util";
  *
  * In addition, the max exposure relative to account balance can be defined, as
  * well as whether to allow fractioned positions (e.g. buying 2.25 units on a
- * forex or crypto market) or not (more common in stocks).
+ * forex or crypto market) or not (more common in stocks). Also, max risk per
+ * trade can be capped by constant cash value.
  *
  * Example use case: "I want to risk max 2% of my account balance per trade, and
  * use max 50% leverage."
@@ -26,6 +27,7 @@ export const createStaker =
     maxRelativeRisk,
     maxRelativeExposure,
     allowFractions,
+    maxAbsoluteRisk,
   }: {
     /**
      * How much of the current account balance can be lost in one trade. For
@@ -49,13 +51,27 @@ export const createStaker =
      * whole number.
      */
     allowFractions: boolean;
+    /**
+     * How much money can be lost in one trade. If defined, this adds one more
+     * ceiling to the position size, in addition to maxRelativeRisk and
+     * maxRelativeExposure.
+     *
+     * If you want to have constant risk per trade regardless of the account
+     * balance, set this property to the desired cash risk and set
+     * maxRelativeRisk to 1 (you can't risk more than what you own).
+     */
+    maxAbsoluteRisk?: number;
   }): Staker =>
   (
     state: FullTradeState,
     updates: Dictionary<StrategyUpdate>
   ): Dictionary<number> => {
     const accountStats = getAccountStats(state);
-    const maxCashRiskPerTrade = accountStats.accountBalance * maxRelativeRisk;
+    const maxCashRiskPerTrade = getMaxCashRiskPerTrade({
+      accountBalance: accountStats.accountBalance,
+      maxRelativeRisk,
+      maxAbsoluteRisk,
+    });
 
     // How much cash can be entered to new positions:
     const exposureToSpare = getExposureToSpare(
@@ -81,6 +97,21 @@ export const createStaker =
       convertCashStakesToAssetQuantities(allowFractions, entryPrices)
     );
   };
+
+function getMaxCashRiskPerTrade({
+  accountBalance,
+  maxRelativeRisk,
+  maxAbsoluteRisk,
+}: {
+  accountBalance: number;
+  maxRelativeRisk: number;
+  maxAbsoluteRisk: number | undefined;
+}) {
+  const riskPerTrade = accountBalance * maxRelativeRisk;
+  return maxAbsoluteRisk === undefined
+    ? riskPerTrade
+    : Math.min(riskPerTrade, maxAbsoluteRisk);
+}
 
 function getExposureToSpare(
   accountStats: AccountStats,
