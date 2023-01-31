@@ -7,6 +7,7 @@ export {
 } from "./backtest/backtest";
 export { getPersistedBacktestResult } from "./backtest/backtest-persistence";
 export { BacktestResult, BacktestStatistics } from "./backtest/backtest-result";
+export * from "./backtest/equity-curve";
 export { ProgressHandler } from "./backtest/progress-handler";
 export * from "./core/types";
 export * from "./data";

@@ -37,6 +37,12 @@ export const testData = {
    * candle, without any wicks.
    */
   getSimpleTestData,
+  /**
+   * Returns a series where each candle opens and closes at the provided
+   * startValue, but has a tail/wick of the provided size (positive value for
+   * tail above the candle, negative for below).
+   */
+  getTails,
 };
 
 function loadCandlesFromFile(fileName: string): CandleSeries {
@@ -77,5 +83,21 @@ function getSimpleTestData(candleCount: number): CandleSeries {
     high: i + 1,
 
     time: i,
+  }));
+}
+
+function getTails({
+  startValue,
+  tails,
+}: {
+  startValue: number;
+  tails: number[];
+}): CandleSeries {
+  return tails.map((tail, index) => ({
+    time: index + 1,
+    open: startValue,
+    close: startValue,
+    high: tail > 0 ? startValue + tail : startValue,
+    low: tail < 0 ? startValue + tail : startValue,
   }));
 }
