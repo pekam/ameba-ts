@@ -6,6 +6,7 @@ import {
   backtest,
   BacktestAsyncArgs,
   BacktestResult,
+  BacktestStatistics,
   backtestSync,
   CandleDataProvider,
   CandleSeries,
@@ -59,8 +60,8 @@ const args: CommonBacktestArgs = {
   initialBalance: 100,
 };
 
-function assertBacktestResult(result: BacktestResult) {
-  expect(result.stats).toEqual({
+function assertBacktestResult(result: BacktestResult, async: boolean) {
+  const expected: BacktestStatistics = {
     buyAndHoldProfit: 0.12410729114764989,
     endBalance: 103.96678409210463,
     initialBalance: 100,
@@ -71,7 +72,11 @@ function assertBacktestResult(result: BacktestResult) {
     relativeProfit: 0.03966784092104632,
     successRate: 0.5909090909090909,
     tradeCount: 22,
-  });
+  };
+  if (async) {
+    expected.timeframe = "1h";
+  }
+  expect(result.stats).toEqual(expected);
 }
 
 it("should produce a backtest result (sync)", () => {
@@ -81,7 +86,7 @@ it("should produce a backtest result (sync)", () => {
       BTC: series,
     },
   });
-  assertBacktestResult(result);
+  assertBacktestResult(result, false);
 });
 
 const dataProvider: CandleDataProvider = ({ symbol, from, to, timeframe }) => {
@@ -110,7 +115,7 @@ const asyncArgs: BacktestAsyncArgs = {
 
 it("should produce a backtest result (async data provider)", async () => {
   const result: BacktestResult = await backtest(asyncArgs);
-  assertBacktestResult(result);
+  assertBacktestResult(result, true);
 });
 
 it("should produce a backtest result (persister)", async () => {
@@ -141,6 +146,9 @@ it("should produce a backtest result (persister)", async () => {
       async set(key, value) {
         store[JSON.stringify(key)] = JSON.stringify(value);
       },
+      async getKeys() {
+        return Object.keys(store);
+      },
     };
   })();
 
@@ -164,17 +172,18 @@ it("should produce a backtest result (persister)", async () => {
       // expected
     }
   }
-  assertBacktestResult(result);
+  assertBacktestResult(result, true);
   expect(errorCount).toBe(errorOnTimestamps.length);
   expect(persistedStateFetchedCount).toBe(errorOnTimestamps.length);
 
   // After finishing, the result should be persisted, so let's make sure that it
   // is correct as well:
   assertBacktestResult(
-    (await getPersistedBacktestResult(fakePersister, "foo"))!
+    (await getPersistedBacktestResult(fakePersister, "foo"))!,
+    true
   );
 
   // When result exists for this backtest key, backtest should return the result
   // immediately without running again. Let's test this path as well.
-  assertBacktestResult(await doBacktest());
+  assertBacktestResult(await doBacktest(), true);
 });
