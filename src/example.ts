@@ -52,15 +52,13 @@ const exampleStrategy: TradingStrategy = (state: AssetState) => {
   }
 };
 
-const dataProvider: CandleDataProvider = async ({
-  symbol,
-  timeframe,
-  from,
-  to,
-}): Promise<Candle[]> => {
-  // You need to implement a data provider e.g. by fetching from your broker's
-  // API or by using your local data.
-  throw Error("Not implemented.");
+const dataProvider: CandleDataProvider = {
+  name: "some-broker-name",
+  getCandles: async ({ symbol, timeframe, from, to }): Promise<Candle[]> => {
+    // You need to implement a data provider e.g. by fetching from your broker's
+    // API or by using your local data.
+    throw Error("Not implemented.");
+  },
 };
 
 // Backtest the example strategy with BTC and ETH hourly data between January
