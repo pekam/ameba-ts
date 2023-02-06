@@ -17,7 +17,12 @@ import {
   persistBacktestResultIfNeeded,
   persistIfNeeded,
 } from "./backtest-persistence";
-import { BacktestResult, convertToBacktestResult } from "./backtest-result";
+import {
+  BacktestResult,
+  BacktestSyncResult,
+  convertToBacktestResult,
+  convertToBacktestSyncResult,
+} from "./backtest-result";
 import {
   AsyncCandleUpdateProvider,
   createAsyncCandleProvider,
@@ -212,7 +217,7 @@ export async function backtest(
     then((state) =>
       pipe(
         state,
-        convertToBacktestResult(args.timeframe),
+        convertToBacktestResult(args),
         tap(persistBacktestResultIfNeeded(state))
       )
     )
@@ -226,7 +231,7 @@ export async function backtest(
  * To backtest asynchronously with lazy loaded price data, you can use
  * {@link backtest} instead.
  */
-export function backtestSync(args: BacktestSyncArgs): BacktestResult {
+export function backtestSync(args: BacktestSyncArgs): BacktestSyncResult {
   const candleUpdates = createCandleUpdates(args.series);
   if (!candleUpdates.length) {
     throw Error("No candles provided");
@@ -243,7 +248,7 @@ export function backtestSync(args: BacktestSyncArgs): BacktestResult {
     args,
     initState(from, to),
     produceFinalStateSync(createSyncCandleProvider(candleUpdates)),
-    convertToBacktestResult(undefined)
+    convertToBacktestSyncResult
   );
 }
 

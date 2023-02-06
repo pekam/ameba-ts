@@ -1,8 +1,9 @@
 import { flatMap, max, min, sortBy, sumBy } from "lodash";
 import { map, pipe, values } from "remeda";
 import { Candle, Range, Trade } from "../core/types";
-import { Timeframe } from "../time";
-import { BacktestState } from "./backtest";
+import { Timeframe, toTimestamp } from "../time";
+import { OverrideProps } from "../util/type-util";
+import { BacktestAsyncArgs, BacktestState } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { updateAsset } from "./update-asset";
 
@@ -29,7 +30,7 @@ export interface BacktestStatistics {
    * How much was the relative value change during the series. This value can be
    * used as a benchmark to compare the result to, as it shows how much you
    * would have profited by simply holding the assets for the backtest period
-   * (migh not be relevant if the strategy trades both long and short
+   * (might not be relevant if the strategy trades both long and short
    * positions).
    *
    * If multiple assets were included in the backtest, their buy-and-hold
@@ -42,9 +43,34 @@ export interface BacktestStatistics {
    */
   range: Range | undefined;
   /**
-   * Timeframe of the data used in the backtest, if known.
+   * Information about the data used in the backtest. Contains everything needed
+   * to load the same set of data as used by the backtest.
    */
-  timeframe?: Timeframe;
+  dataInfo: {
+    /**
+     * Name of the data provider that was used to fetch data for the backtest.
+     */
+    dataProviderName: string;
+    /**
+     * Symbols of the assets included in the backtest. This is based on the
+     * backtest arguments, so a symbol is included here even if no candles were
+     * provided for that asset in the backtest.
+     */
+    symbols: string[];
+    /**
+     * Timeframe of the data used in the backtest (from backtest arguments).
+     */
+    timeframe: Timeframe;
+    /**
+     * Backtest data was requested from the data provider starting from this
+     * timestamp.
+     */
+    from: number;
+    /**
+     * Backtest data was requested from the data provider up to this timestamp.
+     */
+    to: number;
+  };
 }
 
 export interface BacktestResult {
@@ -59,19 +85,45 @@ export interface BacktestResult {
   stats: BacktestStatistics;
 }
 
+export type BacktestSyncStatistics = Omit<BacktestStatistics, "dataInfo">;
+
+export type BacktestSyncResult = OverrideProps<
+  BacktestResult,
+  { stats: BacktestSyncStatistics }
+>;
+
 export const convertToBacktestResult =
-  (timeframe: Timeframe | undefined) =>
+  (args: BacktestAsyncArgs) =>
   (finalState: BacktestState): BacktestResult => {
-    // Only finished trades are included in the result. Another option would be to
-    // close all open trades with the current market price, but exiting against
-    // the strategy's logic would be skew the result in a worse way.
-    return pipe(finalState, revertUnclosedTrades, (finalState) => {
-      const initialBalance = finalState.initialBalance;
-      const trades = getTradesInOrder(finalState);
+    const result = convertToBacktestSyncResult(finalState);
+    const stats: BacktestStatistics = {
+      ...result.stats,
+      dataInfo: {
+        timeframe: args.timeframe,
+        symbols: args.symbols,
+        dataProviderName: args.dataProvider.name,
+        from: toTimestamp(args.from),
+        to: toTimestamp(args.to),
+      },
+    };
+    return { ...result, stats };
+  };
 
-      const endBalance = finalState.cash;
+export const convertToBacktestSyncResult = (
+  finalState: BacktestState
+): BacktestSyncResult => {
+  // Only finished trades are included in the result. Another option would be to
+  // close all open trades with the current market price, but exiting against
+  // the strategy's logic would be skew the result in a worse way.
+  return pipe(finalState, revertUnclosedTrades, (finalState) => {
+    const initialBalance = finalState.initialBalance;
+    const trades = getTradesInOrder(finalState);
 
-      const stats: BacktestStatistics = {
+    const endBalance = finalState.cash;
+
+    return {
+      trades,
+      stats: {
         initialBalance,
         endBalance,
         relativeProfit: (endBalance - initialBalance) / initialBalance,
@@ -80,11 +132,10 @@ export const convertToBacktestResult =
           trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
         buyAndHoldProfit: getBuyAndHoldProfit(finalState),
         range: getRange(finalState),
-        timeframe,
-      };
-      return { trades, stats };
-    });
-  };
+      },
+    };
+  });
+};
 
 function revertUnclosedTrades(state: BacktestState) {
   return Object.values(state.assets)

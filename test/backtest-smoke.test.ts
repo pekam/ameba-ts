@@ -1,5 +1,5 @@
 import { dropWhile, takeWhile } from "lodash/fp";
-import { pipe } from "remeda";
+import { omit, pipe } from "remeda";
 import {
   allInStaker,
   AssetState,
@@ -8,6 +8,8 @@ import {
   BacktestResult,
   BacktestStatistics,
   backtestSync,
+  BacktestSyncResult,
+  BacktestSyncStatistics,
   CandleDataProvider,
   CandleSeries,
   getPersistedBacktestResult,
@@ -60,33 +62,47 @@ const args: CommonBacktestArgs = {
   initialBalance: 100,
 };
 
-function assertBacktestResult(result: BacktestResult, async: boolean) {
-  const expected: BacktestStatistics = {
-    buyAndHoldProfit: 0.12410729114764989,
-    endBalance: 103.96678409210463,
-    initialBalance: 100,
-    range: {
-      from: 1633132800,
-      to: 1633651200,
-    },
-    relativeProfit: 0.03966784092104632,
-    successRate: 0.5909090909090909,
-    tradeCount: 22,
-  };
-  if (async) {
-    expected.timeframe = "1h";
-  }
-  expect(result.stats).toEqual(expected);
+const expectedStatistics: BacktestStatistics = {
+  buyAndHoldProfit: 0.12410729114764989,
+  endBalance: 103.96678409210463,
+  initialBalance: 100,
+  range: {
+    from: 1633132800,
+    to: 1633651200,
+  },
+  relativeProfit: 0.03966784092104632,
+  successRate: 0.5909090909090909,
+  tradeCount: 22,
+  dataInfo: {
+    dataProviderName: "test-data-provider",
+    symbols: ["BTC"],
+    timeframe: "1h",
+    from: toTimestamp(backtestRange.from),
+    to: toTimestamp(backtestRange.to),
+  },
+};
+
+const expectedSyncStatistics: BacktestSyncStatistics = omit(
+  expectedStatistics,
+  ["dataInfo"]
+);
+
+function assertBacktestResult(result: BacktestResult) {
+  expect(result.stats).toEqual(expectedStatistics);
+}
+
+function assertBacktestSyncResult(result: BacktestSyncResult) {
+  expect(result.stats).toEqual(expectedSyncStatistics);
 }
 
 it("should produce a backtest result (sync)", () => {
-  const result: BacktestResult = backtestSync({
+  const result: BacktestSyncResult = backtestSync({
     ...args,
     series: {
       BTC: series,
     },
   });
-  assertBacktestResult(result, false);
+  assertBacktestSyncResult(result);
 });
 
 const dataProvider: CandleDataProvider = {
@@ -118,7 +134,7 @@ const asyncArgs: BacktestAsyncArgs = {
 
 it("should produce a backtest result (async data provider)", async () => {
   const result: BacktestResult = await backtest(asyncArgs);
-  assertBacktestResult(result, true);
+  assertBacktestResult(result);
 });
 
 it("should produce a backtest result (persister)", async () => {
@@ -178,18 +194,17 @@ it("should produce a backtest result (persister)", async () => {
       // expected
     }
   }
-  assertBacktestResult(result, true);
+  assertBacktestResult(result);
   expect(errorCount).toBe(errorOnTimestamps.length);
   expect(persistedStateFetchedCount).toBe(errorOnTimestamps.length);
 
   // After finishing, the result should be persisted, so let's make sure that it
   // is correct as well:
   assertBacktestResult(
-    (await getPersistedBacktestResult(fakePersister, "foo"))!,
-    true
+    (await getPersistedBacktestResult(fakePersister, "foo"))!
   );
 
   // When result exists for this backtest key, backtest should return the result
   // immediately without running again. Let's test this path as well.
-  assertBacktestResult(await doBacktest(), true);
+  assertBacktestResult(await doBacktest());
 });

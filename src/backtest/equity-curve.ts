@@ -1,5 +1,5 @@
 import { concat, dropLast, identity, map, pipe, reduce, sortBy } from "remeda";
-import { BacktestResult } from "..";
+import { BacktestResult, BacktestSyncResult } from "..";
 import { last } from "../util/util";
 
 /**
@@ -44,7 +44,10 @@ export interface EquityCurvePoint {
  * position as the asset value fluctuates, but this function does not track
  * those changes.
  */
-export function getEquityCurve({ stats, trades }: BacktestResult): EquityCurve {
+export function getEquityCurve({
+  stats,
+  trades,
+}: BacktestResult | BacktestSyncResult): EquityCurve {
   const initialState: EquityCurve = {
     series: [],
     peak: stats.initialBalance,
