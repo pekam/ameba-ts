@@ -14,19 +14,24 @@ import {
   Candle,
   MarketPosition,
   Order,
+  OrderType,
   Trade,
   Transaction,
 } from "../core/types";
+import {
+  balanceToMarketPosition,
+  marketPositionToBalance,
+} from "../util/conversions";
+import { Nullable } from "../util/type-util";
 import { last } from "../util/util";
 import { CommissionProvider } from "./backtest";
 
-// This module deals with the combination of a single asset's state (position,
-// orders, candles, etc.) and the account's cash balance.
 interface AssetAndCash {
   asset: AssetState;
   cash: number;
 }
-interface OrderHandlerState extends AssetAndCash {
+
+export interface OrderHandlerArgs extends AssetAndCash {
   commissionProvider: CommissionProvider;
 }
 
@@ -53,84 +58,164 @@ type EnhancedOrder = Order & {
   cancelsOthers: boolean;
 };
 
+/**
+ * Represents linear movement from one price point to another. A candle is split
+ * to these so we can determine which orders are filled and in which order.
+ */
 type PricePath = { from: number; to: number };
 
-function toPricePath([from, to]: [number, number]): PricePath {
-  return { from, to };
-}
-
+/**
+ * The price is expected to have changed in three linear moves within a candle:
+ * from open to low, low to high, high to close (for green candles, red candles
+ * visit first high and then low).
+ */
 function toPricePaths({ open, high, low, close }: Candle): PricePath[] {
   const isGreen = close > open;
   if (isGreen) {
     return [
-      [open, low],
-      [low, high],
-      [high, close],
-    ].map(toPricePath);
+      { from: open, to: low },
+      { from: low, to: high },
+      { from: high, to: close },
+    ];
   } else {
     return [
-      [open, high],
-      [high, low],
-      [low, close],
-    ].map(toPricePath);
+      { from: open, to: high },
+      { from: high, to: low },
+      { from: low, to: close },
+    ];
   }
 }
 
-export function handleOrders(state: OrderHandlerState): OrderHandlerState {
-  const openOrders = getOpenOrders(state.asset);
-  const candle = last(state.asset.series);
+/**
+ * Updates the asset state and cash by filling any orders that should be filled
+ * with the latest candle.
+ */
+export function handleOrders(args: OrderHandlerArgs): AssetAndCash {
+  const { asset, commissionProvider } = args;
+  const openOrders = getOpenOrders(asset);
+  const candle = last(asset.series);
   const pricePaths = toPricePaths(candle);
 
-  return fillOrders(state, openOrders, pricePaths);
+  const newTransactions = fillOrders({
+    time: candle.time,
+    commissionProvider: commissionProvider,
+
+    openOrders,
+    pricePaths,
+    transactions: [],
+  });
+
+  const cash = newTransactions.reduce(updateCash, args.cash);
+  const position = newTransactions.reduce(updatePosition, asset.position);
+  const transactions = asset.transactions.concat(newTransactions);
+
+  const newTrade =
+    newTransactions.length && !position
+      ? convertToTrade({
+          symbol: asset.symbol,
+          entry: transactions[transactions.length - 2],
+          exit: transactions[transactions.length - 1],
+        })
+      : null;
+
+  return {
+    asset: {
+      ...asset,
+      position,
+      transactions,
+      trades: newTrade ? asset.trades.concat(newTrade) : asset.trades,
+    },
+    cash,
+  };
 }
 
-function fillOrders(
-  state: OrderHandlerState,
-  openOrders: EnhancedOrder[],
-  pricePaths: PricePath[]
-): OrderHandlerState {
+interface OrderFillState {
+  openOrders: EnhancedOrder[];
+  time: number;
+  pricePaths: PricePath[];
+  transactions: Transaction[];
+  commissionProvider: CommissionProvider;
+}
+
+/**
+ * Returns transactions of the orders filled by traversing the given price path.
+ */
+function fillOrders(state: OrderFillState): Transaction[] {
+  const { openOrders, pricePaths } = state;
   if (!openOrders.length || !pricePaths.length) {
-    return state;
+    return state.transactions;
   }
 
   const path = pricePaths[0];
   const directionUp = path.from < path.to;
 
-  const orderToFill: { orderIndex: number; fillPrice: number } | undefined =
-    pipe(
-      openOrders,
-      map.indexed((order, index) => {
-        const fillPrice = getFillPrice(order, path);
-        return fillPrice ? { orderIndex: index, fillPrice } : undefined;
-      }),
-      filter(isDefined),
-      (fillableOrders) =>
-        directionUp
-          ? minBy(fillableOrders, (o) => o.fillPrice)
-          : maxBy(fillableOrders, (o) => o.fillPrice)
-    );
+  const nextState: OrderFillState = pipe(
+    openOrders,
 
-  if (!orderToFill) {
-    return fillOrders(state, openOrders, drop(pricePaths, 1));
-  }
+    // Find all orders which would be filled while traversing the price path
+    map.indexed((order, index) => {
+      const fillPrice = getFillPrice(order, path);
+      return fillPrice ? { orderIndex: index, fillPrice } : undefined;
+    }),
+    filter(isDefined),
 
+    // If multiple orders could be filled, fill the one whose fill price is
+    // visited first
+    (fillableOrders) =>
+      directionUp
+        ? minBy(fillableOrders, (o) => o.fillPrice)
+        : maxBy(fillableOrders, (o) => o.fillPrice),
+
+    (orderToFill) =>
+      orderToFill
+        ? // Update transactions and orders, split the current path
+          fillOrder(state, orderToFill)
+        : // This path is finished as no orders triggered
+          { ...state, pricePaths: drop(pricePaths, 1) }
+  );
+
+  return fillOrders(nextState);
+}
+
+function fillOrder(
+  state: OrderFillState,
+  orderToFill: { orderIndex: number; fillPrice: number }
+): OrderFillState {
   const { orderIndex, fillPrice } = orderToFill;
-  const order = openOrders[orderIndex];
+  const order = state.openOrders[orderIndex];
 
-  const nextState = !state.asset.position
-    ? fulfillEntryOrder(state, order, fillPrice)
-    : fulfillExitOrder(state, order, fillPrice);
+  const transaction: Transaction = withCommission(
+    {
+      side: order.side,
+      size: order.size,
+      price: fillPrice,
+      time: state.time,
+    },
+    state.commissionProvider
+  );
 
   const nextOpenOrders = pipe(
-    openOrders,
+    state.openOrders,
+    // Remove filled order
     filter.indexed((_, index) => index !== orderIndex),
+    // Cancel others if OCO
     (orders) => (order.cancelsOthers ? [] : orders),
+    // Open others if OTO
     concat(order.triggers)
   );
 
-  const nextPricePaths = splitFirstPricePath(pricePaths, fillPrice);
+  // The path is traversed up to the point where an order was filled, and that
+  // part should not be revisited for potentially triggered new orders.
+  const nextPricePaths = splitFirstPricePath(state.pricePaths, fillPrice);
 
-  return fillOrders(nextState, nextOpenOrders, nextPricePaths);
+  return {
+    time: state.time,
+    commissionProvider: state.commissionProvider,
+
+    openOrders: nextOpenOrders,
+    pricePaths: nextPricePaths,
+    transactions: state.transactions.concat(transaction),
+  };
 }
 
 function splitFirstPricePath(
@@ -143,7 +228,10 @@ function splitFirstPricePath(
 
 function getOpenOrders(asset: AssetState): EnhancedOrder[] {
   const exitOrders: EnhancedOrder[] = filter(
-    [getStopLossOrder(asset), getTakeProfitOrder(asset)],
+    [
+      getExitOrder(asset, asset.stopLoss, "stop"),
+      getExitOrder(asset, asset.takeProfit, "limit"),
+    ],
     isDefined
   );
   if (!asset.position) {
@@ -171,33 +259,49 @@ function getOpenOrders(asset: AssetState): EnhancedOrder[] {
  * candle's close and current candle's open.
  */
 function getFillPrice(order: Order, pricePath: PricePath): number | null {
+  const startPrice = pricePath.from;
   if (order.type === "market") {
-    return pricePath.from;
+    return startPrice;
   }
+  const { side, type, price: orderPrice } = order;
 
-  const priceBelowOrder = Math.min(pricePath.from, pricePath.to) <= order.price;
-  if (priceBelowOrder) {
-    const buyPriceCrossed = order.side === "buy" && order.type === "limit";
-    const sellPriceCrossed = order.side === "sell" && order.type === "stop";
-    if (buyPriceCrossed || sellPriceCrossed) {
-      return Math.min(order.price, pricePath.from);
+  const immediatelyFilled: boolean = (() => {
+    if (side === "buy") {
+      if (type === "limit") {
+        return startPrice <= orderPrice;
+      } else if (type === "stop") {
+        return startPrice >= orderPrice;
+      }
+    } else if (side === "sell") {
+      if (type === "limit") {
+        return startPrice >= orderPrice;
+      } else if (type === "stop") {
+        return startPrice <= orderPrice;
+      }
     }
+    throw Error(
+      "Unhandled order side+type combo in backtest: " +
+        JSON.stringify({ side, type })
+    );
+  })();
+
+  if (immediatelyFilled) {
+    return startPrice;
   }
 
-  const priceAboveOrder = Math.max(pricePath.from, pricePath.to) >= order.price;
-  if (priceAboveOrder) {
-    const buyPriceCrossed = order.side === "buy" && order.type === "stop";
-    const sellPriceCrossed = order.side === "sell" && order.type === "limit";
-    if (buyPriceCrossed || sellPriceCrossed) {
-      return Math.max(order.price, pricePath.from);
-    }
-  }
-
-  return null;
+  return isWithin(orderPrice, pricePath) ? orderPrice : null;
 }
 
-function getStopLossOrder(asset: AssetState): EnhancedOrder | undefined {
-  if (!asset.stopLoss) {
+function isWithin(price: number, { from, to }: PricePath) {
+  return price >= Math.min(from, to) && price <= Math.max(from, to);
+}
+
+function getExitOrder(
+  asset: AssetState,
+  price: Nullable<number>,
+  type: Exclude<OrderType, "market">
+): EnhancedOrder | undefined {
+  if (!price) {
     return undefined;
   }
   const sideAndSize = getSideAndSizeForExit(asset);
@@ -205,25 +309,8 @@ function getStopLossOrder(asset: AssetState): EnhancedOrder | undefined {
     return undefined;
   }
   return {
-    price: asset.stopLoss,
-    type: "stop",
-    ...sideAndSize,
-    triggers: [],
-    cancelsOthers: true,
-  };
-}
-
-function getTakeProfitOrder(asset: AssetState): EnhancedOrder | undefined {
-  if (!asset.takeProfit) {
-    return undefined;
-  }
-  const sideAndSize = getSideAndSizeForExit(asset);
-  if (!sideAndSize) {
-    return undefined;
-  }
-  return {
-    price: asset.takeProfit,
-    type: "limit",
+    price,
+    type,
     ...sideAndSize,
     triggers: [],
     cancelsOthers: true,
@@ -250,70 +337,6 @@ function getSideAndSizeForExit({
   return null;
 }
 
-function fulfillEntryOrder(
-  state: OrderHandlerState,
-  entryOrder: Order,
-  fillPrice: number
-): OrderHandlerState {
-  const transaction = withCommission(
-    {
-      side: entryOrder.side,
-      size: entryOrder.size,
-      price: fillPrice,
-      time: last(state.asset.series).time,
-    },
-    state.commissionProvider
-  );
-
-  const transactions = state.asset.transactions.concat(transaction);
-
-  const position: MarketPosition = {
-    side: transaction.side === "buy" ? "long" : "short",
-    size: transaction.size,
-  };
-
-  const cash = updateCash(state.cash, transaction);
-
-  return { ...state, asset: { ...state.asset, transactions, position }, cash };
-}
-
-function fulfillExitOrder(
-  state: OrderHandlerState,
-  order: Order,
-  fillPrice: number
-): OrderHandlerState {
-  const { series, transactions, trades } = state.asset;
-  const transaction = withCommission(
-    {
-      side: order.side,
-      size: order.size,
-      price: fillPrice,
-      time: last(series).time,
-    },
-    state.commissionProvider
-  );
-  const cash = updateCash(state.cash, transaction);
-
-  const trade: Trade = convertToTrade({
-    symbol: state.asset.symbol,
-    entry: last(transactions),
-    exit: transaction,
-  });
-  return {
-    ...state,
-    asset: {
-      ...state.asset,
-      transactions: transactions.concat(transaction),
-      trades: trades.concat(trade),
-      position: null,
-      entryOrder: null,
-      stopLoss: null,
-      takeProfit: null,
-    },
-    cash,
-  };
-}
-
 function updateCash(cashBefore: number, transaction: Transaction) {
   return cashBefore + getCashChange(transaction);
 }
@@ -323,6 +346,16 @@ function getCashChange(transaction: Transaction) {
   const cashChange =
     transaction.side === "buy" ? -positionSizeInCash : positionSizeInCash;
   return cashChange - transaction.commission;
+}
+
+function updatePosition(
+  positionBefore: MarketPosition | null,
+  transaction: Transaction
+): MarketPosition | null {
+  const balanceAfter =
+    marketPositionToBalance(positionBefore) +
+    (transaction.side === "buy" ? transaction.size : -transaction.size);
+  return balanceToMarketPosition(balanceAfter);
 }
 
 function convertToTrade({
