@@ -1,4 +1,14 @@
-import { dropLast, identity, pipe } from "remeda";
+import { minBy } from "lodash";
+import {
+  concat,
+  drop,
+  dropLast,
+  filter,
+  isDefined,
+  map,
+  maxBy,
+  pipe,
+} from "remeda";
 import {
   AssetState,
   Candle,
@@ -21,133 +31,222 @@ interface OrderHandlerState extends AssetAndCash {
 }
 
 /**
- * Takes the latest candle in the series and executes orders in the state based
- * on those price changes. Returns the updated asset state and cash balance.
+ * Internally simulating OTO (one-triggers-other) and OCO (one-cancels-other)
+ * orders.
  */
-export function handleOrders(state: OrderHandlerState): OrderHandlerState {
-  if (!state.asset.position) {
-    return handleOrdersOnEntryCandle(handleEntryOrder(state));
+type EnhancedOrder = Order & {
+  /**
+   * Orders that should be opened when this order is filled (if this is an OTO
+   * order).
+   */
+  triggers: EnhancedOrder[];
+  /**
+   * True if all other open orders should be cancelled when this order is filled
+   * (if this is an OCO order).
+   *
+   * Ideally this would also be a list of orders to cancel, but that would
+   * create circular reference among stoploss and takeprofit, so introducing
+   * order identifiers would be required for that. The current approach works
+   * while the strategy function enforces that the only possible case for
+   * multiple open orders is stoploss + takeprofit.
+   */
+  cancelsOthers: boolean;
+};
+
+type PricePath = { from: number; to: number };
+
+function toPricePath([from, to]: [number, number]): PricePath {
+  return { from, to };
+}
+
+function toPricePaths({ open, high, low, close }: Candle): PricePath[] {
+  const isGreen = close > open;
+  if (isGreen) {
+    return [
+      [open, low],
+      [low, high],
+      [high, close],
+    ].map(toPricePath);
   } else {
-    // Could be executed in an order based on candle direction, instead of
-    // always running stop loss first.
-    return handleTakeProfit(handleStopLoss(state));
+    return [
+      [open, high],
+      [high, low],
+      [low, close],
+    ].map(toPricePath);
   }
 }
 
-// Stop loss and take profit need to be handled differently on the candle where
-// entry was triggered.
-function handleOrdersOnEntryCandle(
-  state: OrderHandlerState
+export function handleOrders(state: OrderHandlerState): OrderHandlerState {
+  const openOrders = getOpenOrders(state.asset);
+  const candle = last(state.asset.series);
+  const pricePaths = toPricePaths(candle);
+
+  return fillOrders(state, openOrders, pricePaths);
+}
+
+function fillOrders(
+  state: OrderHandlerState,
+  openOrders: EnhancedOrder[],
+  pricePaths: PricePath[]
 ): OrderHandlerState {
-  const { position, takeProfit, stopLoss } = state.asset;
-  if (!position) {
-    // Entry not triggered.
+  if (!openOrders.length || !pricePaths.length) {
     return state;
   }
 
-  const shouldHandleStopLoss =
-    !!stopLoss && shouldHandleOrderOnEntryCandle(state, stopLoss);
-  const shouldHandleTakeProfit =
-    !!takeProfit && shouldHandleOrderOnEntryCandle(state, takeProfit);
+  const path = pricePaths[0];
+  const directionUp = path.from < path.to;
 
-  return pipe(
-    state,
-    shouldHandleStopLoss ? handleStopLoss : identity,
-    shouldHandleTakeProfit ? handleTakeProfit : identity
+  const orderToFill: { orderIndex: number; fillPrice: number } | undefined =
+    pipe(
+      openOrders,
+      map.indexed((order, index) => {
+        const fillPrice = getFillPrice(order, path);
+        return fillPrice ? { orderIndex: index, fillPrice } : undefined;
+      }),
+      filter(isDefined),
+      (fillableOrders) =>
+        directionUp
+          ? minBy(fillableOrders, (o) => o.fillPrice)
+          : maxBy(fillableOrders, (o) => o.fillPrice)
+    );
+
+  if (!orderToFill) {
+    return fillOrders(state, openOrders, drop(pricePaths, 1));
+  }
+
+  const { orderIndex, fillPrice } = orderToFill;
+  const order = openOrders[orderIndex];
+
+  const nextState = !state.asset.position
+    ? fulfillEntryOrder(state, order, fillPrice)
+    : fulfillExitOrder(state, order, fillPrice);
+
+  const nextOpenOrders = pipe(
+    openOrders,
+    filter.indexed((_, index) => index !== orderIndex),
+    (orders) => (order.cancelsOthers ? [] : orders),
+    concat(order.triggers)
   );
+
+  const nextPricePaths = splitFirstPricePath(pricePaths, fillPrice);
+
+  return fillOrders(nextState, nextOpenOrders, nextPricePaths);
 }
 
-function shouldHandleOrderOnEntryCandle(
-  state: OrderHandlerState,
-  orderPrice: number
-): boolean {
-  const candle = last(state.asset.series);
-  // If the candle was green, assume that only prices above the entry price are
-  // covered after the entry, and vice versa.
-  const priceMovedUp: boolean = candle.close > candle.open;
-  const entryPrice = last(state.asset.transactions).price;
+function splitFirstPricePath(
+  pricePaths: PricePath[],
+  splitAt: number
+): PricePath[] {
+  const newFirst: PricePath = { from: splitAt, to: pricePaths[0].to };
+  return [newFirst, ...drop(pricePaths, 1)];
+}
 
-  return (
-    (priceMovedUp && orderPrice > entryPrice) ||
-    (!priceMovedUp && orderPrice < entryPrice)
+function getOpenOrders(asset: AssetState): EnhancedOrder[] {
+  const exitOrders: EnhancedOrder[] = filter(
+    [getStopLossOrder(asset), getTakeProfitOrder(asset)],
+    isDefined
   );
-}
-
-function handleEntryOrder(state: OrderHandlerState): OrderHandlerState {
-  const { position, entryOrder, series } = state.asset;
-  if (!position && entryOrder) {
-    const fillPrice = getFillPrice(entryOrder, last(series));
-    if (fillPrice) {
-      return fulfillEntryOrder(state, entryOrder, fillPrice);
+  if (!asset.position) {
+    if (!asset.entryOrder) {
+      return [];
     }
+    return [
+      {
+        ...asset.entryOrder,
+        triggers: exitOrders,
+        cancelsOthers: false,
+      },
+    ];
+  } else {
+    return exitOrders;
   }
-  return state;
-}
-
-function handleStopLoss(state: OrderHandlerState): OrderHandlerState {
-  const { position, stopLoss, series } = state.asset;
-  if (position && stopLoss) {
-    const stopLossOrder: Order = {
-      price: stopLoss,
-      type: "stop",
-      side: position.side === "long" ? "sell" : "buy",
-      size: position.size,
-    };
-    const price = getFillPrice(stopLossOrder, last(series));
-    if (price) {
-      return fulfillExitOrder(state, stopLossOrder, price);
-    }
-  }
-  return state;
-}
-
-function handleTakeProfit(state: OrderHandlerState): OrderHandlerState {
-  const { position, takeProfit, series } = state.asset;
-  if (position && takeProfit) {
-    const takeProfitOrder: Order = {
-      price: takeProfit,
-      type: "limit",
-      side: position.side === "long" ? "sell" : "buy",
-      size: position.size,
-    };
-    const fillPrice = getFillPrice(takeProfitOrder, last(series));
-    if (fillPrice) {
-      return fulfillExitOrder(state, takeProfitOrder, fillPrice);
-    }
-  }
-  return state;
 }
 
 /**
- * If the order should become fulfilled with the new candle, returns the price
- * where the transaction took place. Otherwise returns null.
+ * If the order should have been filled when the asset has traded along the
+ * given path, returns the price where the transaction took place. Otherwise
+ * returns null.
  *
  * The price ignores slippage except that caused by gaps between previous
  * candle's close and current candle's open.
  */
-function getFillPrice(order: Order, newCandle: Candle): number | null {
+function getFillPrice(order: Order, pricePath: PricePath): number | null {
   if (order.type === "market") {
-    return newCandle.open;
+    return pricePath.from;
   }
 
-  const priceBelowOrder = newCandle.low <= order.price;
+  const priceBelowOrder = Math.min(pricePath.from, pricePath.to) <= order.price;
   if (priceBelowOrder) {
     const buyPriceCrossed = order.side === "buy" && order.type === "limit";
     const sellPriceCrossed = order.side === "sell" && order.type === "stop";
     if (buyPriceCrossed || sellPriceCrossed) {
-      return Math.min(order.price, newCandle.open);
+      return Math.min(order.price, pricePath.from);
     }
   }
 
-  const priceAboveOrder = newCandle.high >= order.price;
+  const priceAboveOrder = Math.max(pricePath.from, pricePath.to) >= order.price;
   if (priceAboveOrder) {
     const buyPriceCrossed = order.side === "buy" && order.type === "stop";
     const sellPriceCrossed = order.side === "sell" && order.type === "limit";
     if (buyPriceCrossed || sellPriceCrossed) {
-      return Math.max(order.price, newCandle.open);
+      return Math.max(order.price, pricePath.from);
     }
   }
 
+  return null;
+}
+
+function getStopLossOrder(asset: AssetState): EnhancedOrder | undefined {
+  if (!asset.stopLoss) {
+    return undefined;
+  }
+  const sideAndSize = getSideAndSizeForExit(asset);
+  if (!sideAndSize) {
+    return undefined;
+  }
+  return {
+    price: asset.stopLoss,
+    type: "stop",
+    ...sideAndSize,
+    triggers: [],
+    cancelsOthers: true,
+  };
+}
+
+function getTakeProfitOrder(asset: AssetState): EnhancedOrder | undefined {
+  if (!asset.takeProfit) {
+    return undefined;
+  }
+  const sideAndSize = getSideAndSizeForExit(asset);
+  if (!sideAndSize) {
+    return undefined;
+  }
+  return {
+    price: asset.takeProfit,
+    type: "limit",
+    ...sideAndSize,
+    triggers: [],
+    cancelsOthers: true,
+  };
+}
+
+function getSideAndSizeForExit({
+  position,
+  entryOrder,
+}: AssetState): Pick<Order, "side" | "size"> | null {
+  // entryOrder should be available also when in position but this is more
+  // future-proof
+  if (position) {
+    return {
+      side: position.side === "long" ? "sell" : "buy",
+      size: position.size,
+    };
+  } else if (entryOrder) {
+    return {
+      side: entryOrder.side === "buy" ? "sell" : "buy",
+      size: entryOrder.size,
+    };
+  }
   return null;
 }
 

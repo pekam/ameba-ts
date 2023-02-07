@@ -64,14 +64,14 @@ const args: CommonBacktestArgs = {
 
 const expectedStatistics: BacktestStatistics = {
   buyAndHoldProfit: 0.12410729114764989,
-  endBalance: 103.96678409210463,
+  endBalance: 106.0671231646724,
   initialBalance: 100,
   range: {
     from: 1633132800,
     to: 1633651200,
   },
-  relativeProfit: 0.03966784092104632,
-  successRate: 0.5909090909090909,
+  relativeProfit: 0.06067123164672395,
+  successRate: 0.6363636363636364,
   tradeCount: 22,
   dataInfo: {
     dataProviderName: "test-data-provider",
