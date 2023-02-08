@@ -109,21 +109,28 @@ export function handleOrders(args: OrderHandlerArgs): AssetAndCash {
   const position = newTransactions.reduce(updatePosition, asset.position);
   const transactions = asset.transactions.concat(newTransactions);
 
-  const newTrade =
-    newTransactions.length && !position
-      ? convertToTrade({
-          symbol: asset.symbol,
-          entry: transactions[transactions.length - 2],
-          exit: transactions[transactions.length - 1],
-        })
-      : null;
+  const positionExited = newTransactions.length && !position;
+  const exitUpdates: Partial<AssetState> = positionExited
+    ? {
+        trades: asset.trades.concat(
+          convertToTrade({
+            symbol: asset.symbol,
+            entry: transactions[transactions.length - 2],
+            exit: transactions[transactions.length - 1],
+          })
+        ),
+        entryOrder: null,
+        stopLoss: null,
+        takeProfit: null,
+      }
+    : {};
 
   return {
     asset: {
       ...asset,
       position,
       transactions,
-      trades: newTrade ? asset.trades.concat(newTrade) : asset.trades,
+      ...exitUpdates,
     },
     cash,
   };
