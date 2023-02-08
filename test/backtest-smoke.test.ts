@@ -66,7 +66,7 @@ const expectedStatistics: BacktestStatistics = {
   buyAndHoldProfit: 0.12410729114764989,
   endBalance: 106.0671231646724,
   initialBalance: 100,
-  range: {
+  candleTimeRange: {
     from: 1633132800,
     to: 1633651200,
   },

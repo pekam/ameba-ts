@@ -55,12 +55,12 @@ export function getEquityCurve({
     maxAbsoluteDrawdown: 0,
   };
 
-  if (!stats.range) {
+  if (!stats.candleTimeRange) {
     return initialState;
   }
 
   const firstPoint: EquityCurvePoint = {
-    time: stats.range.from,
+    time: stats.candleTimeRange.from,
     equity: stats.initialBalance,
     relativeDrawdown: 0,
     absoluteDrawdown: 0,

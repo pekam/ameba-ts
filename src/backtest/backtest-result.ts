@@ -41,7 +41,7 @@ export interface BacktestStatistics {
    * Timestamps of the first and last candle included in the backtest (both
    * inclusive). Not defined if the backtest didn't use any candles.
    */
-  range: Range | undefined;
+  candleTimeRange: Range | undefined;
   /**
    * Information about the data used in the backtest. Contains everything needed
    * to load the same set of data as used by the backtest.
@@ -131,7 +131,7 @@ export const convertToBacktestSyncResult = (
         winRate:
           trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
         buyAndHoldProfit: getBuyAndHoldProfit(finalState),
-        range: getRange(finalState),
+        candleTimeRange: getCandleTimeRange(finalState),
       },
     };
   });
@@ -191,7 +191,7 @@ const getBuyAndHoldProfitAndDuration = (
   return [profit, duration];
 };
 
-const getRange = (finalState: BacktestState): Range | undefined => {
+const getCandleTimeRange = (finalState: BacktestState): Range | undefined => {
   const firstAndLastCandles = values(finalState.firstAndLastCandles);
   if (!firstAndLastCandles.length) {
     return undefined;
