@@ -71,7 +71,7 @@ const expectedStatistics: BacktestStatistics = {
     to: 1633651200,
   },
   relativeProfit: 0.06067123164672395,
-  successRate: 0.6363636363636364,
+  winRate: 0.6363636363636364,
   tradeCount: 22,
   dataInfo: {
     dataProviderName: "test-data-provider",

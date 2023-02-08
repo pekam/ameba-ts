@@ -25,7 +25,7 @@ export interface BacktestStatistics {
    *
    * For example: 0.4 if there were 4 wins and 6 losses (or breakeven trades).
    */
-  successRate: number;
+  winRate: number;
   /**
    * How much was the relative value change during the series. This value can be
    * used as a benchmark to compare the result to, as it shows how much you
@@ -128,7 +128,7 @@ export const convertToBacktestSyncResult = (
         endBalance,
         relativeProfit: (endBalance - initialBalance) / initialBalance,
         tradeCount: trades.length,
-        successRate:
+        winRate:
           trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
         buyAndHoldProfit: getBuyAndHoldProfit(finalState),
         range: getRange(finalState),
