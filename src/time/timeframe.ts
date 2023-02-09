@@ -53,3 +53,7 @@ export function periodToTimeframe(period: number): Timeframe | null {
   );
   return pair ? (pair[0] as Timeframe) : null;
 }
+
+export function isIntraday(timeframe: Timeframe): boolean {
+  return timeframeToPeriod(timeframe) < timeframeToPeriod("1d");
+}
