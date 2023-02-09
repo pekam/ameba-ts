@@ -2,7 +2,7 @@ import { getAdx, getRsi } from "..";
 import { AssetState } from "../core/types";
 import { SizelessOrder, StrategyUpdate } from "../high-level-api/types";
 import { getAverageCandleSize, last } from "../util/util";
-import { cancelEntry } from "./strat-util";
+import { cancelOrders } from "./strat-util";
 
 const rsiPeriod = 10;
 const adxPeriod = 20;
@@ -34,7 +34,7 @@ export function rsiReversalStrategy() {
           stopLoss: last(series).low - getAverageCandleSize(series, 5) / 2,
         };
       } else {
-        return cancelEntry;
+        return cancelOrders;
       }
     } else {
       if (rsi > 70) {

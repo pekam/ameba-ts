@@ -2,7 +2,7 @@ import {
   allInStaker,
   AssetState,
   backtestSync,
-  cancelEntry,
+  cancelOrders,
   StrategyUpdate,
   TradingStrategy,
   withStaker,
@@ -78,7 +78,7 @@ export function tradeOnlyRecentlyProfitable(
     const update = (() => {
       if (!state.position && !data.torpData.enabled) {
         // Not allowed to enter a trade
-        return cancelEntry;
+        return cancelOrders;
       } else {
         return strategy(state);
       }

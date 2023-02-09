@@ -1,7 +1,7 @@
 import { AssetState } from "../core/types";
 import { StrategyUpdate } from "../high-level-api/types";
 import { combineCandles, get, getAverageCandleSize, last } from "../util/util";
-import { cancelEntry, nonIncresingStopLoss } from "./strat-util";
+import { cancelOrders, nonIncresingStopLoss } from "./strat-util";
 
 /**
  * (needs a better name...) Enters when there's a big one-directional move
@@ -53,7 +53,7 @@ export function volatilityStrategy(settings: {
         };
       }
 
-      return cancelEntry;
+      return cancelOrders;
     } else {
       return nonIncresingStopLoss({
         state,

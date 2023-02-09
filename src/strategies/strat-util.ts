@@ -6,8 +6,10 @@ import {
 import { SizelessOrder } from "../high-level-api/types";
 import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
 
-export const cancelEntry: SingleAssetStrategyUpdate = {
+export const cancelOrders: SingleAssetStrategyUpdate = {
   entryOrder: null,
+  stopLoss: null,
+  takeProfit: null,
 } as const;
 
 export function withRelativeExits({
