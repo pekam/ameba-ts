@@ -73,16 +73,48 @@ export function getRelativeDiff(
 
 export function getExpectedFillPriceWithoutSlippage(
   order: Order | SizelessOrder,
-  currentPrice: number | Candle | CandleSeries
+  currentPriceSource: number | Candle | CandleSeries
 ): number {
-  if (order.type === "market") {
-    return isNumber(currentPrice)
-      ? currentPrice
-      : isArray(currentPrice)
-      ? last(currentPrice).close
-      : currentPrice.close;
+  const currentPrice = isNumber(currentPriceSource)
+    ? currentPriceSource
+    : isArray(currentPriceSource)
+    ? last(currentPriceSource).close
+    : currentPriceSource.close;
+
+  // Need to check market order here also for TS to know that it's definitely
+  // limit or stop order in the else-block.
+  if (order.type === "market" || shouldFillImmediately(order, currentPrice)) {
+    return currentPrice;
+  } else {
+    return order.price;
   }
-  return order.price;
+}
+
+export function shouldFillImmediately(
+  order: Order | SizelessOrder,
+  currentPrice: number
+): boolean {
+  if (order.type === "market") {
+    return true;
+  }
+  const { type, price: orderPrice, side } = order;
+  if (side === "buy") {
+    if (type === "limit") {
+      return currentPrice <= orderPrice;
+    } else if (type === "stop") {
+      return currentPrice >= orderPrice;
+    }
+  } else if (side === "sell") {
+    if (type === "limit") {
+      return currentPrice >= orderPrice;
+    } else if (type === "stop") {
+      return currentPrice <= orderPrice;
+    }
+  }
+  // TODO why doesn't TS recognize the exhaustiveness above?
+  throw Error(
+    "Unhandled order side+type combo " + JSON.stringify({ side, type })
+  );
 }
 
 /**

@@ -23,7 +23,7 @@ import {
   marketPositionToBalance,
 } from "../util/conversions";
 import { Nullable } from "../util/type-util";
-import { last } from "../util/util";
+import { last, shouldFillImmediately } from "../util/util";
 import { CommissionProvider } from "./backtest";
 
 interface AssetAndCash {
@@ -267,36 +267,12 @@ function getOpenOrders(asset: AssetState): EnhancedOrder[] {
  */
 function getFillPrice(order: Order, pricePath: PricePath): number | null {
   const startPrice = pricePath.from;
-  if (order.type === "market") {
-    return startPrice;
-  }
-  const { side, type, price: orderPrice } = order;
 
-  const immediatelyFilled: boolean = (() => {
-    if (side === "buy") {
-      if (type === "limit") {
-        return startPrice <= orderPrice;
-      } else if (type === "stop") {
-        return startPrice >= orderPrice;
-      }
-    } else if (side === "sell") {
-      if (type === "limit") {
-        return startPrice >= orderPrice;
-      } else if (type === "stop") {
-        return startPrice <= orderPrice;
-      }
-    }
-    throw Error(
-      "Unhandled order side+type combo in backtest: " +
-        JSON.stringify({ side, type })
-    );
-  })();
-
-  if (immediatelyFilled) {
+  if (order.type === "market" || shouldFillImmediately(order, startPrice)) {
     return startPrice;
   }
 
-  return isWithin(orderPrice, pricePath) ? orderPrice : null;
+  return isWithin(order.price, pricePath) ? order.price : null;
 }
 
 function isWithin(price: number, { from, to }: PricePath) {
