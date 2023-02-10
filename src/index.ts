@@ -1,4 +1,5 @@
 export * from "./backtest";
+export * from "./compose-strategy";
 export * from "./core/types";
 export * from "./data";
 export * from "./high-level-api";
