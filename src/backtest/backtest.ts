@@ -161,6 +161,13 @@ export interface BacktestAsyncArgs extends CommonBacktestArgs {
      */
     key?: string;
   };
+  /**
+   * Enables overriding the behavior of providing the next set of candles for
+   * each iteration of the backtest.
+   */
+  createCandleUpdateProvider?: (
+    args: Omit<BacktestAsyncArgs, "createCandleUpdateProvider">
+  ) => AsyncCandleUpdateProvider;
 }
 
 /**

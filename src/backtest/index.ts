@@ -12,5 +12,6 @@ export {
   BacktestSyncResult,
   BacktestSyncStatistics,
 } from "./backtest-result";
+export { AsyncCandleUpdateProvider } from "./candle-update-provider-async";
 export * from "./equity-curve";
 export { ProgressHandler } from "./progress-handler";

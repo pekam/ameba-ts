@@ -8,6 +8,7 @@ import {
 import { Moment, Timeframe, timeframeToPeriod, toTimestamp } from "../time";
 import { Nullable } from "../util/type-util";
 import { then } from "../util/util";
+import { BacktestAsyncArgs } from "./backtest";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
 
 /**
@@ -18,11 +19,19 @@ export type AsyncCandleUpdateProvider = (
   lastCandleTime: number | undefined
 ) => Promise<Nullable<CandleUpdate>>;
 
+export function createAsyncCandleProvider(
+  args: BacktestAsyncArgs
+): AsyncCandleUpdateProvider {
+  return (args.createCandleUpdateProvider || createDefaultAsyncCandleProvider)(
+    args
+  );
+}
+
 /**
  * Creates a backtester-compatible candle provider that fetches new candles on
  * demand from the given data provider.
  */
-export function createAsyncCandleProvider(args: {
+function createDefaultAsyncCandleProvider(args: {
   dataProvider: CandleDataProvider;
   from: Moment;
   to: Moment;
