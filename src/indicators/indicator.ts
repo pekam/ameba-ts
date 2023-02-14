@@ -22,10 +22,8 @@ fetched (the common reason for bugs in non-pure code), the value of a specific
 indicator for a specific candle will always be the same.
 */
 
-export type IndicatorInputState = Pick<
-  AssetState,
-  "series" | "data" | "bufferSize"
->;
+export type IndicatorInputState = Pick<AssetState, "series" | "data"> &
+  Partial<Pick<AssetState, "bufferSize">>;
 
 /**
  * Property key that is used to store indicator data in AssetState.data
@@ -71,7 +69,7 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
       takeRightWhile(series, (c) => c.time > lastTimestamp).forEach((c) => {
         const nextValue = nextValueGenerator(c);
         nextValue && result.push(nextValue);
-        while (result.length > bufferSize) {
+        while (bufferSize !== undefined && result.length > bufferSize) {
           result.shift();
         }
       });
