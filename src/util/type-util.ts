@@ -3,6 +3,12 @@ export type Dictionary<T> = Record<string, T>;
 export type Nullable<T> = T | null | undefined;
 
 /**
+ * Like TS built-in Omit, but enforces that the omitted keys exist in the
+ * original type.
+ */
+export type OmitStrict<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+
+/**
  * Partially overrides object property types.
  *
  * Example:
