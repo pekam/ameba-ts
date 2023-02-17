@@ -78,8 +78,9 @@ export async function getUniverseSet(
   args: GetUniverseSetArgs
 ): Promise<UniverseSet> {
   if (args.persistence) {
-    const persistedSet = await args.persistence.persister.get<UniverseSet>(
-      toPersisterKey(args.persistence.key)
+    const persistedSet = await getPersistedUniverseSet(
+      args.persistence.persister,
+      args.persistence.key
     );
     if (persistedSet) {
       return persistedSet;
@@ -112,3 +113,15 @@ const toPersisterKey = (key: string): PersisterKey => ({
   category: "universe",
   key,
 });
+
+/**
+ * If a universe set with the provided key has been stored with the given
+ * persister, returns that set.
+ */
+export async function getPersistedUniverseSet(
+  persister: Persister,
+  key: string
+): Promise<UniverseSet | undefined> {
+  const persistedSet = await persister.get<UniverseSet>(toPersisterKey(key));
+  return persistedSet || undefined;
+}

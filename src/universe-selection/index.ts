@@ -1,5 +1,6 @@
 export { BacktestUniverseArgs, backtestUniverses } from "./backtest-universes";
 export {
+  getPersistedUniverseSet,
   getUniverseSet,
   GetUniverseSetArgs,
   SingleAssetUniverseFilter,
