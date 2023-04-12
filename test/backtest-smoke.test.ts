@@ -116,8 +116,8 @@ const dataProvider: CandleDataProvider = {
     }
     const candles = pipe(
       series,
-      dropWhile((c) => c.time < from),
-      takeWhile((c) => c.time <= to)
+      dropWhile((c) => c.time < toTimestamp(from)),
+      takeWhile((c) => c.time <= toTimestamp(to))
     );
     return Promise.resolve(candles);
   },
