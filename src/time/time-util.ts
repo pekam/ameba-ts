@@ -18,7 +18,7 @@ export function toDateString(time: Moment, resolution: "d" | "m" | "s" = "m") {
       return 19;
     }
   })();
-  return toDateTime(time).toISO().substring(0, endIndex).replace("T", " ");
+  return toDateTime(time).toISO()!.substring(0, endIndex).replace("T", " ");
 }
 
 export const getCurrentTimestampInSeconds = () =>

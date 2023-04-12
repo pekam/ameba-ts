@@ -69,7 +69,7 @@ export const initBacktestPersistence =
     // NOTE: technically possible to have duplicate keys if starting multiple
     // backtests on the same millisecond
     const key: PersisterKey = toPersisterKey(
-      persistenceArgs.key || DateTime.utc().toISO()
+      persistenceArgs.key || DateTime.utc().toISO()!
     );
 
     const persistedBacktest: Nullable<PersistedBacktest> = await persister.get(
