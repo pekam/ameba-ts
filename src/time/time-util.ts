@@ -45,13 +45,14 @@ export function isNewYorkRTH(moment: Moment) {
   return true;
 }
 
-export function timeIsAfter(
+export function timeIsAfterOrEqual(
   dateTime: DateTime,
   hour: number,
   minute: number = 0
 ) {
   return (
-    dateTime.hour > hour || (dateTime.hour === hour && dateTime.minute > minute)
+    dateTime.hour > hour ||
+    (dateTime.hour === hour && dateTime.minute >= minute)
   );
 }
 

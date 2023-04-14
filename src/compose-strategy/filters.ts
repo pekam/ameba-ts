@@ -4,7 +4,7 @@ import {
   getAdx,
   getDonchianChannel,
   getSma,
-  timeIsAfter,
+  timeIsAfterOrEqual,
   timeIsBefore,
   toNewYorkTime,
 } from "..";
@@ -89,25 +89,22 @@ export const trailingLow =
     getDonchianChannel(state, period, indexFromEnd)?.lower;
 
 /**
- * An entry filter that passes if the time in New York is after the given hour
- * and minute.
+ * An entry filter that passes if the time in New York is the same or later than
+ * the given hour and minute.
  */
-export function newYorkTimeAfter(
+export function newYorkTimeAfterOrEqual(
   hour: number,
-  minute: number = 0
+  minute?: number
 ): EntryFilter {
   return (state) =>
-    timeIsAfter(toNewYorkTime(last(state.series).time), hour, minute);
+    timeIsAfterOrEqual(toNewYorkTime(last(state.series).time), hour, minute);
 }
 
 /**
  * An entry filter that passes if the time in New York is before the given hour
  * and minute.
  */
-export function newYorkTimeBefore(
-  hour: number,
-  minute: number = 0
-): EntryFilter {
+export function newYorkTimeBefore(hour: number, minute?: number): EntryFilter {
   return (state) =>
     timeIsBefore(toNewYorkTime(last(state.series).time), hour, minute);
 }
