@@ -10,10 +10,10 @@ import {
 import { Nullable } from "../util/type-util";
 
 /**
- * A strategy component used to decide whether an entry order can be placed, to
- * be used with {@link composeStrategy}.
+ * A strategy component used with {@link composeStrategy} as an entry filter, or
+ * as an exit filter with {@link conditionExit}.
  */
-export type EntryFilter = (state: AssetState) => boolean;
+export type AssetPredicate = (state: AssetState) => boolean;
 
 /**
  * A strategy component used to enter a position, to be used with
@@ -66,7 +66,7 @@ export interface ComposeStrategyArgs {
   /**
    * Conditions that need to pass in order to enter a position.
    */
-  filters: EntryFilter[];
+  filters: AssetPredicate[];
   /**
    * Defines how the entry order will be placed when all the filters are passed.
    */

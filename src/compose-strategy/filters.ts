@@ -9,7 +9,7 @@ import {
   toNewYorkTime,
 } from "..";
 import { last } from "../util/util";
-import { EntryFilter } from "./compose-strategy";
+import { AssetPredicate } from "./compose-strategy";
 
 /**
  * An entry filter that passes if the first provided value is greater than the
@@ -18,7 +18,7 @@ import { EntryFilter } from "./compose-strategy";
 export function gt(
   valueProvider1: ValueProvider | number,
   valueProvider2: ValueProvider | number
-): EntryFilter {
+): AssetPredicate {
   return (state) => {
     const value1 = getValue(valueProvider1, state);
     const value2 = getValue(valueProvider2, state);
@@ -33,7 +33,7 @@ export function gt(
 export function lt(
   valueProvider1: ValueProvider | number,
   valueProvider2: ValueProvider | number
-): EntryFilter {
+): AssetPredicate {
   return (state) => {
     const value1 = getValue(valueProvider1, state);
     const value2 = getValue(valueProvider2, state);
@@ -95,7 +95,7 @@ export const trailingLow =
 export function newYorkTimeAfterOrEqual(
   hour: number,
   minute?: number
-): EntryFilter {
+): AssetPredicate {
   return (state) =>
     timeIsAfterOrEqual(toNewYorkTime(last(state.series).time), hour, minute);
 }
@@ -104,7 +104,10 @@ export function newYorkTimeAfterOrEqual(
  * An entry filter that passes if the time in New York is before the given hour
  * and minute.
  */
-export function newYorkTimeBefore(hour: number, minute?: number): EntryFilter {
+export function newYorkTimeBefore(
+  hour: number,
+  minute?: number
+): AssetPredicate {
   return (state) =>
     timeIsBefore(toNewYorkTime(last(state.series).time), hour, minute);
 }

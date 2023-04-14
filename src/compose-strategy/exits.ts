@@ -1,6 +1,6 @@
 import { getAtr, newYorkTimeAfterOrEqual } from "..";
 import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
-import { EntryFilter, Exit, STRATEGY_NOT_READY } from "./compose-strategy";
+import { AssetPredicate, Exit, STRATEGY_NOT_READY } from "./compose-strategy";
 
 /**
  * Sets a take profit a multiple of the ATR indicator away from the entry price.
@@ -72,7 +72,7 @@ export function newYorkTimeExit(hour: number, minute?: number): Exit {
  * is implemented by trying to set the stop loss far beyond the current price,
  * or near zero for short positions.
  */
-export function conditionExit(entryFilter: EntryFilter): Exit {
+export function conditionExit(entryFilter: AssetPredicate): Exit {
   return (state) => {
     if (entryFilter(state)) {
       if (!state.position) {
