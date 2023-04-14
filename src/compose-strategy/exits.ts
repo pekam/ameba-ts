@@ -8,7 +8,7 @@ import { Exit, STRATEGY_NOT_READY } from "./compose-strategy";
 export function atrTakeProfit(period: number, multiplier: number): Exit {
   return (state, entryOrder) => {
     if (state.position || !entryOrder) {
-      return state.takeProfit;
+      return {};
     }
     const atr = getAtr(state, period);
     if (!atr) {
@@ -20,11 +20,12 @@ export function atrTakeProfit(period: number, multiplier: number): Exit {
     );
     const profit = atr * multiplier;
     if (entryOrder.side === "buy") {
-      return entryPrice + profit;
+      return { takeProfit: entryPrice + profit };
     } else if (entryOrder.side === "sell") {
-      return entryPrice - profit;
+      return { takeProfit: entryPrice - profit };
     } else {
       const exhaustiveCheck: never = entryOrder.side;
+      return {};
     }
   };
 }
@@ -35,7 +36,7 @@ export function atrTakeProfit(period: number, multiplier: number): Exit {
 export function atrStopLoss(period: number, multiplier: number): Exit {
   return (state, entryOrder) => {
     if (state.position || !entryOrder) {
-      return state.stopLoss;
+      return {};
     }
     const atr = getAtr(state, period);
     if (!atr) {
@@ -47,11 +48,12 @@ export function atrStopLoss(period: number, multiplier: number): Exit {
     );
     const risk = atr * multiplier;
     if (entryOrder.side === "buy") {
-      return entryPrice - risk;
+      return { stopLoss: entryPrice - risk };
     } else if (entryOrder.side === "sell") {
-      return entryPrice + risk;
+      return { stopLoss: entryPrice + risk };
     } else {
       const exhaustiveCheck: never = entryOrder.side;
+      return {};
     }
   };
 }

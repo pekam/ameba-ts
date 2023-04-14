@@ -1,5 +1,12 @@
-import { allPass } from "remeda";
-import { AssetState, cancelOrders, SizelessOrder, TradingStrategy } from "..";
+import { allPass, filter, isDefined, map, pipe, reduce } from "remeda";
+import {
+  AssetState,
+  PositionSide,
+  SingleAssetStrategyUpdate,
+  SizelessOrder,
+  TradingStrategy,
+  cancelOrders,
+} from "..";
 import { Nullable } from "../util/type-util";
 
 /**
@@ -11,19 +18,41 @@ export type EntryFilter = (state: AssetState) => boolean;
 /**
  * A strategy component used to enter a position, to be used with
  * {@link composeStrategy}.
+ *
+ * A special value {@link STRATEGY_NOT_READY} can be returned to indicate that
+ * the technical indicators used by this strategy component need more data
+ * before making decisions. After it becomes ready (enough data is provided),
+ * it's expected that it remains ready (the function should not return this
+ * special value after it has returned a valid value).
  */
 export type Entry = (
   state: AssetState
 ) => SizelessOrder | typeof STRATEGY_NOT_READY;
 
 /**
- * A strategy component used to exit a position, to be used as either stop loss
- * or take profit with {@link composeStrategy}.
+ * A strategy component used to exit a position with {@link composeStrategy} (to
+ * set the stop loss and/or take profit price levels).
+ *
+ * The exit functions are called when an entry order is set (to have initial
+ * values for the exit price levels if the entry is triggered), and after each
+ * new candle when in a position (to manage the exit price levels).
+ *
+ * If either stop loss or take profit is not provided, the existing value will
+ * be used. To cancel an order, you need to explicitly pass null or undefined as
+ * the value for the stop loss or take profit.
+ *
+ * A special value {@link STRATEGY_NOT_READY} can be returned to indicate that
+ * the technical indicators used by this strategy component need more data
+ * before making decisions. After it becomes ready (enough data is provided),
+ * it's expected that it remains ready (the function should not return this
+ * special value after it has returned a valid value).
  */
 export type Exit = (
   state: AssetState,
   entryOrder: Nullable<SizelessOrder>
-) => Nullable<number> | typeof STRATEGY_NOT_READY;
+) =>
+  | Pick<SingleAssetStrategyUpdate, "takeProfit" | "stopLoss">
+  | typeof STRATEGY_NOT_READY;
 
 /**
  * A special value that can be returned from a strategy component (entries,
@@ -43,16 +72,13 @@ export interface ComposeStrategyArgs {
    */
   entry: Entry;
   /**
-   * Defines how the take profit order will be placed when in a position. The
-   * take profit will be updated after each new candle while the position is
-   * active.
+   * Set of exit strategies that update the stop loss and take profit price
+   * levels. If multiple of the exit functions return a take profit, the last
+   * one in the list will take effect. If there are multiple stop losses, the
+   * one that is closest to the current price is used (to avoid increasing the
+   * risk of the trade, which is a good principle in general).
    */
-  takeProfit: Exit;
-  /**
-   * Defines how the stop loss order will be placed when in a position. The stop
-   * loss will be updated after each new candle while the position is active.
-   */
-  stopLoss: Exit;
+  exits: Exit[];
 }
 
 /**
@@ -70,33 +96,70 @@ export function composeStrategy(args: ComposeStrategyArgs): TradingStrategy {
           return cancelOrders;
         }
 
-        const stopLoss = args.stopLoss(state, entryOrder);
-        const takeProfit = args.takeProfit(state, entryOrder);
-
-        if (
-          stopLoss === STRATEGY_NOT_READY ||
-          takeProfit === STRATEGY_NOT_READY
-        ) {
+        const exitUpdate = resolveExits(args.exits, state, entryOrder);
+        if (exitUpdate === STRATEGY_NOT_READY) {
           return cancelOrders;
         }
-        return { entryOrder, stopLoss, takeProfit };
+
+        return { entryOrder, ...exitUpdate };
       } else {
         return cancelOrders;
       }
     } else {
-      const takeProfit = args.takeProfit(state, state.entryOrder);
-      const stopLoss = args.stopLoss(state, state.entryOrder);
-
-      if (
-        takeProfit === STRATEGY_NOT_READY ||
-        stopLoss === STRATEGY_NOT_READY
-      ) {
+      const exitUpdate = resolveExits(args.exits, state, state.entryOrder!);
+      if (exitUpdate === STRATEGY_NOT_READY) {
         throw Error("Exits should be ready after entered");
       }
-      return {
-        takeProfit,
-        stopLoss,
-      };
+      return exitUpdate;
     }
   };
 }
+
+function resolveExits(
+  exits: Exit[],
+  state: AssetState,
+  entryOrder: SizelessOrder
+): SingleAssetStrategyUpdate | typeof STRATEGY_NOT_READY {
+  const updates = exits.map((exit) => exit(state, entryOrder));
+  if (allReady(updates)) {
+    const positionSide: PositionSide =
+      state.position?.side || entryOrder.side === "buy" ? "long" : "short";
+    return pipe(
+      updates,
+      reduce(
+        (combinedUpdate, update) => ({ ...combinedUpdate, ...update }),
+        {}
+      ),
+      ensureNonIncreasingStopLoss(updates, positionSide)
+    );
+  } else {
+    return STRATEGY_NOT_READY;
+  }
+}
+
+function allReady<T>(
+  updates: (T | typeof STRATEGY_NOT_READY)[]
+): updates is T[] {
+  return !updates.includes(STRATEGY_NOT_READY);
+}
+
+const ensureNonIncreasingStopLoss =
+  (updates: SingleAssetStrategyUpdate[], positionSide: PositionSide) =>
+  (combinedUpdate: SingleAssetStrategyUpdate) => {
+    const stopLosses = pipe(
+      updates,
+      map((u) => u.stopLoss),
+      filter(isDefined)
+    );
+    if (stopLosses.length < 2) {
+      return combinedUpdate;
+    }
+    if (positionSide === "long") {
+      return { ...combinedUpdate, stopLoss: Math.max(...stopLosses) };
+    } else if (positionSide === "short") {
+      return { ...combinedUpdate, stopLoss: Math.min(...stopLosses) };
+    } else {
+      const exhaustiveCheck: never = positionSide;
+      return combinedUpdate;
+    }
+  };
