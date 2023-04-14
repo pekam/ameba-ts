@@ -44,3 +44,23 @@ export function isNewYorkRTH(moment: Moment) {
   }
   return true;
 }
+
+export function timeIsAfter(
+  dateTime: DateTime,
+  hour: number,
+  minute: number = 0
+) {
+  return (
+    dateTime.hour > hour || (dateTime.hour === hour && dateTime.minute > minute)
+  );
+}
+
+export function timeIsBefore(
+  dateTime: DateTime,
+  hour: number,
+  minute: number = 0
+) {
+  return (
+    dateTime.hour < hour || (dateTime.hour === hour && dateTime.minute < minute)
+  );
+}

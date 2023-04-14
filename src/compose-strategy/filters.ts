@@ -1,5 +1,14 @@
 import { isDefined, isNumber } from "remeda";
-import { AssetState, getAdx, getDonchianChannel, getSma } from "..";
+import {
+  AssetState,
+  getAdx,
+  getDonchianChannel,
+  getSma,
+  timeIsAfter,
+  timeIsBefore,
+  toNewYorkTime,
+} from "..";
+import { last } from "../util/util";
 import { EntryFilter } from "./compose-strategy";
 
 /**
@@ -78,3 +87,27 @@ export const trailingLow =
   (period: number, indexFromEnd?: number): ValueProvider =>
   (state: AssetState) =>
     getDonchianChannel(state, period, indexFromEnd)?.lower;
+
+/**
+ * An entry filter that passes if the time in New York is after the given hour
+ * and minute.
+ */
+export function newYorkTimeAfter(
+  hour: number,
+  minute: number = 0
+): EntryFilter {
+  return (state) =>
+    timeIsAfter(toNewYorkTime(last(state.series).time), hour, minute);
+}
+
+/**
+ * An entry filter that passes if the time in New York is before the given hour
+ * and minute.
+ */
+export function newYorkTimeBefore(
+  hour: number,
+  minute: number = 0
+): EntryFilter {
+  return (state) =>
+    timeIsBefore(toNewYorkTime(last(state.series).time), hour, minute);
+}
