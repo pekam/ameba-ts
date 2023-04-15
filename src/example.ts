@@ -9,6 +9,11 @@ import {
   withStaker,
 } from "./";
 
+/*
+  TODO: Update to use composeStrategy as that is the recommended method for
+  writing strategies.
+*/
+
 /**
  * A strategy that buys the breakout of previous candle's high if the price is
  * above the 50-period simple moving average (SMA), aims to take a 5% profit and
