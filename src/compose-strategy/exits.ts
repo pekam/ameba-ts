@@ -1,6 +1,11 @@
-import { getAtr, newYorkTimeAfterOrEqual } from "..";
+import {
+  AssetPredicate,
+  Exit,
+  STRATEGY_NOT_READY,
+  getAtr,
+  newYorkTimeAfterOrEqual,
+} from "..";
 import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
-import { AssetPredicate, Exit, STRATEGY_NOT_READY } from "./compose-strategy";
 
 /**
  * Sets a take profit a multiple of the ATR indicator away from the entry price.

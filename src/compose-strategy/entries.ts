@@ -1,6 +1,5 @@
 import { OrderSide, OrderType } from "../core/types";
-import { Entry, STRATEGY_NOT_READY } from "./compose-strategy";
-import { ValueProvider } from "./filters";
+import { Entry, STRATEGY_NOT_READY, ValueProvider } from "./types";
 
 /**
  * Sets a market buy order to enter a long position.

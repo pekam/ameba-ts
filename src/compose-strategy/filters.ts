@@ -1,6 +1,8 @@
 import { isDefined, isNumber } from "remeda";
 import {
+  AssetPredicate,
   AssetState,
+  ValueProvider,
   getAdx,
   getDonchianChannel,
   getSma,
@@ -9,7 +11,6 @@ import {
   toNewYorkTime,
 } from "..";
 import { last } from "../util/util";
-import { AssetPredicate } from "./compose-strategy";
 
 /**
  * An entry filter that passes if the first provided value is greater than the
@@ -40,12 +41,6 @@ export function lt(
     return isDefined(value1) && isDefined(value2) && value1 < value2;
   };
 }
-
-/**
- * A function that gets a numeric value (usually the value of some technical
- * indicator) so it can be used with entry filters such as {@link gt}.
- */
-export type ValueProvider = (state: AssetState) => number | undefined;
 
 function getValue(
   providerOrValue: ValueProvider | number,
