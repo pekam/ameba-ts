@@ -10,32 +10,45 @@ import {
 import { last } from "../util/util";
 
 /**
- * An entry filter that passes if the first provided value is greater than the
- * second.
+ * A predicate that passes if the first provided value is less than the second.
  */
-export function gt(
-  valueProvider1: ValueProvider | number,
-  valueProvider2: ValueProvider | number
-): AssetPredicate {
-  return (state) => {
-    const value1 = getValue(valueProvider1, state);
-    const value2 = getValue(valueProvider2, state);
-    return isDefined(value1) && isDefined(value2) && value1 > value2;
-  };
-}
-
+export const lt: ComparingPredicate = getComparingPredicate(
+  (v1, v2) => v1 < v2
+);
 /**
- * An entry filter that passes if the first provided value is less than the
+ * A predicate that passes if the first provided value is greater than the
  * second.
  */
-export function lt(
+export const gt: ComparingPredicate = getComparingPredicate(
+  (v1, v2) => v1 > v2
+);
+/**
+ * A predicate that passes if the first provided value is less than or equal
+ * compared to the second.
+ */
+export const lte: ComparingPredicate = getComparingPredicate(
+  (v1, v2) => v1 <= v2
+);
+/**
+ * A predicate that passes if the first provided value is greater than or equal
+ * compared to the second.
+ */
+export const gte: ComparingPredicate = getComparingPredicate(
+  (v1, v2) => v1 <= v2
+);
+
+type ComparingPredicate = (
   valueProvider1: ValueProvider | number,
   valueProvider2: ValueProvider | number
-): AssetPredicate {
-  return (state) => {
+) => AssetPredicate;
+
+function getComparingPredicate(
+  comparator: (value1: number, value2: number) => boolean
+): ComparingPredicate {
+  return (valueProvider1, valueProvider2) => (state) => {
     const value1 = getValue(valueProvider1, state);
     const value2 = getValue(valueProvider2, state);
-    return isDefined(value1) && isDefined(value2) && value1 < value2;
+    return isDefined(value1) && isDefined(value2) && comparator(value1, value2);
   };
 }
 
