@@ -1,26 +1,25 @@
-import { dropWhile, takeWhile } from "lodash/fp";
-import { omit, pipe } from "remeda";
+import { omit, pipe, takeWhile } from "remeda";
 import {
-  allInStaker,
   AssetState,
-  backtest,
   BacktestAsyncArgs,
   BacktestResult,
   BacktestStatistics,
-  backtestSync,
   BacktestSyncResult,
   BacktestSyncStatistics,
   CandleDataProvider,
   CandleSeries,
-  getPersistedBacktestResult,
   Persister,
-  toTimestamp,
   TradingStrategy,
+  allInStaker,
+  backtest,
+  backtestSync,
+  getPersistedBacktestResult,
+  toTimestamp,
   withStaker,
 } from "../src";
 import { CommonBacktestArgs } from "../src/backtest/backtest";
 import { Dictionary } from "../src/util/type-util";
-import { last } from "../src/util/util";
+import { dropWhile, last } from "../src/util/util";
 import { testData } from "./test-data/testData";
 
 const series: CandleSeries = testData.getBtcHourly();

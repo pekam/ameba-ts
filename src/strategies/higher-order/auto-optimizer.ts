@@ -1,4 +1,4 @@
-import { maxBy } from "lodash";
+import { maxBy } from "remeda";
 import {
   allInStaker,
   AssetState,

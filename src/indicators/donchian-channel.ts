@@ -1,7 +1,7 @@
-import { maxBy, minBy } from "lodash";
+import { maxBy, minBy } from "remeda";
 import { Candle } from "../core/types";
 import { avg } from "../util/util";
-import { createIndicatorWithPeriod, IndicatorChannel } from "./indicator-util";
+import { IndicatorChannel, createIndicatorWithPeriod } from "./indicator-util";
 
 /**
  * Returns the value of a Donchian channel indicator.

@@ -1,4 +1,4 @@
-import { dropRightWhile } from "lodash";
+import { dropLastWhile } from "../util/util";
 import { Moment, toDateTime, toTimestamp } from "./moment";
 
 const TIME_PROPS = ["year", "month", "day", "hour", "minute"] as const;
@@ -16,7 +16,7 @@ export function toStartOf(
 ): number {
   const dateTime = toDateTime(time);
 
-  const propsToCopy = dropRightWhile(TIME_PROPS, (p) => p !== unit);
+  const propsToCopy = dropLastWhile(TIME_PROPS, (p) => p !== unit);
 
   const timeObject: Record<(typeof TIME_PROPS)[number], number> =
     TIME_PROPS.reduce(

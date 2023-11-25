@@ -1,4 +1,4 @@
-import { last } from "lodash/fp";
+import { last } from "remeda";
 import { backtestSync } from "../src";
 import { Candle, FullTradingStrategy, SeriesMap } from "../src/core/types";
 

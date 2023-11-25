@@ -1,7 +1,6 @@
-import { takeRightWhile } from "lodash";
 import { AssetState, Candle } from "../core/types";
 import { Dictionary } from "../util/type-util";
-import { last } from "../util/util";
+import { last, takeLastWhile } from "../util/util";
 
 /*
 Note: While most of this project works with pure functions, the indicators
@@ -66,7 +65,7 @@ function createIndicator<RESULT>(initializer: () => (c: Candle) => RESULT) {
 
   return {
     update: ({ series, bufferSize }: IndicatorInputState): void => {
-      takeRightWhile(series, (c) => c.time > lastTimestamp).forEach((c) => {
+      takeLastWhile(series, (c) => c.time > lastTimestamp).forEach((c) => {
         const nextValue = nextValueGenerator(c);
         nextValue && result.push(nextValue);
         while (bufferSize !== undefined && result.length > bufferSize) {

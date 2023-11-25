@@ -1,4 +1,3 @@
-import { dropRightWhile, dropWhile } from "lodash/fp";
 import { pipe, reverse } from "remeda";
 import { Range } from "../core/types";
 import {
@@ -7,7 +6,7 @@ import {
 } from "../data/candle-data-provider";
 import { Moment, Timeframe, timeframeToPeriod, toTimestamp } from "../time";
 import { Nullable } from "../util/type-util";
-import { then } from "../util/util";
+import { dropLastWhile, dropWhile, then } from "../util/util";
 import { BacktestAsyncArgs } from "./backtest";
 import { CandleUpdate, createCandleUpdates } from "./create-candle-updates";
 
@@ -67,7 +66,7 @@ function createDefaultAsyncCandleProvider(args: {
           (c: CandleUpdate) => c.time <= (previousCandleTime || -Infinity)
         )
       ),
-      then(dropRightWhile((c) => c.time > fullRange.to)),
+      then(dropLastWhile((c) => c.time > fullRange.to)),
       then(reverse()) // for perf, removing from end
     );
 

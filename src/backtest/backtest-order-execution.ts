@@ -1,4 +1,3 @@
-import { minBy } from "lodash";
 import {
   concat,
   drop,
@@ -7,6 +6,7 @@ import {
   isDefined,
   map,
   maxBy,
+  minBy,
   pipe,
 } from "remeda";
 import {

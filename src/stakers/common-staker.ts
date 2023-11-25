@@ -1,5 +1,4 @@
-import { sumBy } from "lodash/fp";
-import { keys, map, mapValues, pipe, values } from "remeda";
+import { keys, map, mapValues, pipe, sumBy, values } from "remeda";
 import { AssetMap, AssetState, FullTradeState } from "../core/types";
 import { SizelessOrder, Staker, StrategyUpdate } from "../high-level-api/types";
 import { Dictionary, OverrideProps } from "../util/type-util";

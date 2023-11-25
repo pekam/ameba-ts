@@ -1,4 +1,3 @@
-import { tap } from "lodash/fp";
 import { first, last, pipe } from "remeda";
 import { CandleDataProvider, Persister } from "..";
 import {
@@ -10,7 +9,7 @@ import {
 } from "../core/types";
 import { Moment, Timeframe, toTimestamp } from "../time";
 import { Dictionary } from "../util/type-util";
-import { repeatUntil, repeatUntilAsync, then } from "../util/util";
+import { repeatUntil, repeatUntilAsync, tap, then } from "../util/util";
 import {
   BacktestPersistenceState,
   initBacktestPersistence,
@@ -28,12 +27,12 @@ import {
   createAsyncCandleProvider,
 } from "./candle-update-provider-async";
 import {
-  createSyncCandleProvider,
   SyncCandleUpdateProvider,
+  createSyncCandleProvider,
 } from "./candle-update-provider-sync";
 import { createCandleUpdates } from "./create-candle-updates";
 import { produceNextState } from "./produce-next-state";
-import { createProgressBar, ProgressHandler } from "./progress-handler";
+import { ProgressHandler, createProgressBar } from "./progress-handler";
 
 /**
  * Args used by both synchronous and asynchronous backtest.

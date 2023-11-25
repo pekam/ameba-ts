@@ -1,8 +1,8 @@
-import { flatMap, max, min, sortBy, sumBy } from "lodash";
-import { map, pipe, values } from "remeda";
+import { flatMap, map, pipe, sortBy, sumBy, values } from "remeda";
 import { Candle, Range, Trade } from "../core/types";
 import { Timeframe, toTimestamp } from "../time";
 import { OverrideProps } from "../util/type-util";
+import { max, min } from "../util/util";
 import { BacktestAsyncArgs, BacktestState } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { updateAsset } from "./update-asset";
@@ -151,9 +151,11 @@ function revertUnclosedTrades(state: BacktestState) {
 }
 
 function getTradesInOrder(state: BacktestState) {
-  return sortBy(
-    flatMap(state.assets, (a) => a.trades),
-    (t) => t.entry.time
+  return pipe(
+    state.assets,
+    values,
+    flatMap((asset) => asset.trades),
+    sortBy((trade) => trade.entry.time)
   );
 }
 

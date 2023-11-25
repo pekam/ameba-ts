@@ -1,10 +1,14 @@
-import _ from "lodash";
 import {
-  fromPairs as remedaFromPairs,
   identity,
   isArray,
   isNumber,
+  maxBy,
+  minBy,
+  purry,
+  fromPairs as remedaFromPairs,
+  pickBy as remedaPickBy,
   sort,
+  sumBy,
 } from "remeda";
 import { Candle, CandleSeries, Order } from "../core/types";
 import { SizelessOrder } from "../high-level-api/types";
@@ -31,9 +35,9 @@ export function last<T>(array: Array<T>) {
 export function avg(values: number[]): number {
   return sum(values) / values.length;
 }
-export function sum(values: number[]): number {
-  return values.reduce((sum, value) => sum + value, 0);
-}
+export const sum = sumBy<number>(identity);
+export const min = minBy<number>(identity);
+export const max = maxBy<number>(identity);
 
 export function getAverageCandleSize(
   series: CandleSeries,
@@ -134,22 +138,12 @@ export const fromPairs = <T>(pairs: [string, T][]) => remedaFromPairs(pairs);
 /**
  * Filters object entries by the given predicate.
  *
- * Lodash's pickBy curried and with better typing.
+ * Remeda's pickBy with looser typing.
  */
 export const pickBy =
   <T>(predicate: (value: T, key: string) => boolean) =>
   (obj: Dictionary<T>): Dictionary<T> =>
-    _.pickBy(obj, predicate);
-
-/**
- * Maps object values by the given function.
- *
- * Lodash's mapValues curried and with better typing.
- */
-export const mapValues =
-  <T, R>(mapper: (value: T, key: string) => R) =>
-  (obj: Dictionary<T>): Dictionary<R> =>
-    _.mapValues(obj, mapper);
+    remedaPickBy(obj, predicate);
 
 /**
  * Enables using Promise.then in pipe without arrow functions.
@@ -199,3 +193,79 @@ export const repeatUntilAsync =
     }
     return value;
   };
+
+export function tap<T>(value: T, fn: (value: T) => void): T;
+export function tap<T>(fn: (value: T) => void): (value: T) => T;
+export function tap() {
+  return purry(_tap, arguments);
+}
+function _tap<T>(value: T, fn: (value: T) => void): T {
+  fn(value);
+  return value;
+}
+
+export function takeLastWhile<T>(
+  array: ReadonlyArray<T>,
+  fn: (item: T) => boolean
+): Array<T>;
+export function takeLastWhile<T>(
+  fn: (item: T) => boolean
+): (array: ReadonlyArray<T>) => Array<T>;
+export function takeLastWhile() {
+  return purry(_takeLastWhile, arguments);
+}
+export function _takeLastWhile<T>(
+  array: ReadonlyArray<T>,
+  fn: (item: T) => boolean
+): ReadonlyArray<T> {
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (!fn(array[i])) {
+      return array.slice(i + 1);
+    }
+  }
+  return array;
+}
+
+export function dropWhile<T>(
+  array: ReadonlyArray<T>,
+  fn: (item: T) => boolean
+): Array<T>;
+export function dropWhile<T>(
+  fn: (item: T) => boolean
+): (array: ReadonlyArray<T>) => Array<T>;
+export function dropWhile() {
+  return purry(_dropWhile, arguments);
+}
+export function _dropWhile<T>(
+  array: ReadonlyArray<T>,
+  fn: (item: T) => boolean
+): ReadonlyArray<T> {
+  for (let i = 0; i < array.length; i++) {
+    if (!fn(array[i])) {
+      return array.slice(i);
+    }
+  }
+  return [];
+}
+
+export function dropLastWhile<T>(
+  array: ReadonlyArray<T>,
+  fn: (item: T) => boolean
+): Array<T>;
+export function dropLastWhile<T>(
+  fn: (item: T) => boolean
+): (array: ReadonlyArray<T>) => Array<T>;
+export function dropLastWhile() {
+  return purry(_dropLastWhile, arguments);
+}
+export function _dropLastWhile<T>(
+  array: ReadonlyArray<T>,
+  fn: (item: T) => boolean
+): ReadonlyArray<T> {
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (!fn(array[i])) {
+      return array.slice(0, i + 1);
+    }
+  }
+  return [];
+}
