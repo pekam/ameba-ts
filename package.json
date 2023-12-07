@@ -9,11 +9,12 @@
   },
   "author": "Pekka Maanpää",
   "license": "MIT",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "files": [
-    "src/*"
+    "dist/*"
   ],
   "scripts": {
+    "build": "tsc",
     "test": "jest",
     "check-types": "tsc -w --noEmit",
     "prepare": "husky install",
