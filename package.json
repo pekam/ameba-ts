@@ -1,6 +1,6 @@
 {
   "name": "ameba-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A multi-asset backtester for TypeScript",
   "homepage": "https://github.com/pekam/ameba-ts",
   "repository": {
