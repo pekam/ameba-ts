@@ -8,6 +8,7 @@
     "url": "https://github.com/pekam/ameba-ts.git"
   },
   "author": "Pekka Maanpää",
+  "license": "MIT",
   "main": "src/index.ts",
   "scripts": {
     "test": "jest",
