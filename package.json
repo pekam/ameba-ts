@@ -10,6 +10,9 @@
   "author": "Pekka Maanpää",
   "license": "MIT",
   "main": "src/index.ts",
+  "files": [
+    "src/*"
+  ],
   "scripts": {
     "test": "jest",
     "check-types": "tsc -w --noEmit",
