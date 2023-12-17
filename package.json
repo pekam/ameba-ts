@@ -9,12 +9,21 @@
   },
   "author": "Pekka Maanpää",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "dist/commonjs/index.js",
+  "module": "dist/es/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/es/index.js",
+      "require": "./dist/commonjs/index.js"
+    }
+  },
   "files": [
     "dist/*"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf ./dist && npm run build:es && npm run build:cjs && node post-build.js",
+    "build:es": "tsc --module esnext --outDir \"./dist/es\"",
+    "build:cjs": "tsc --module commonjs --outDir \"./dist/commonjs\"",
     "test": "jest",
     "check-types": "tsc -w --noEmit",
     "prepare": "husky install",

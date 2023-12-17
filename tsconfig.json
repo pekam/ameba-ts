@@ -2,7 +2,6 @@
   "compilerOptions": {
     "outDir": "./dist",
     "target": "ES6",
-    "module": "CommonJS", // ES modules don't support directory imports
     "lib": ["ES2021"],
     "moduleResolution": "node",
     "sourceMap": true,
