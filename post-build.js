@@ -92,7 +92,7 @@ function updateModuleReferences(filePath) {
 
   // Regular expression to find and update import/export statements
   const moduleRegex =
-    /(import\s+[\s\S]*?\s+from\s+|export\s+.*?\s+from\s+)?['"]([^'"]+)['"]/gm;
+    /(import\s+[\s\S]*?\s+from\s+|export\s+.*?\s+from\s+)['"]([^'"]+)['"]/gm;
   let updatedContent = content.replace(
     moduleRegex,
     (match, prefix, modulePath) => {
