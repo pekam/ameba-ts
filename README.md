@@ -175,3 +175,21 @@ abstraction among the trading strategy APIs. If writing out a
 `FullTradingStrategy`, you need to take care of position sizing and
 simultaneosly handle multiple tradable assets (if provided). This gives you the
 most control over the trading decisions, at the cost of complexity.
+
+## Development
+
+### Commits
+
+Commit messages should follow [Angular's flavor of conventional
+commits](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format),
+so each commit should start with one of the predefined prefixes such as `fix` or
+`refactor`.
+
+### Release
+
+When new commits are added to master branch, a GitHub action runs
+[`semantic-release`](https://github.com/semantic-release/semantic-release) to
+automatically publish a new version to npm if there are user affecting changes
+based on the conventional commit types. The commit types are also used to
+automatically decide the next version (major, minor or patch) and to write
+release notes.
