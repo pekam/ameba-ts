@@ -25,7 +25,7 @@
     "build:es": "tsc --module esnext --outDir \"./dist/es\"",
     "build:cjs": "tsc --module commonjs --outDir \"./dist/commonjs\"",
     "test": "jest",
-    "check-types": "tsc -w --noEmit",
+    "check-types": "tsc -w --noEmit -p tsconfig.dev.json",
     "prepare": "husky install",
     "format": "prettier --write .",
     "release": "npm run build && semantic-release"
