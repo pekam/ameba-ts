@@ -8,7 +8,7 @@ export interface OHLC {
 }
 
 export interface Candle extends OHLC {
-  volume?: number;
+  volume: number;
   time: number;
 }
 

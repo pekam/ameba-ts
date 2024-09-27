@@ -7,7 +7,5 @@ import { createIndicatorWithPeriod } from "./indicator-util";
  */
 export const getAvgVolume = createIndicatorWithPeriod("avgVol", (period) => {
   const avgVol = new SMA({ period, values: [] });
-
-  return (c: Candle) =>
-    c.volume !== undefined ? avgVol.nextValue(c.volume) : undefined;
+  return (c: Candle) => avgVol.nextValue(c.volume);
 });

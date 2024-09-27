@@ -83,6 +83,7 @@ function getSimpleTestData(candleCount: number): CandleSeries {
     high: i + 1,
 
     time: i,
+    volume: 10,
   }));
 }
 
@@ -95,6 +96,7 @@ function getTails({
 }): CandleSeries {
   return tails.map((tail, index) => ({
     time: index + 1,
+    volume: 10,
     open: startValue,
     close: startValue,
     high: tail > 0 ? startValue + tail : startValue,

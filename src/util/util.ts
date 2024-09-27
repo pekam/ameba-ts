@@ -52,10 +52,7 @@ export function getAverageCandleSize(
  * Expects candles to be subsequent and in order.
  */
 export function combineCandles(candles: CandleSeries): Candle {
-  const volume =
-    candles[0].volume !== undefined
-      ? sum(candles.map((c) => c.volume || 0))
-      : undefined;
+  const volume = sum(candles.map((c) => c.volume));
   return {
     open: candles[0].open,
     close: last(candles).close,
