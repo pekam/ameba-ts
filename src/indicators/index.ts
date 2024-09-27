@@ -1,5 +1,6 @@
 export * from "./adx";
 export * from "./atr";
+export * from "./avg-dollar-volume";
 export * from "./avg-relative-range";
 export * from "./avg-volume";
 export * from "./donchian-channel";

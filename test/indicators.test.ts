@@ -3,6 +3,7 @@ import {
   CandleSeries,
   getAdx,
   getAtr,
+  getAvgDollarVolume,
   getAvgRelativeRange,
   getAvgVolume,
   getDonchianChannel,
@@ -84,6 +85,7 @@ it("should support multiple indicators with different settings", () => {
     return {
       adx: getAdx(mockState, setting),
       atr: getAtr(mockState, setting),
+      avgDollarVol: getAvgDollarVolume(mockState, setting),
       avgRelRange: getAvgRelativeRange(mockState, setting),
       avgVol: getAvgVolume(mockState, setting),
       dc: getDonchianChannel(mockState, setting),
@@ -133,6 +135,7 @@ it("should support multiple indicators with different settings", () => {
         "pdi": 42.39683305720431,
       },
       "atr": 385.90656,
+      "avgDollarVol": 1141553343756.664,
       "avgRelRange": 0.009468291431461794,
       "avgVol": 25687492.16444,
       "dc": {
