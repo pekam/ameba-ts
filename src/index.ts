@@ -9,5 +9,6 @@ export * from "./stakers";
 export * from "./strategies";
 export * from "./time";
 export * from "./universe-selection";
+export * from "./util/candle-util";
 export * from "./util/conversions";
 export * from "./util/type-guards";
