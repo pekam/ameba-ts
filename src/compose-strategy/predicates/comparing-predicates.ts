@@ -46,7 +46,7 @@ function getComparingPredicate(
 
 function getValue(
   providerOrValue: ValueProvider | number,
-  state: AssetState
+  state: Pick<AssetState, "series" | "data">
 ): number | undefined {
   return isNumber(providerOrValue) ? providerOrValue : providerOrValue(state);
 }

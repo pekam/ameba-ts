@@ -5,7 +5,9 @@ import { Nullable } from "../util/type-util";
  * A strategy component used with {@link composeStrategy} as an entry filter, or
  * as an exit filter with {@link conditionExit}.
  */
-export type AssetPredicate = (state: AssetState) => boolean;
+export type AssetPredicate = (
+  state: Pick<AssetState, "series" | "data">
+) => boolean;
 
 /**
  * A strategy component used to enter a position, to be used with
@@ -59,4 +61,6 @@ export const STRATEGY_NOT_READY = "notready";
  * indicator) so it can be used with strategy components such as the {@link gt}
  * filter or the {@link limitBuyEntry}.
  */
-export type ValueProvider = (state: AssetState) => number | undefined;
+export type ValueProvider = (
+  state: Pick<AssetState, "series" | "data">
+) => number | undefined;
