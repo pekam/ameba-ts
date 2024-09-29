@@ -21,6 +21,12 @@ export interface GetUniverseSetArgs {
   persistence?: {
     persister: Persister;
     key: string;
+    /**
+     * If set to true, a new universe set will be produced and persisted even if
+     * a universe set with the same key already exists, overwriting the previous
+     * one.
+     */
+    overwrite?: boolean;
   };
 }
 
@@ -77,7 +83,7 @@ export interface UniverseSet {
 export async function getUniverseSet(
   args: GetUniverseSetArgs
 ): Promise<UniverseSet> {
-  if (args.persistence) {
+  if (args.persistence && !args.persistence.overwrite) {
     const persistedSet = await getPersistedUniverseSet(
       args.persistence.persister,
       args.persistence.key
