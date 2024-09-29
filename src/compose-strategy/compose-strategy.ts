@@ -1,11 +1,11 @@
 import { allPass, filter, isDefined, map, pipe, reduce } from "remeda";
 import {
   AssetState,
+  CANCEL_ORDERS_UPDATE,
   PositionSide,
   SingleAssetStrategyUpdate,
   SizelessOrder,
   TradingStrategy,
-  cancelOrders,
 } from "..";
 import { AssetPredicate, Entry, Exit, STRATEGY_NOT_READY } from "./types";
 
@@ -40,17 +40,17 @@ export function composeStrategy(args: ComposeStrategyArgs): TradingStrategy {
         const entryOrder = args.entry(state);
 
         if (!entryOrder || entryOrder === STRATEGY_NOT_READY) {
-          return cancelOrders;
+          return CANCEL_ORDERS_UPDATE;
         }
 
         const exitUpdate = resolveExits(args.exits, state, entryOrder);
         if (exitUpdate === STRATEGY_NOT_READY) {
-          return cancelOrders;
+          return CANCEL_ORDERS_UPDATE;
         }
 
         return { entryOrder, ...exitUpdate };
       } else {
-        return cancelOrders;
+        return CANCEL_ORDERS_UPDATE;
       }
     } else {
       const exitUpdate = resolveExits(args.exits, state, state.entryOrder!);

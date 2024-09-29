@@ -1,6 +1,6 @@
 import { SingleAssetStrategyUpdate } from "../core/types";
 
-export const cancelOrders: SingleAssetStrategyUpdate = {
+export const CANCEL_ORDERS_UPDATE: SingleAssetStrategyUpdate = {
   entryOrder: null,
   stopLoss: null,
   takeProfit: null,
