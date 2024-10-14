@@ -70,7 +70,7 @@ function resolveExits(
   const updates = exits.map((exit) => exit(state, entryOrder));
   if (allReady(updates)) {
     const positionSide: PositionSide =
-      state.position?.side || entryOrder.side === "buy" ? "long" : "short";
+      state.position?.side || (entryOrder.side === "buy" ? "long" : "short");
     return pipe(
       updates,
       reduce(
