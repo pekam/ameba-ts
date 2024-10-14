@@ -1,6 +1,7 @@
 import {
   flatMap,
   groupBy,
+  identity,
   map,
   mapValues,
   pick,
@@ -15,8 +16,8 @@ import {
   GetUniverseSetArgs,
   SingleAssetUniverseFilter,
   Universe,
-  UniverseAssetState,
   UNIVERSE_TIMEFRAME,
+  UniverseAssetState,
 } from "./get-universe-set";
 
 export function produceUniverses(
@@ -65,22 +66,24 @@ const getValidDatesForSymbol =
 
     const dates = reduce(
       dailyCandles,
-      nextState(args.universeFilter),
+      nextState(args),
       initialState
     ).selectedDates;
     return { symbol, dates };
   };
 
 const nextState =
-  (filter: SingleAssetUniverseFilter) =>
+  (args: Omit<GetUniverseSetArgs, "symbols">) =>
   (state: UniverseAssetState, candle: Candle) =>
     pipe(
       state,
       addCandle(candle),
       // if the filter passed on the previous iteration, this (the next candle
-      // after) is the actual one that should be added
-      addLatestCandleDate,
-      runFilter(filter)
+      // after) is the actual one that should be added (unless otherwise
+      // specified)
+      args.useCurrentDate ? identity : addLatestCandleDate,
+      runFilter(args.universeFilter),
+      args.useCurrentDate ? addLatestCandleDate : identity
     );
 
 const addCandle =

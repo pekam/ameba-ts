@@ -28,6 +28,26 @@ export interface GetUniverseSetArgs {
      */
     overwrite?: boolean;
   };
+  /**
+   * If set to true: When the universe filter returns true, the symbol will be
+   * added to the universe at the date of the latest candle instead of the next
+   * tradable date.
+   *
+   * This introduces the risk of look ahead bias: You're choosing to trade on a
+   * day based on data that is available only after that day. That's why you
+   * should also use an intraday filter in your strategy that makes sure that
+   * the conditions of the universe filter are fulfilled before entering a
+   * trade. This enables optimizing the backtest of intraday filters, by being
+   * able to cut down the universe of assets with daily timeframe data.
+   *
+   * Examples:
+   * - Check that the opening gap is greater than 10%. The gap data is available
+   *   right from open, so this doesn't have look ahead bias.
+   * - Intraday filter expects price to move up 10% from open. You can use
+   *   universe filter that checks that the price from open to high is greater
+   *   than 10%, to optimize the backtest without look ahead bias.
+   */
+  useCurrentDate?: boolean;
 }
 
 export type SingleAssetUniverseFilter = (
