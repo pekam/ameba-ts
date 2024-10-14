@@ -2,11 +2,15 @@ import { AssetState } from "../core/types";
 import {
   getAdx,
   getAtr,
+  getAvgDollarVolume,
+  getAvgVolume,
   getDonchianChannel,
   getEma,
   getRsi,
   getSma,
 } from "../indicators";
+import { getDollarVolume } from "../util/candle-util";
+import { get } from "../util/util";
 import { ValueProvider } from "./types";
 
 /**
@@ -66,3 +70,29 @@ export const trailingLow =
   (period: number, indexFromEnd?: number): ValueProvider =>
   (state: AssetState) =>
     getDonchianChannel(state, period, indexFromEnd)?.lower;
+
+/**
+ * Average volume as a {@link ValueProvider}.
+ */
+export const avgVolume =
+  (period: number, indexFromEnd?: number): ValueProvider =>
+  (state: AssetState) =>
+    getAvgVolume(state, period, indexFromEnd);
+
+/**
+ * Dollar volume of the candle as a {@link ValueProvider}.
+ */
+export const dollarVolume =
+  (indexFromEnd?: number): ValueProvider =>
+  (state: AssetState) => {
+    const candle = get(state.series, -1 - (indexFromEnd || 0));
+    return candle && getDollarVolume(candle);
+  };
+
+/**
+ * Average dollar volume as a {@link ValueProvider}.
+ */
+export const avgDollarVolume =
+  (period: number, indexFromEnd?: number): ValueProvider =>
+  (state: AssetState) =>
+    getAvgDollarVolume(state, period, indexFromEnd);
