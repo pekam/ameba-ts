@@ -39,15 +39,6 @@ export const sum = sumBy<number>(identity);
 export const min = minBy<number>(identity);
 export const max = maxBy<number>(identity);
 
-export function getAverageCandleSize(
-  series: CandleSeries,
-  countFromEnd: number
-) {
-  const head: Candle[] =
-    series.length >= countFromEnd ? series.slice(-countFromEnd) : series;
-  return avg(head.map((candle) => candle.high - candle.low));
-}
-
 /**
  * Expects candles to be subsequent and in order.
  */
