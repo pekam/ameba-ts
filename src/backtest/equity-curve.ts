@@ -115,19 +115,23 @@ function addToEquityCurve(
   const equity = previous.equity + absoluteProfit;
   const peak = Math.max(state.peak, equity);
   const absoluteDrawdown = peak - equity;
-  const drawdown = absoluteDrawdown / peak;
+  // Realistically peak account value should always be positive, but in case
+  // backtester decides to start from zero balance and the first trade is a
+  // loss, just use zero, as it is impossible to produce a meaningful relative
+  // drawdown.
+  const relativeDrawdown = peak > 0 ? absoluteDrawdown / peak : 0;
 
   const entry: EquityCurvePoint = {
     time,
     equity,
-    relativeDrawdown: drawdown,
+    relativeDrawdown,
     absoluteDrawdown,
   };
 
   return {
     series: [...state.series, entry],
     peak,
-    maxRelativeDrawdown: Math.max(state.maxRelativeDrawdown, drawdown),
+    maxRelativeDrawdown: Math.max(state.maxRelativeDrawdown, relativeDrawdown),
     maxAbsoluteDrawdown: Math.max(state.maxAbsoluteDrawdown, absoluteDrawdown),
   };
 }
