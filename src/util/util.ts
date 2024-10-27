@@ -39,21 +39,6 @@ export const sum = sumBy<number>(identity);
 export const min = minBy<number>(identity);
 export const max = maxBy<number>(identity);
 
-/**
- * Expects candles to be subsequent and in order.
- */
-export function combineCandles(candles: CandleSeries): Candle {
-  const volume = sum(candles.map((c) => c.volume));
-  return {
-    open: candles[0].open,
-    close: last(candles).close,
-    low: Math.min(...candles.map((c) => c.low)),
-    high: Math.max(...candles.map((c) => c.high)),
-    volume,
-    time: candles[0].time,
-  };
-}
-
 export function getRelativeDiff(
   value1: number,
   value2: number,
