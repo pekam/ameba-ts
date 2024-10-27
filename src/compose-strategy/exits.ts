@@ -5,7 +5,8 @@ import {
   getAtr,
   newYorkTimeAfterOrEqual,
 } from "..";
-import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
+import { getExpectedFillPriceWithoutSlippage } from "../util/order-util";
+import { last } from "../util/util";
 
 /**
  * Sets a take profit a multiple of the ATR indicator away from the entry price.

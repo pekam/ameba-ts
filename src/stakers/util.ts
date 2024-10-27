@@ -1,6 +1,7 @@
 import { pipe, reduce, values } from "remeda";
 import { AssetState, FullTradeState } from "..";
-import { getExpectedFillPriceWithoutSlippage, last } from "../util/util";
+import { getExpectedFillPriceWithoutSlippage } from "../util/order-util";
+import { last } from "../util/util";
 
 export interface AccountStats {
   /**

@@ -1,12 +1,9 @@
 import { keys, map, mapValues, pipe, sumBy, values } from "remeda";
 import { AssetMap, AssetState, FullTradeState } from "../core/types";
 import { SizelessOrder, Staker, StrategyUpdate } from "../high-level-api/types";
+import { getExpectedFillPriceWithoutSlippage } from "../util/order-util";
 import { Dictionary, OverrideProps } from "../util/type-util";
-import {
-  getExpectedFillPriceWithoutSlippage,
-  hasOwnProperty,
-  pickBy,
-} from "../util/util";
+import { hasOwnProperty, pickBy } from "../util/util";
 import { AccountStats, getAccountStats, getExpectedExposure } from "./util";
 
 /**

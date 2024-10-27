@@ -22,8 +22,9 @@ import {
   balanceToMarketPosition,
   marketPositionToBalance,
 } from "../util/conversions";
+import { shouldFillImmediately } from "../util/order-util";
 import { Nullable } from "../util/type-util";
-import { last, shouldFillImmediately } from "../util/util";
+import { last } from "../util/util";
 import { CommissionProvider } from "./backtest";
 
 interface AssetAndCash {
