@@ -7,7 +7,6 @@ import {
   purry,
   fromPairs as remedaFromPairs,
   pickBy as remedaPickBy,
-  sort,
   sumBy,
 } from "remeda";
 import { Candle, CandleSeries, Order } from "../core/types";
@@ -38,15 +37,6 @@ export function avg(values: number[]): number {
 export const sum = sumBy<number>(identity);
 export const min = minBy<number>(identity);
 export const max = maxBy<number>(identity);
-
-export function getRelativeDiff(
-  value1: number,
-  value2: number,
-  relativeToHigher = false
-) {
-  const [low, high] = sort([value1, value2], identity);
-  return (high - low) / (relativeToHigher ? high : low);
-}
 
 export function getExpectedFillPriceWithoutSlippage(
   order: Order | SizelessOrder,
