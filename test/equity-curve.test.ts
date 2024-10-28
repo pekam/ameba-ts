@@ -63,7 +63,10 @@ it("should convert backtest result to equity curve", () => {
     initialBalance: 100,
   });
 
-  const equityCurve = getEquityCurve(result);
+  const equityCurve = getEquityCurve(
+    result.trades,
+    result.stats.initialBalance
+  );
 
   expect(omit(equityCurve, ["series"])).toEqual({
     maxAbsoluteDrawdown: 22,
@@ -92,7 +95,10 @@ it("should combine simultaneous trade exits to same equity curve point", () => {
     initialBalance: 100,
   });
 
-  const equityCurve = getEquityCurve(result);
+  const equityCurve = getEquityCurve(
+    result.trades,
+    result.stats.initialBalance
+  );
 
   expect(equityCurve.series.length).toBe(8);
 

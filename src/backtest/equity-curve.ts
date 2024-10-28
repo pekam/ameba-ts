@@ -1,5 +1,5 @@
 import { concat, dropLast, identity, map, pipe, reduce, sortBy } from "remeda";
-import { BacktestResult, BacktestSyncResult } from "..";
+import { Trade } from "..";
 import { last } from "../util/util";
 
 /**
@@ -34,9 +34,9 @@ export interface EquityCurvePoint {
 }
 
 /**
- * From the given backtest result, creates a time series that tracks equity
- * (total value of cash balance and all positions) and drawdown (distance from
- * peak equity) throughout the backtest. The return value also includes the peak
+ * From the given set of trades, creates a time series that tracks equity (total
+ * value of cash balance and all positions) and drawdown (distance from peak
+ * equity) throughout the backtest. The return value also includes the peak
  * equity value during the backtest, as well as the maximum drawdown.
  *
  * Note that the equity is updated (new point added to the time series) only at
@@ -44,24 +44,24 @@ export interface EquityCurvePoint {
  * position as the asset value fluctuates, but this function does not track
  * those changes.
  */
-export function getEquityCurve({
-  stats,
-  trades,
-}: BacktestResult | BacktestSyncResult): EquityCurve {
+export function getEquityCurve(
+  trades: Trade[],
+  initialBalance: number
+): EquityCurve {
   const initialState: EquityCurve = {
     series: [],
-    peak: stats.initialBalance,
+    peak: initialBalance,
     maxRelativeDrawdown: 0,
     maxAbsoluteDrawdown: 0,
   };
 
-  if (!stats.candleTimeRange) {
+  if (!trades.length) {
     return initialState;
   }
 
   const firstPoint: EquityCurvePoint = {
-    time: stats.candleTimeRange.from,
-    equity: stats.initialBalance,
+    time: trades[0].entry.time,
+    equity: initialBalance,
     relativeDrawdown: 0,
     absoluteDrawdown: 0,
   };
