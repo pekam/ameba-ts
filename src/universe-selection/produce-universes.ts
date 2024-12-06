@@ -10,19 +10,22 @@ import {
   sortBy,
   toPairs,
 } from "remeda";
-import { Candle, toDateString } from "..";
-import { last, thenAll } from "../util/util";
+import { Candle, PERIODS, timeframeToPeriod, toDateString } from "..";
+import { thenAll } from "../util/util";
 import {
   GetUniverseSetArgs,
   SingleAssetUniverseFilter,
   Universe,
-  UNIVERSE_TIMEFRAME,
   UniverseAssetState,
 } from "./get-universe-set";
 
 export function produceUniverses(
   args: GetUniverseSetArgs
 ): Promise<Universe[]> {
+  if (args.timeframe && timeframeToPeriod(args.timeframe) > PERIODS.day) {
+    throw Error("Timeframe for universe selection must be daily or intraday");
+  }
+
   return pipe(
     args.symbols,
     map(getValidDatesForSymbol(args)),
@@ -31,7 +34,7 @@ export function produceUniverses(
 }
 
 function mapByDate(
-  symbolsAndDates: { symbol: string; dates: number[] }[]
+  symbolsAndDates: { symbol: string; dates: string[] }[]
 ): Universe[] {
   return pipe(
     symbolsAndDates,
@@ -41,7 +44,7 @@ function mapByDate(
     toPairs,
     sortBy(([date]) => date),
     map(([date, symbols]) => ({
-      time: toDateString(parseInt(date), "d"),
+      time: date,
       symbols,
     }))
   );
@@ -49,12 +52,23 @@ function mapByDate(
 
 const getValidDatesForSymbol =
   (args: Omit<GetUniverseSetArgs, "symbols">) =>
-  async (symbol: string): Promise<{ symbol: string; dates: number[] }> => {
-    const dailyCandles = await args.dataProvider.getCandles({
+  async (symbol: string): Promise<{ symbol: string; dates: string[] }> => {
+    const allCandles = await args.dataProvider.getCandles({
       symbol,
-      timeframe: UNIVERSE_TIMEFRAME,
+      timeframe: args.timeframe || "1d",
       ...pick(args, ["from", "to"]),
     });
+
+    const dailyCandles: [string, Candle[]][] = pipe(
+      allCandles,
+      groupBy((c) => toDateString(c.time, "d")),
+      toPairs,
+
+      // Just in case, ensuring the order of both the dates and the candles
+      // within single date
+      sortBy(([date, _candles]) => date),
+      map(([date, candles]) => [date, sortBy(candles, (c) => c.time)])
+    );
 
     const initialState: UniverseAssetState = {
       symbol,
@@ -62,6 +76,7 @@ const getValidDatesForSymbol =
       data: {},
       selected: false,
       selectedDates: [],
+      currentDate: "", // This is set in the iteration before anything else
     };
 
     const dates = reduce(
@@ -74,34 +89,43 @@ const getValidDatesForSymbol =
 
 const nextState =
   (args: Omit<GetUniverseSetArgs, "symbols">) =>
-  (state: UniverseAssetState, candle: Candle) =>
+  (state: UniverseAssetState, [date, daysCandles]: [string, Candle[]]) =>
     pipe(
       state,
-      addCandle(candle),
+      updateDate(date),
+      addCandles(daysCandles),
       // if the filter passed on the previous iteration, this (the next candle
       // after) is the actual one that should be added (unless otherwise
       // specified)
-      args.useCurrentDate ? identity : addLatestCandleDate,
+      args.useCurrentDate ? identity : addCurrentDateIfSelected,
       runFilter(args.universeFilter),
-      args.useCurrentDate ? addLatestCandleDate : identity
+      args.useCurrentDate ? addCurrentDateIfSelected : identity
     );
 
-const addCandle =
-  (candle: Candle) =>
+const updateDate =
+  (date: string) =>
+  (state: UniverseAssetState): UniverseAssetState => ({
+    ...state,
+    currentDate: date,
+  });
+
+const addCandles =
+  (candles: Candle[]) =>
   (state: UniverseAssetState): UniverseAssetState => {
     // for perf
-    state.series.push(candle);
+    state.series.push(...candles);
     return state;
   };
 
-function addLatestCandleDate(state: UniverseAssetState): UniverseAssetState {
+const addCurrentDateIfSelected = (
+  state: UniverseAssetState
+): UniverseAssetState => {
   if (state.selected) {
-    const time = last(state.series).time;
     // for perf
-    state.selectedDates.push(time);
+    state.selectedDates.push(state.currentDate);
   }
   return state;
-}
+};
 
 const runFilter =
   (filter: SingleAssetUniverseFilter) =>

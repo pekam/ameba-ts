@@ -10,14 +10,20 @@ import {
 import { Dictionary } from "../util/type-util";
 import { produceUniverses } from "./produce-universes";
 
-export const UNIVERSE_TIMEFRAME: Timeframe = "1d";
-
 export interface GetUniverseSetArgs {
   symbols: string[];
   universeFilter: SingleAssetUniverseFilter;
   dataProvider: CandleDataProvider;
   from: Moment;
   to: Moment;
+  /**
+   * Timeframe of the candles loaded per each day. E.g. if set to "5min", on
+   * each update, 5-minute candles for the full calendar day are added to
+   * series, then user's universe filter is run.
+   *
+   * Must be daily ("1d") or an intraday timeframe. Defaults to "1d".
+   */
+  timeframe?: Timeframe;
   persistence?: {
     persister: Persister;
     key: string;
@@ -59,7 +65,8 @@ export interface UniverseAssetState {
   series: Candle[];
   data: Dictionary<any>;
   selected: boolean;
-  selectedDates: number[];
+  selectedDates: string[];
+  currentDate: string;
 }
 
 export type SingleAssetUniverseFilterUpdate = Pick<
