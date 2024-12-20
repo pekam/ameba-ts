@@ -1,5 +1,5 @@
 import { concat, dropLast, identity, map, pipe, reduce, sortBy } from "remeda";
-import { Trade } from "..";
+import { PERIODS, Trade } from "..";
 import { last } from "../util/util";
 
 /**
@@ -60,7 +60,10 @@ export function getEquityCurve(
   }
 
   const firstPoint: EquityCurvePoint = {
-    time: trades[0].entry.time,
+    // Setting the initial point slightly before the first entry ensures that
+    // there's never two points with the same timestamp, which might happen if
+    // the first trade is a same-bar entry and exit.
+    time: trades[0].entry.time - PERIODS.minute,
     equity: initialBalance,
     relativeDrawdown: 0,
     absoluteDrawdown: 0,
