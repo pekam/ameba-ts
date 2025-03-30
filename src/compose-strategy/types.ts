@@ -8,7 +8,9 @@ import { Nullable } from "../util/type-util";
 // Note: Generic type needed instead of Pick<AssetState, "series" | "data">
 // because otherwise TS allows using a wider type (e.g. AssetState) as the
 // argument.
-export type AssetPredicate = <T extends Pick<AssetState, "series" | "data">>(
+export type CandleDataPredicate = <
+  T extends Pick<AssetState, "series" | "data">
+>(
   state: T
 ) => boolean;
 

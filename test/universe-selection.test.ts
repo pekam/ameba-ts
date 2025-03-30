@@ -1,6 +1,6 @@
 import { allPass } from "remeda";
 import {
-  AssetPredicate,
+  CandleDataPredicate,
   getUniverseSet,
   GetUniverseSetArgs,
   gt,
@@ -10,7 +10,7 @@ import { last } from "../src/util/util";
 import { testDataProvider } from "./test-data/test-data-provider";
 
 describe("universe selection", () => {
-  const predicates: AssetPredicate[] = [gt(sma(3), 1)];
+  const predicates: CandleDataPredicate[] = [gt(sma(3), 1)];
 
   const args: GetUniverseSetArgs = {
     dataProvider: testDataProvider,
@@ -22,7 +22,7 @@ describe("universe selection", () => {
     }),
   };
 
-  it("should be able to use AssetPredicates", async () => {
+  it("should be able to use CandleDataPredicates", async () => {
     const universeSet = await getUniverseSet(args);
 
     expect(universeSet).toMatchInlineSnapshot(`

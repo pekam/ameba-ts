@@ -1,5 +1,5 @@
 import { isDefined, isNumber } from "remeda";
-import { AssetPredicate, AssetState, ValueProvider } from "../..";
+import { AssetState, CandleDataPredicate, ValueProvider } from "../..";
 
 /**
  * A predicate that passes if the first provided value is less than the second.
@@ -32,7 +32,7 @@ export const gte: ComparingPredicate = getComparingPredicate(
 type ComparingPredicate = (
   valueProvider1: ValueProvider | number,
   valueProvider2: ValueProvider | number
-) => AssetPredicate;
+) => CandleDataPredicate;
 
 function getComparingPredicate(
   comparator: (value1: number, value2: number) => boolean

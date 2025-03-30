@@ -1,5 +1,5 @@
 import {
-  AssetPredicate,
+  CandleDataPredicate,
   timeIsAfterOrEqual,
   timeIsBefore,
   toNewYorkTime,
@@ -13,7 +13,7 @@ import { last } from "../../util/util";
 export function newYorkTimeAfterOrEqual(
   hour: number,
   minute?: number
-): AssetPredicate {
+): CandleDataPredicate {
   return (state) =>
     timeIsAfterOrEqual(toNewYorkTime(last(state.series).time), hour, minute);
 }
@@ -25,7 +25,7 @@ export function newYorkTimeAfterOrEqual(
 export function newYorkTimeBefore(
   hour: number,
   minute?: number
-): AssetPredicate {
+): CandleDataPredicate {
   return (state) =>
     timeIsBefore(toNewYorkTime(last(state.series).time), hour, minute);
 }
