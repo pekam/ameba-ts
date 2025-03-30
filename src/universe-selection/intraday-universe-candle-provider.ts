@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { drop, first, pipe, reverse } from "remeda";
 import { getMultiCandles, PERIODS, toTimestamp } from "..";
 import { BacktestAsyncArgs } from "../backtest";
@@ -44,7 +45,9 @@ async function getCandleUpdatesForNextDay(
   if (!universe) {
     return { ...state, finished: true, candleUpdates: [] };
   }
-  const from = toTimestamp(universe.time);
+  const from = toTimestamp(
+    DateTime.fromISO(universe.time, { zone: "America/New_York" })
+  );
 
   const candleUpdates = await pipe(
     getMultiCandles({
