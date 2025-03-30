@@ -1,5 +1,5 @@
 import { OrderSide, OrderType } from "../core/types";
-import { Entry, STRATEGY_NOT_READY, ValueProvider } from "./types";
+import { CandleDataToNumber, Entry, STRATEGY_NOT_READY } from "./types";
 
 /**
  * Sets a market buy order to enter a long position.
@@ -19,7 +19,7 @@ export const marketSellEntry: Entry = () => ({
 
 const pricedEntry =
   (type: Exclude<OrderType, "market">, side: OrderSide) =>
-  (orderPriceProvider: ValueProvider): Entry =>
+  (orderPriceProvider: CandleDataToNumber): Entry =>
   (state) => {
     const price = orderPriceProvider(state);
     if (price === undefined) {

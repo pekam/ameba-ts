@@ -62,13 +62,15 @@ export type Exit = (
 export const STRATEGY_NOT_READY = "notready";
 
 /**
- * A function that gets a numeric value (usually the value of some technical
+ * A function that returns a numeric value (usually the value of some technical
  * indicator) so it can be used with strategy components such as the {@link gt}
  * filter or the {@link limitBuyEntry}.
  */
 // Note: Generic type needed instead of Pick<AssetState, "series" | "data">
 // because otherwise TS allows using a wider type (e.g. AssetState) as the
 // argument.
-export type ValueProvider = <T extends Pick<AssetState, "series" | "data">>(
+export type CandleDataToNumber = <
+  T extends Pick<AssetState, "series" | "data">
+>(
   state: T
 ) => number | undefined;
