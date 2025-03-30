@@ -5,8 +5,11 @@ import { Nullable } from "../util/type-util";
  * A strategy component used with {@link composeStrategy} as an entry filter, or
  * as an exit filter with {@link conditionExit}.
  */
-export type AssetPredicate = (
-  state: Pick<AssetState, "series" | "data">
+// Note: Generic type needed instead of Pick<AssetState, "series" | "data">
+// because otherwise TS allows using a wider type (e.g. AssetState) as the
+// argument.
+export type AssetPredicate = <T extends Pick<AssetState, "series" | "data">>(
+  state: T
 ) => boolean;
 
 /**
@@ -61,6 +64,9 @@ export const STRATEGY_NOT_READY = "notready";
  * indicator) so it can be used with strategy components such as the {@link gt}
  * filter or the {@link limitBuyEntry}.
  */
-export type ValueProvider = (
-  state: Pick<AssetState, "series" | "data">
+// Note: Generic type needed instead of Pick<AssetState, "series" | "data">
+// because otherwise TS allows using a wider type (e.g. AssetState) as the
+// argument.
+export type ValueProvider = <T extends Pick<AssetState, "series" | "data">>(
+  state: T
 ) => number | undefined;

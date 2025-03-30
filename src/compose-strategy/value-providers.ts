@@ -1,4 +1,3 @@
-import { AssetState } from "../core/types";
 import {
   getAdx,
   getAtr,
@@ -18,7 +17,7 @@ import { ValueProvider } from "./types";
  */
 export const adx =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getAdx(state, period, indexFromEnd)?.adx;
 
 /**
@@ -26,7 +25,7 @@ export const adx =
  */
 export const atr =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getAtr(state, period, indexFromEnd);
 
 /**
@@ -34,7 +33,7 @@ export const atr =
  */
 export const ema =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getEma(state, period, indexFromEnd);
 
 /**
@@ -42,7 +41,7 @@ export const ema =
  */
 export const rsi =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getRsi(state, period, indexFromEnd);
 
 /**
@@ -50,7 +49,7 @@ export const rsi =
  */
 export const sma =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getSma(state, period, indexFromEnd);
 
 /**
@@ -59,7 +58,7 @@ export const sma =
  */
 export const trailingHigh =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getDonchianChannel(state, period, indexFromEnd)?.upper;
 
 /**
@@ -68,7 +67,7 @@ export const trailingHigh =
  */
 export const trailingLow =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getDonchianChannel(state, period, indexFromEnd)?.lower;
 
 /**
@@ -76,7 +75,7 @@ export const trailingLow =
  */
 export const avgVolume =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getAvgVolume(state, period, indexFromEnd);
 
 /**
@@ -84,7 +83,7 @@ export const avgVolume =
  */
 export const dollarVolume =
   (indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) => {
+  (state) => {
     const candle = get(state.series, -1 - (indexFromEnd || 0));
     return candle && getDollarVolume(candle);
   };
@@ -94,5 +93,5 @@ export const dollarVolume =
  */
 export const avgDollarVolume =
   (period: number, indexFromEnd?: number): ValueProvider =>
-  (state: AssetState) =>
+  (state) =>
     getAvgDollarVolume(state, period, indexFromEnd);
