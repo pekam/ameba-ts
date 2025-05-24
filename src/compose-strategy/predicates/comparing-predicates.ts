@@ -26,7 +26,7 @@ export const lte: ComparingPredicate = getComparingPredicate(
  * compared to the second.
  */
 export const gte: ComparingPredicate = getComparingPredicate(
-  (v1, v2) => v1 <= v2
+  (v1, v2) => v1 >= v2
 );
 
 type ComparingPredicate = (
