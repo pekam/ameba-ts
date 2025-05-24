@@ -1,5 +1,5 @@
 import {
-  CandleDataPredicate,
+  AssetStatePredicate,
   Exit,
   STRATEGY_NOT_READY,
   getAtr,
@@ -78,7 +78,7 @@ export function newYorkTimeExit(hour: number, minute?: number): Exit {
  * is implemented by trying to set the stop loss far beyond the current price,
  * or near zero for short positions.
  */
-export function conditionExit(entryFilter: CandleDataPredicate): Exit {
+export function conditionExit(entryFilter: AssetStatePredicate): Exit {
   return (state) => {
     if (entryFilter(state)) {
       if (!state.position) {

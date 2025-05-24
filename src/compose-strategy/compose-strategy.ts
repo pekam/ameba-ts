@@ -7,13 +7,13 @@ import {
   SizelessOrder,
   TradingStrategy,
 } from "..";
-import { CandleDataPredicate, Entry, Exit, STRATEGY_NOT_READY } from "./types";
+import { AssetStatePredicate, Entry, Exit, STRATEGY_NOT_READY } from "./types";
 
 export interface ComposeStrategyArgs {
   /**
    * Conditions that need to pass in order to enter a position.
    */
-  filters: CandleDataPredicate[];
+  filters: AssetStatePredicate[];
   /**
    * Defines how the entry order will be placed when all the filters are passed.
    */

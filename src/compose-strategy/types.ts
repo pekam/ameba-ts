@@ -4,6 +4,12 @@ import { Nullable } from "../util/type-util";
 /**
  * A strategy component used with {@link composeStrategy} as an entry filter, or
  * as an exit filter with {@link conditionExit}.
+ *
+ * This is more narrowly typed than {@link AssetStatePredicate}, which enables
+ * using this type of predicates also in universe selection. For this reason,
+ * predicate functions should be typed as {@link CandleDataPredicate} if
+ * possible, and as {@link AssetStatePredicate} only if the predicate needs
+ * access to properties besides `series` and `data`.
  */
 // Note: Generic type needed instead of Pick<AssetState, "series" | "data">
 // because otherwise TS allows using a wider type (e.g. AssetState) as the
@@ -13,6 +19,18 @@ export type CandleDataPredicate = <
 >(
   state: T
 ) => boolean;
+
+/**
+ * A strategy component used with {@link composeStrategy} as an entry filter, or
+ * as an exit filter with {@link conditionExit}.
+ *
+ * {@link CandleDataPredicate} is more narrowly typed than this, which enables
+ * using the predicate also in universe selection. For this reason, predicate
+ * functions should be typed as {@link CandleDataPredicate} if possible, and as
+ * {@link AssetStatePredicate} only if the predicate needs access to properties
+ * besides `series` and `data`.
+ */
+export type AssetStatePredicate = (state: AssetState) => boolean;
 
 /**
  * A strategy component used to enter a position, to be used with
