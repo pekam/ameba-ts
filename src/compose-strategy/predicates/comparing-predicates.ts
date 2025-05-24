@@ -1,4 +1,4 @@
-import { isDefined, isNumber } from "remeda";
+import { allPass, isDefined, isNumber } from "remeda";
 import { AssetState, CandleDataPredicate, CandleDataToNumber } from "../..";
 
 /**
@@ -28,6 +28,15 @@ export const lte: ComparingPredicate = getComparingPredicate(
 export const gte: ComparingPredicate = getComparingPredicate(
   (v1, v2) => v1 >= v2
 );
+
+/**
+ * A predicate that checks that the value is >= min and < max.
+ */
+export const inRange = (
+  value: CandleDataToNumber | number,
+  min: CandleDataToNumber | number,
+  max: CandleDataToNumber | number
+): CandleDataPredicate => allPass([gte(value, min), lt(value, max)]);
 
 type ComparingPredicate = (
   fnOrValue1: CandleDataToNumber | number,
