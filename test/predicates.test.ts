@@ -1,4 +1,6 @@
-import { AssetState, inRange, sma } from "../src";
+import { DateTime } from "luxon";
+import { AssetState, inRange, maxTradesPerDay, sma, toTimestamp } from "../src";
+import { mockAssetState, mockCandle, mockTrade } from "./test-data/mocks";
 
 describe("inRange", () => {
   const state: Pick<AssetState, "series" | "data"> = {
@@ -46,5 +48,32 @@ describe("inRange", () => {
     expect(inRange(sma(10), -100, 100)(state)).toBe(false);
     expect(inRange(90, sma(10), 100)(state)).toBe(false);
     expect(inRange(-90, -100, sma(10))(state)).toBe(false);
+  });
+});
+
+describe("maxTradesPerDay", () => {
+  it("should return true until the number of trades in calendar day is reached", () => {
+    const nyTime = (date: string) =>
+      toTimestamp(DateTime.fromISO(date, { zone: "America/New_York" }));
+
+    const state: AssetState = mockAssetState({
+      // Latest candle defines current time:
+      series: [mockCandle({ time: nyTime("2020-01-02T12:00:00") })],
+    });
+
+    // 1 trade in the previous day
+    state.trades.push(mockTrade(nyTime("2020-01-01T23:00:00")));
+    expect(maxTradesPerDay(1)(state)).toBe(true);
+    expect(maxTradesPerDay(2)(state)).toBe(true);
+
+    // 1 trade yesterday, 1 trade today
+    state.trades.push(mockTrade(nyTime("2020-01-02T01:00:00")));
+    expect(maxTradesPerDay(1)(state)).toBe(false);
+    expect(maxTradesPerDay(2)(state)).toBe(true);
+
+    // 1 trade yesterday, 2 trades today
+    state.trades.push(mockTrade(nyTime("2020-01-02T02:00:00")));
+    expect(maxTradesPerDay(2)(state)).toBe(false);
+    expect(maxTradesPerDay(3)(state)).toBe(true);
   });
 });
