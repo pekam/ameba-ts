@@ -159,6 +159,11 @@ export interface BacktestAsyncArgs extends CommonBacktestArgs {
      * the key.
      */
     key?: string;
+    /**
+     * If set to true, any potentially existing backtest with the same key will
+     * be ignored and overwritten by a new one started from scratch.
+     */
+    overwrite?: boolean;
   };
   /**
    * Enables overriding the behavior of providing the next set of candles for

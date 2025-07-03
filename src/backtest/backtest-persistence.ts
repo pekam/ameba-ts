@@ -72,9 +72,8 @@ export const initBacktestPersistence =
       persistenceArgs.key || DateTime.utc().toISO()!
     );
 
-    const persistedBacktest: Nullable<PersistedBacktest> = await persister.get(
-      key
-    );
+    const persistedBacktest: Nullable<PersistedBacktest> =
+      persistenceArgs.overwrite ? null : await persister.get(key);
 
     if (persistedBacktest?.finished) {
       return persistedBacktest;
