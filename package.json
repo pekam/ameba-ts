@@ -50,5 +50,8 @@
   },
   "lint-staged": {
     "*.{js,ts,css,md}": "prettier --write"
+  },
+  "release": {
+    "branches": ["main"]
   }
 }
