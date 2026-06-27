@@ -14,8 +14,35 @@ export interface GetUniverseSetArgs {
   symbols: string[];
   universeFilter: SingleAssetUniverseFilter;
   dataProvider: CandleDataProvider;
+  /**
+   * First date where universe selection is evaluated.
+   *
+   * If `lookback` is provided, candles before `from` may be preloaded into
+   * `state.series`, but `universeFilter` is not called before `from`.
+   */
   from: Moment;
   to: Moment;
+  /**
+   * Historical candle lookback to load before `from`.
+   *
+   * Lookback candles are preloaded into `state.series` before the first call to
+   * `universeFilter`, but `universeFilter` is not called for lookback-only
+   * dates. Indicators and predicates should use `state.series` as historical
+   * input instead of depending on universe selection being iterated over the
+   * lookback period.
+   *
+   * Dates before `from` are never emitted in the resulting UniverseSet. This is
+   * intended for indicators and predicates that need historical candle context,
+   * such as SMA(200), while keeping `from` as the first date where universe
+   * selection actually starts.
+   */
+  lookback?: {
+    years?: number;
+    months?: number;
+    weeks?: number;
+    days?: number;
+    hours?: number;
+  };
   /**
    * Timeframe of the candles loaded per each day. E.g. if set to "5min", on
    * each update, 5-minute candles for the full calendar day are added to

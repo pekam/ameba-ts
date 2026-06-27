@@ -1,16 +1,24 @@
 import {
+  findIndex,
   flatMap,
   groupBy,
   identity,
   map,
   mapValues,
-  pick,
   pipe,
   reduce,
   sortBy,
   toPairs,
 } from "remeda";
-import { Candle, PERIODS, timeframeToPeriod, toDateString } from "..";
+import {
+  Candle,
+  PERIODS,
+  Moment,
+  timeframeToPeriod,
+  toDateTime,
+  toDateString,
+  toTimestamp,
+} from "..";
 import { thenAll } from "../util/util";
 import {
   GetUniverseSetArgs,
@@ -19,11 +27,17 @@ import {
   UniverseAssetState,
 } from "./get-universe-set";
 
+/** Candles grouped by ISO date string. */
+type DailyCandles = [string, Candle[]][];
+
 export function produceUniverses(
   args: GetUniverseSetArgs
 ): Promise<Universe[]> {
   if (args.timeframe && timeframeToPeriod(args.timeframe) > PERIODS.day) {
     throw Error("Timeframe for universe selection must be daily or intraday");
+  }
+  if (args.lookback && hasNegativePeriodValue(args.lookback)) {
+    throw Error("lookback values must be non-negative");
   }
 
   return pipe(
@@ -56,10 +70,11 @@ const getValidDatesForSymbol =
     const allCandles = await args.dataProvider.getCandles({
       symbol,
       timeframe: args.timeframe || "1d",
-      ...pick(args, ["from", "to"]),
+      from: getCandleLoadStart(args),
+      to: args.to,
     });
 
-    const dailyCandles: [string, Candle[]][] = pipe(
+    const dailyCandles: DailyCandles = pipe(
       allCandles,
       groupBy((c) => toDateString(c.time, "d")),
       toPairs,
@@ -70,22 +85,66 @@ const getValidDatesForSymbol =
       map(([date, candles]) => [date, sortBy(candles, (c) => c.time)])
     );
 
-    const initialState: UniverseAssetState = {
-      symbol,
-      series: [],
-      data: {},
-      selected: false,
-      selectedDates: [],
-      currentDate: "", // This is set in the iteration before anything else
-    };
+    const { lookbackDailyCandles, selectionDailyCandles } =
+      splitBySelectionStart(dailyCandles, args.from);
 
     const dates = reduce(
-      dailyCandles,
+      selectionDailyCandles,
       nextState(args),
-      initialState
+      getInitialState(symbol, lookbackDailyCandles)
     ).selectedDates;
     return { symbol, dates };
   };
+
+const hasNegativePeriodValue = (
+  period: NonNullable<GetUniverseSetArgs["lookback"]>
+): boolean =>
+  pipe(period, Object.values, (periodValues) =>
+    periodValues.some(
+      (periodValue) => typeof periodValue === "number" && periodValue < 0
+    )
+  );
+
+const getCandleLoadStart = (
+  args: Omit<GetUniverseSetArgs, "symbols">
+): Moment =>
+  args.lookback ? toDateTime(args.from).minus(args.lookback) : args.from;
+
+const splitBySelectionStart = (
+  dailyCandles: DailyCandles,
+  from: Moment
+): {
+  lookbackDailyCandles: DailyCandles;
+  selectionDailyCandles: DailyCandles;
+} => {
+  const fromTimestamp = toTimestamp(from);
+  const selectionStartIndex = pipe(
+    dailyCandles,
+    findIndex(([date]) => toTimestamp(date) >= fromTimestamp)
+  );
+  const splitIndex =
+    selectionStartIndex === -1 ? dailyCandles.length : selectionStartIndex;
+
+  return {
+    lookbackDailyCandles: dailyCandles.slice(0, splitIndex),
+    selectionDailyCandles: dailyCandles.slice(splitIndex),
+  };
+};
+
+const getInitialState = (
+  symbol: string,
+  lookbackDailyCandles: DailyCandles
+): UniverseAssetState => ({
+  symbol,
+  series: pipe(
+    lookbackDailyCandles,
+    flatMap(([_date, candles]) => candles)
+  ),
+  data: {},
+  selected: false,
+  selectedDates: [],
+  currentDate: "", // This is set in the iteration before anything else
+});
 
 const nextState =
   (args: Omit<GetUniverseSetArgs, "symbols">) =>

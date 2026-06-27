@@ -149,4 +149,193 @@ describe("universe selection", () => {
       }
     `);
   });
+
+  it("should preload lookback candles before running universe selection", async () => {
+    let iterationData: {
+      date: string;
+      candleCount: number;
+      close: number;
+    }[] = [];
+
+    const universeSet = await getUniverseSet({
+      ...args,
+      lookback: { days: 3 },
+      from: "1970-01-04",
+      to: "1970-01-07",
+      universeFilter: (state) => {
+        iterationData.push({
+          date: state.currentDate,
+          candleCount: state.series.length,
+          close: last(state.series).close,
+        });
+        return { selected: allPass(state, predicates) };
+      },
+    });
+
+    expect(iterationData).toMatchInlineSnapshot(`
+      [
+        {
+          "candleCount": 4,
+          "close": 6,
+          "date": "1970-01-04",
+        },
+        {
+          "candleCount": 5,
+          "close": 7,
+          "date": "1970-01-05",
+        },
+        {
+          "candleCount": 6,
+          "close": 8,
+          "date": "1970-01-06",
+        },
+        {
+          "candleCount": 4,
+          "close": 6,
+          "date": "1970-01-04",
+        },
+        {
+          "candleCount": 5,
+          "close": 7,
+          "date": "1970-01-05",
+        },
+        {
+          "candleCount": 6,
+          "close": 8,
+          "date": "1970-01-06",
+        },
+      ]
+    `);
+    expect(universeSet).toMatchInlineSnapshot(`
+      {
+        "dataProviderName": "test-data-provider",
+        "from": 259200,
+        "to": 518400,
+        "universes": [
+          {
+            "symbols": [
+              "foo",
+              "bar",
+            ],
+            "time": "1970-01-05",
+          },
+          {
+            "symbols": [
+              "foo",
+              "bar",
+            ],
+            "time": "1970-01-06",
+          },
+        ],
+      }
+    `);
+  });
+
+  it("should support lookback with useCurrentDate=true", async () => {
+    const universeSet = await getUniverseSet({
+      ...args,
+      lookback: { days: 3 },
+      from: "1970-01-04",
+      to: "1970-01-07",
+      useCurrentDate: true,
+    });
+
+    expect(universeSet).toMatchInlineSnapshot(`
+      {
+        "dataProviderName": "test-data-provider",
+        "from": 259200,
+        "to": 518400,
+        "universes": [
+          {
+            "symbols": [
+              "foo",
+              "bar",
+            ],
+            "time": "1970-01-04",
+          },
+          {
+            "symbols": [
+              "foo",
+              "bar",
+            ],
+            "time": "1970-01-05",
+          },
+          {
+            "symbols": [
+              "foo",
+              "bar",
+            ],
+            "time": "1970-01-06",
+          },
+        ],
+      }
+    `);
+  });
+
+  it("should support lookback with intraday timeframe", async () => {
+    let iterationData: {
+      date: string;
+      candleCount: number;
+      close: number;
+    }[] = [];
+
+    const universeSet = await getUniverseSet({
+      dataProvider: testDataProvider,
+      lookback: { days: 1 },
+      from: "1970-01-02",
+      to: "1970-01-03",
+      timeframe: "1h",
+      symbols: ["foo", "bar"],
+      useCurrentDate: true,
+      universeFilter: (state) => {
+        iterationData.push({
+          date: state.currentDate,
+          candleCount: state.series.length,
+          close: last(state.series).close,
+        });
+        return { selected: last(state.series).close === 50 };
+      },
+    });
+
+    expect(iterationData).toMatchInlineSnapshot(`
+      [
+        {
+          "candleCount": 48,
+          "close": 50,
+          "date": "1970-01-02",
+        },
+        {
+          "candleCount": 48,
+          "close": 50,
+          "date": "1970-01-02",
+        },
+      ]
+    `);
+    expect(universeSet).toMatchInlineSnapshot(`
+      {
+        "dataProviderName": "test-data-provider",
+        "from": 86400,
+        "to": 172800,
+        "universes": [
+          {
+            "symbols": [
+              "foo",
+              "bar",
+            ],
+            "time": "1970-01-02",
+          },
+        ],
+      }
+    `);
+  });
+
+  it("should throw if lookback period is negative", async () => {
+    await expect(
+      getUniverseSet({
+        ...args,
+        lookback: { days: -1 },
+        from: "1970-01-04",
+      })
+    ).rejects.toThrow("lookback values must be non-negative");
+  });
 });
