@@ -59,6 +59,7 @@ const args: CommonBacktestArgs = {
   strategy: withStaker(strat, allInStaker),
   ...backtestRange,
   initialBalance: 100,
+  progressHandler: null,
 };
 
 const expectedStatistics: BacktestStatistics = {
