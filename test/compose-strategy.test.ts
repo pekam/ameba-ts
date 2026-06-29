@@ -50,11 +50,6 @@ describe("composeStrategy", () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "stats": {
-          "buyAndHoldProfit": 0.024709103353867213,
-          "candleTimeRange": {
-            "from": 1633046400,
-            "to": 1633078800,
-          },
           "endBalance": 99.2502343017807,
           "initialBalance": 100,
           "relativeProfit": -0.007497656982193064,

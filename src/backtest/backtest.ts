@@ -1,14 +1,12 @@
 import { first, last, pipe } from "remeda";
 import { CandleDataProvider, Persister } from "..";
 import {
-  Candle,
   FullTradeState,
   FullTradingStrategy,
   SeriesMap,
   Transaction,
 } from "../core/types";
 import { Moment, Timeframe, toTimestamp } from "../time";
-import { Dictionary } from "../util/type-util";
 import { repeatUntil, repeatUntilAsync, tap, then } from "../util/util";
 import {
   BacktestPersistenceState,
@@ -86,8 +84,7 @@ export interface BacktestSyncArgs extends CommonBacktestArgs {
    *
    * This can be useful if your strategy needs some amount of data before making
    * decisions (e.g. a strategy using a 20-period moving average needs 20
-   * candles before acting), and you want the backtest result to have correct
-   * values for `range` and `buyAndHoldProfit`.
+   * candles before acting).
    */
   from?: Moment;
   /**
@@ -199,7 +196,6 @@ export type CommissionProvider = (
 export type BacktestState = FullTradeState &
   Required<CommonBacktestArgs> & { from: number; to: number } & {
     finished: boolean;
-    firstAndLastCandles: Dictionary<[Candle, Candle]>;
     persistence?: BacktestPersistenceState;
   };
 
@@ -299,7 +295,6 @@ const initState =
       updated: [],
       time: 0,
       finished: false,
-      firstAndLastCandles: {},
       from,
       to,
     };

@@ -2,11 +2,10 @@ import { createPipe, filter, identity, map, mapToObj, pipe } from "remeda";
 import {
   AssetMap,
   AssetState,
-  Candle,
   FullTradingStrategy,
   SingleAssetStrategyUpdate,
 } from "../core/types";
-import { Dictionary, Nullable } from "../util/type-util";
+import { Nullable } from "../util/type-util";
 import { hasOwnProperty } from "../util/util";
 import { BacktestState } from "./backtest";
 import { handleOrders } from "./backtest-order-execution";
@@ -34,7 +33,6 @@ export function produceNextState(
       : createPipe(
           handleAllOrders,
           applyStrategy(state.strategy),
-          updateFirstAndLastCandles(candleUpdate),
           notifyProgressHandler
         )
   );
@@ -126,28 +124,6 @@ function assertUpdate(update: SingleAssetStrategyUpdate, asset: AssetState) {
     );
   }
 }
-
-const updateFirstAndLastCandles =
-  (candleUpdate: CandleUpdate) =>
-  (state: BacktestState): BacktestState => {
-    const updatedEntries: Dictionary<[Candle, Candle]> = pipe(
-      candleUpdate.nextCandles,
-      mapToObj(({ symbol, candle }) => {
-        const firstAndLastCandles = state.firstAndLastCandles[symbol];
-        return [
-          symbol,
-          [firstAndLastCandles ? firstAndLastCandles[0] : candle, candle],
-        ];
-      })
-    );
-    return {
-      ...state,
-      firstAndLastCandles: {
-        ...state.firstAndLastCandles,
-        ...updatedEntries,
-      },
-    };
-  };
 
 function notifyProgressHandler(state: BacktestState): BacktestState {
   if (state.progressHandler) {

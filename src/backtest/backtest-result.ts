@@ -1,8 +1,7 @@
-import { flatMap, map, pipe, sortBy, sumBy, values } from "remeda";
-import { Candle, Range, Trade } from "../core/types";
+import { flatMap, pipe, sortBy, values } from "remeda";
+import { Trade } from "../core/types";
 import { Timeframe, toTimestamp } from "../time";
 import { OverrideProps } from "../util/type-util";
-import { max, min } from "../util/util";
 import { BacktestAsyncArgs, BacktestState } from "./backtest";
 import { revertLastTransaction } from "./backtest-order-execution";
 import { updateAsset } from "./update-asset";
@@ -26,22 +25,6 @@ export interface BacktestStatistics {
    * For example: 0.4 if there were 4 wins and 6 losses (or breakeven trades).
    */
   winRate: number;
-  /**
-   * How much was the relative value change during the series. This value can be
-   * used as a benchmark to compare the result to, as it shows how much you
-   * would have profited by simply holding the assets for the backtest period
-   * (might not be relevant if the strategy trades both long and short
-   * positions).
-   *
-   * If multiple assets were included in the backtest, their buy-and-hold
-   * profits will be averaged with weights based on the series lengths.
-   */
-  buyAndHoldProfit: number;
-  /**
-   * Timestamps of the first and last candle included in the backtest (both
-   * inclusive). Not defined if the backtest didn't use any candles.
-   */
-  candleTimeRange: Range | undefined;
   /**
    * Information about the data used in the backtest. Contains everything needed
    * to load the same set of data as used by the backtest.
@@ -130,8 +113,6 @@ export const convertToBacktestSyncResult = (
         tradeCount: trades.length,
         winRate:
           trades.filter((t) => t.absoluteProfit > 0).length / trades.length,
-        buyAndHoldProfit: getBuyAndHoldProfit(finalState),
-        candleTimeRange: getCandleTimeRange(finalState),
       },
     };
   });
@@ -158,48 +139,3 @@ function getTradesInOrder(state: BacktestState) {
     sortBy((trade) => trade.entry.time)
   );
 }
-
-function getBuyAndHoldProfit(state: BacktestState): number {
-  const profitsAndDurations: [number, number][] = pipe(
-    state.firstAndLastCandles,
-    values,
-    map(getBuyAndHoldProfitAndDuration)
-  );
-
-  const totalWeight = sumBy(
-    profitsAndDurations,
-    ([profit, duration]) => duration
-  );
-
-  const weightedAvg = sumBy(
-    profitsAndDurations,
-    ([profit, duration]) => (profit * duration) / totalWeight
-  );
-
-  return weightedAvg;
-}
-
-const getBuyAndHoldProfitAndDuration = (
-  firstAndLastCandles: [Candle, Candle]
-): [number, number] => {
-  const [startCandle, endCandle] = firstAndLastCandles;
-
-  const startPrice = startCandle.open;
-  const endPrice = endCandle.close;
-
-  const profit = (endPrice - startPrice) / startPrice;
-  const duration = endCandle.time - startCandle.time;
-
-  return [profit, duration];
-};
-
-const getCandleTimeRange = (finalState: BacktestState): Range | undefined => {
-  const firstAndLastCandles = values(finalState.firstAndLastCandles);
-  if (!firstAndLastCandles.length) {
-    return undefined;
-  }
-  return {
-    from: min(firstAndLastCandles.map(([first, last]) => first.time))!,
-    to: max(firstAndLastCandles.map(([first, last]) => last.time))!,
-  };
-};

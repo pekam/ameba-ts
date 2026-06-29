@@ -93,14 +93,11 @@ const dataProvider: CandleDataProvider = {
     endBalance: 32161.101496586634,
     relativeProfit: 2.2161101496586633,
     tradeCount: 2183,
-    successRate: 0.37792029317453046,
-    buyAndHoldProfit: 3.1247092452187273,
-    range: { from: 1609459200, to: 1638313200 }
+    winRate: 0.37792029317453046
   }
 
-  222% profit looks awesome, until comparing to the buy-and-hold profit,
-  which is 312% on average for these two cryptos. Also, transaction costs
-  and slippage (can be simulated with commissionProvider) for 2183 trades
-  could turn this result negative.
+  222% profit looks awesome, but transaction costs and slippage (can be
+  simulated with commissionProvider) for 2183 trades could turn this result
+  negative.
   */
 })();

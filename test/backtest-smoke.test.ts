@@ -62,13 +62,8 @@ const args: CommonBacktestArgs = {
 };
 
 const expectedStatistics: BacktestStatistics = {
-  buyAndHoldProfit: 0.12410729114764989,
   endBalance: 106.0671231646724,
   initialBalance: 100,
-  candleTimeRange: {
-    from: 1633132800,
-    to: 1633651200,
-  },
   relativeProfit: 0.06067123164672395,
   winRate: 0.6363636363636364,
   tradeCount: 22,
