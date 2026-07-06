@@ -1,5 +1,4 @@
 import {
-  findIndex,
   flatMap,
   groupBy,
   identity,
@@ -118,9 +117,8 @@ const splitBySelectionStart = (
   selectionDailyCandles: DailyCandles;
 } => {
   const fromTimestamp = toTimestamp(from);
-  const selectionStartIndex = pipe(
-    dailyCandles,
-    findIndex(([date]) => toTimestamp(date) >= fromTimestamp)
+  const selectionStartIndex = dailyCandles.findIndex(
+    ([date]) => toTimestamp(date) >= fromTimestamp
   );
   const splitIndex =
     selectionStartIndex === -1 ? dailyCandles.length : selectionStartIndex;

@@ -329,6 +329,47 @@ describe("universe selection", () => {
     `);
   });
 
+  it("should not emit lookback-only dates when no candle exists at or after from", async () => {
+    const universeSet = await getUniverseSet({
+      dataProvider: {
+        name: "lookback-only-data-provider",
+        getCandles: async () => [
+          {
+            time: 0,
+            open: 1,
+            high: 1,
+            low: 1,
+            close: 1,
+            volume: 1,
+          },
+          {
+            time: 86400,
+            open: 2,
+            high: 2,
+            low: 2,
+            close: 2,
+            volume: 2,
+          },
+        ],
+      },
+      lookback: { days: 2 },
+      from: "1970-01-03",
+      to: "1970-01-04",
+      symbols: ["foo"],
+      useCurrentDate: true,
+      universeFilter: () => ({ selected: true }),
+    });
+
+    expect(universeSet).toMatchInlineSnapshot(`
+      {
+        "dataProviderName": "lookback-only-data-provider",
+        "from": 172800,
+        "to": 259200,
+        "universes": [],
+      }
+    `);
+  });
+
   it("should throw if lookback period is negative", async () => {
     await expect(
       getUniverseSet({
