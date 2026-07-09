@@ -1,4 +1,4 @@
-import { Dictionary } from "../util/type-util";
+import { Dictionary, Nullable } from "../util/type-util";
 
 export interface OHLC {
   open: number;
@@ -104,6 +104,10 @@ export interface Trade {
    * - 0.5% loss: profit = -0.005
    */
   relativeProfit: number;
+  /**
+   * The stop loss price that was active when the entry order filled.
+   */
+  initialStopLoss?: Nullable<number>;
 }
 
 /**
@@ -167,6 +171,10 @@ export interface AssetState {
    * candle to finish.
    */
   stopLoss: number | null;
+  /**
+   * The stop loss price that was active when the current position was opened.
+   */
+  initialStopLoss?: Nullable<number>;
   /**
    * A list of buy and sell transactions of this asset since starting to run the
    * strategy.

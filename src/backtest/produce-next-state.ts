@@ -54,6 +54,7 @@ const initMissingAssetStates =
           entryOrder: null,
           takeProfit: null,
           stopLoss: null,
+          initialStopLoss: null,
           transactions: [],
           trades: [],
           data: {},

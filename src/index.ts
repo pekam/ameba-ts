@@ -12,4 +12,5 @@ export * from "./util/candle-util";
 export * from "./util/conversions";
 export * from "./util/order-util";
 export * from "./util/strat-util";
+export * from "./util/trade-util";
 export * from "./util/type-guards";

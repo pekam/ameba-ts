@@ -1,5 +1,5 @@
 import { omit, pipe } from "remeda";
-import { AssetState, Candle } from "../src";
+import { AssetState, Candle, getInitialRisk } from "../src";
 import {
   handleOrders,
   OrderHandlerArgs,
@@ -36,6 +36,14 @@ function testHandleOrders(args: TestArgs) {
     asset: omit(r.asset, ["bufferSize", "data", "series", "symbol"]),
   }));
   expect(result).toMatchSnapshot();
+}
+
+function handleOrdersWithoutCommission(asset: AssetState) {
+  return handleOrders({
+    asset,
+    cash: 100,
+    commissionProvider: () => 0,
+  });
 }
 
 const greenCandle: Candle = {
@@ -164,4 +172,108 @@ it("red candle: should fill long entry at body, skip tp in body above entry, fil
     stopLoss: 30,
     takeProfit: 48,
   });
+});
+
+it("should store initial stop loss for a completed long trade", () => {
+  const result = handleOrdersWithoutCommission({
+    symbol: "foo",
+    series: [greenCandle],
+    position: null,
+    entryOrder: { side: "buy", type: "limit", size: 2, price: 40 },
+    stopLoss: 30,
+    takeProfit: 70,
+    initialStopLoss: null,
+    bufferSize: 100,
+    data: {},
+    transactions: [],
+    trades: [],
+  });
+
+  const trade = result.asset.trades[0];
+  expect(trade.initialStopLoss).toBe(30);
+  expect(getInitialRisk(trade)).toBe(20);
+});
+
+it("should store initial stop loss for a completed short trade", () => {
+  const result = handleOrdersWithoutCommission({
+    symbol: "foo",
+    series: [redCandle],
+    position: null,
+    entryOrder: { side: "sell", type: "limit", size: 2, price: 60 },
+    stopLoss: 70,
+    takeProfit: 30,
+    initialStopLoss: null,
+    bufferSize: 100,
+    data: {},
+    transactions: [],
+    trades: [],
+  });
+
+  const trade = result.asset.trades[0];
+  expect(trade.initialStopLoss).toBe(70);
+  expect(getInitialRisk(trade)).toBe(20);
+});
+
+it("should return null initial risk when a trade had no initial stop loss", () => {
+  const result = handleOrdersWithoutCommission({
+    symbol: "foo",
+    series: [greenCandle],
+    position: null,
+    entryOrder: { side: "buy", type: "limit", size: 2, price: 40 },
+    stopLoss: null,
+    takeProfit: 70,
+    initialStopLoss: null,
+    bufferSize: 100,
+    data: {},
+    transactions: [],
+    trades: [],
+  });
+
+  const trade = result.asset.trades[0];
+  expect(trade.initialStopLoss).toBeNull();
+  expect(getInitialRisk(trade)).toBeNull();
+});
+
+it("should keep the initial stop loss after the stop loss is updated", () => {
+  const firstCandle: Candle = {
+    open: 100,
+    close: 100,
+    low: 100,
+    high: 100,
+    volume: 100,
+    time: 1,
+  };
+  const secondCandle: Candle = {
+    open: 100,
+    close: 110,
+    low: 100,
+    high: 110,
+    volume: 100,
+    time: 2,
+  };
+
+  const entryResult = handleOrdersWithoutCommission({
+    symbol: "foo",
+    series: [firstCandle],
+    position: null,
+    entryOrder: { side: "buy", type: "market", size: 2 },
+    stopLoss: 90,
+    takeProfit: 120,
+    initialStopLoss: null,
+    bufferSize: 100,
+    data: {},
+    transactions: [],
+    trades: [],
+  });
+
+  const exitResult = handleOrdersWithoutCommission({
+    ...entryResult.asset,
+    series: [secondCandle],
+    stopLoss: 95,
+    takeProfit: 110,
+  });
+
+  const trade = exitResult.asset.trades[0];
+  expect(trade.initialStopLoss).toBe(90);
+  expect(getInitialRisk(trade)).toBe(20);
 });

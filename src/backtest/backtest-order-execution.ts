@@ -97,18 +97,26 @@ export function handleOrders(args: OrderHandlerArgs): AssetAndCash {
   const candle = last(asset.series);
   const pricePaths = toPricePaths(candle);
 
-  const newTransactions = fillOrders({
+  const { transactions: newTransactions, initialStopLoss } = fillOrders({
     time: candle.time,
     commissionProvider: commissionProvider,
 
     openOrders,
     pricePaths,
     transactions: [],
+    initialStopLoss: asset.initialStopLoss ?? null,
   });
 
   const cash = newTransactions.reduce(updateCash, args.cash);
   const position = newTransactions.reduce(updatePosition, asset.position);
   const transactions = asset.transactions.concat(newTransactions);
+
+  const positionEntered = newTransactions.length && !asset.position && position;
+  const entryUpdates: Partial<AssetState> = positionEntered
+    ? {
+        initialStopLoss,
+      }
+    : {};
 
   const positionExited = newTransactions.length && !position;
   const exitUpdates: Partial<AssetState> = positionExited
@@ -118,11 +126,13 @@ export function handleOrders(args: OrderHandlerArgs): AssetAndCash {
             symbol: asset.symbol,
             entry: transactions[transactions.length - 2],
             exit: transactions[transactions.length - 1],
+            initialStopLoss,
           })
         ),
         entryOrder: null,
         stopLoss: null,
         takeProfit: null,
+        initialStopLoss: null,
       }
     : {};
 
@@ -131,6 +141,7 @@ export function handleOrders(args: OrderHandlerArgs): AssetAndCash {
       ...asset,
       position,
       transactions,
+      ...entryUpdates,
       ...exitUpdates,
     },
     cash,
@@ -143,15 +154,16 @@ interface OrderFillState {
   pricePaths: PricePath[];
   transactions: Transaction[];
   commissionProvider: CommissionProvider;
+  initialStopLoss: Nullable<number>;
 }
 
 /**
  * Returns transactions of the orders filled by traversing the given price path.
  */
-function fillOrders(state: OrderFillState): Transaction[] {
+function fillOrders(state: OrderFillState): OrderFillState {
   const { openOrders, pricePaths } = state;
   if (!openOrders.length || !pricePaths.length) {
-    return state.transactions;
+    return state;
   }
 
   const path = pricePaths[0];
@@ -215,6 +227,9 @@ function fillOrder(
   // The path is traversed up to the point where an order was filled, and that
   // part should not be revisited for potentially triggered new orders.
   const nextPricePaths = splitFirstPricePath(state.pricePaths, fillPrice);
+  const initialStopLoss = order.triggers.length
+    ? getInitialStopLoss(order)
+    : state.initialStopLoss;
 
   return {
     time: state.time,
@@ -223,7 +238,12 @@ function fillOrder(
     openOrders: nextOpenOrders,
     pricePaths: nextPricePaths,
     transactions: state.transactions.concat(transaction),
+    initialStopLoss,
   };
+}
+
+function getInitialStopLoss(order: EnhancedOrder): Nullable<number> {
+  return order.triggers.find((order) => order.type === "stop")?.price ?? null;
 }
 
 function splitFirstPricePath(
@@ -346,10 +366,12 @@ function convertToTrade({
   symbol,
   entry,
   exit,
+  initialStopLoss,
 }: {
   symbol: string;
   entry: Transaction;
   exit: Transaction;
+  initialStopLoss: Nullable<number>;
 }): Trade {
   const side = entry.side === "buy" ? "long" : "short";
   const size = entry.size;
@@ -376,6 +398,7 @@ function convertToTrade({
     position: { side, size },
     absoluteProfit,
     relativeProfit,
+    initialStopLoss,
   };
 }
 
@@ -404,6 +427,7 @@ export function revertLastTransaction(state: AssetAndCash): AssetAndCash {
       ...state.asset,
       transactions: dropLast(transactions, 1),
       position: null,
+      initialStopLoss: null,
     },
     cash,
   };

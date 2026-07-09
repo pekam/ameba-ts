@@ -73,6 +73,7 @@ describe("composeStrategy", () => {
               "size": 0.002285871031156422,
               "time": 1633053600,
             },
+            "initialStopLoss": 43423,
             "position": {
               "side": "long",
               "size": 0.002285871031156422,

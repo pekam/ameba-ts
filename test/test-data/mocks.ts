@@ -59,6 +59,7 @@ export function mockAssetState(overrides?: Partial<AssetState>): AssetState {
     entryOrder: null,
     takeProfit: null,
     stopLoss: null,
+    initialStopLoss: null,
     bufferSize: 100,
     data: {},
     transactions: [],
