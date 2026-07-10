@@ -17,6 +17,7 @@ import {
   OrderType,
   Trade,
   Transaction,
+  TransactionLiquiditySide,
 } from "../core/types";
 import {
   balanceToMarketPosition,
@@ -174,8 +175,8 @@ function fillOrders(state: OrderFillState): OrderFillState {
 
     // Find all orders which would be filled while traversing the price path
     map.indexed((order, index) => {
-      const fillPrice = getFillPrice(order, path);
-      return fillPrice ? { orderIndex: index, fillPrice } : undefined;
+      const fill = getFill(order, path);
+      return fill ? { orderIndex: index, fill } : undefined;
     }),
     filter(isDefined),
 
@@ -183,8 +184,8 @@ function fillOrders(state: OrderFillState): OrderFillState {
     // visited first
     (fillableOrders) =>
       directionUp
-        ? minBy(fillableOrders, (o) => o.fillPrice)
-        : maxBy(fillableOrders, (o) => o.fillPrice),
+        ? minBy(fillableOrders, (o) => o.fill.price)
+        : maxBy(fillableOrders, (o) => o.fill.price),
 
     (orderToFill) =>
       orderToFill
@@ -199,17 +200,21 @@ function fillOrders(state: OrderFillState): OrderFillState {
 
 function fillOrder(
   state: OrderFillState,
-  orderToFill: { orderIndex: number; fillPrice: number }
+  orderToFill: {
+    orderIndex: number;
+    fill: { price: number; liquiditySide: TransactionLiquiditySide };
+  }
 ): OrderFillState {
-  const { orderIndex, fillPrice } = orderToFill;
+  const { orderIndex, fill } = orderToFill;
   const order = state.openOrders[orderIndex];
 
   const transaction: Transaction = withCommission(
     {
       side: order.side,
       size: order.size,
-      price: fillPrice,
+      price: fill.price,
       time: state.time,
+      liquiditySide: fill.liquiditySide,
     },
     state.commissionProvider
   );
@@ -226,7 +231,7 @@ function fillOrder(
 
   // The path is traversed up to the point where an order was filled, and that
   // part should not be revisited for potentially triggered new orders.
-  const nextPricePaths = splitFirstPricePath(state.pricePaths, fillPrice);
+  const nextPricePaths = splitFirstPricePath(state.pricePaths, fill.price);
   const initialStopLoss = order.triggers.length
     ? getInitialStopLoss(order)
     : state.initialStopLoss;
@@ -280,20 +285,30 @@ function getOpenOrders(asset: AssetState): EnhancedOrder[] {
 
 /**
  * If the order should have been filled when the asset has traded along the
- * given path, returns the price where the transaction took place. Otherwise
- * returns null.
+ * given path, returns the price and liquidity side of the transaction.
+ * Otherwise returns null.
  *
  * The price ignores slippage except that caused by gaps between previous
  * candle's close and current candle's open.
  */
-function getFillPrice(order: Order, pricePath: PricePath): number | null {
+function getFill(
+  order: Order,
+  pricePath: PricePath
+): { price: number; liquiditySide: TransactionLiquiditySide } | null {
   const startPrice = pricePath.from;
 
   if (order.type === "market" || shouldFillImmediately(order, startPrice)) {
-    return startPrice;
+    return { price: startPrice, liquiditySide: "taker" };
   }
 
-  return isWithin(order.price, pricePath) ? order.price : null;
+  if (isWithin(order.price, pricePath)) {
+    return {
+      price: order.price,
+      liquiditySide: order.type === "limit" ? "maker" : "taker",
+    };
+  }
+
+  return null;
 }
 
 function isWithin(price: number, { from, to }: PricePath) {

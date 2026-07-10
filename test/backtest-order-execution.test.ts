@@ -46,6 +46,12 @@ function handleOrdersWithoutCommission(asset: AssetState) {
   });
 }
 
+function getSingleTransactionLiquiditySide(args: TestArgs) {
+  const result = handleOrdersWithoutCommission(getArgs(args).asset);
+  expect(result.asset.transactions).toHaveLength(1);
+  return result.asset.transactions[0].liquiditySide;
+}
+
 const greenCandle: Candle = {
   open: 50,
   close: 60,
@@ -192,6 +198,42 @@ it("should store initial stop loss for a completed long trade", () => {
   const trade = result.asset.trades[0];
   expect(trade.initialStopLoss).toBe(30);
   expect(getInitialRisk(trade)).toBe(20);
+});
+
+it("should mark market orders as taker transactions", () => {
+  expect(
+    getSingleTransactionLiquiditySide({
+      candle: greenCandle,
+      entryOrder: { side: "buy", type: "market", size: 1 },
+    })
+  ).toBe("taker");
+});
+
+it("should mark resting limit orders as maker transactions", () => {
+  expect(
+    getSingleTransactionLiquiditySide({
+      candle: greenCandle,
+      entryOrder: { side: "buy", type: "limit", size: 1, price: 40 },
+    })
+  ).toBe("maker");
+});
+
+it("should mark immediately marketable limit orders as taker transactions", () => {
+  expect(
+    getSingleTransactionLiquiditySide({
+      candle: greenCandle,
+      entryOrder: { side: "buy", type: "limit", size: 1, price: 55 },
+    })
+  ).toBe("taker");
+});
+
+it("should mark stop orders as taker transactions", () => {
+  expect(
+    getSingleTransactionLiquiditySide({
+      candle: greenCandle,
+      entryOrder: { side: "buy", type: "stop", size: 1, price: 55 },
+    })
+  ).toBe("taker");
 });
 
 it("should store initial stop loss for a completed short trade", () => {

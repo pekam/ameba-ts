@@ -33,6 +33,7 @@ export function mockTrade(entryTime: Moment): Trade {
       size: 10,
       price: 100,
       time: entryTimeSeconds,
+      liquiditySide: "taker",
       commission: 0,
     },
     exit: {
@@ -40,6 +41,7 @@ export function mockTrade(entryTime: Moment): Trade {
       size: 10,
       price: 120,
       time: exitTimeSeconds,
+      liquiditySide: "taker",
       commission: 0,
     },
     position: {

@@ -54,6 +54,10 @@ export const ORDER_TYPES = ["market", "limit", "stop"] as const;
 export type PositionSide = (typeof POSITION_SIDES)[number];
 export const POSITION_SIDES = ["long", "short"] as const;
 
+export type TransactionLiquiditySide =
+  (typeof TRANSACTION_LIQUIDITY_SIDES)[number];
+export const TRANSACTION_LIQUIDITY_SIDES = ["maker", "taker"] as const;
+
 export interface MarketPosition {
   /**
    * Whether this is a long or short position.
@@ -82,6 +86,11 @@ export interface Transaction {
    * The moment when the transaction took place, in unix time.
    */
   time: number;
+  /**
+   * Whether the order added liquidity ("maker") or removed liquidity ("taker")
+   * when the transaction filled.
+   */
+  liquiditySide: TransactionLiquiditySide;
   /**
    * The transaction cost paid for the transaction, in cash.
    */

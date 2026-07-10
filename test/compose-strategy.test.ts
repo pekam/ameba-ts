@@ -61,6 +61,7 @@ describe("composeStrategy", () => {
             "absoluteProfit": -0.7497656982193064,
             "entry": {
               "commission": 0,
+              "liquiditySide": "taker",
               "price": 43751,
               "side": "buy",
               "size": 0.002285871031156422,
@@ -68,6 +69,7 @@ describe("composeStrategy", () => {
             },
             "exit": {
               "commission": 0,
+              "liquiditySide": "taker",
               "price": 43423,
               "side": "sell",
               "size": 0.002285871031156422,

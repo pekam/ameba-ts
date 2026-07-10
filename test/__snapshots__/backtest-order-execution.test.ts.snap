@@ -20,6 +20,7 @@ exports[`green candle: should fill entry 1`] = `
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 55,
         "side": "sell",
         "size": 1,
@@ -44,6 +45,7 @@ exports[`green candle: should fill entry and sl immediately 1`] = `
         "absoluteProfit": -2,
         "entry": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 50,
           "side": "buy",
           "size": 1,
@@ -51,6 +53,7 @@ exports[`green candle: should fill entry and sl immediately 1`] = `
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 50,
           "side": "sell",
           "size": 1,
@@ -68,6 +71,7 @@ exports[`green candle: should fill entry and sl immediately 1`] = `
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 50,
         "side": "buy",
         "size": 1,
@@ -75,6 +79,7 @@ exports[`green candle: should fill entry and sl immediately 1`] = `
       },
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 50,
         "side": "sell",
         "size": 1,
@@ -99,6 +104,7 @@ exports[`green candle: should fill entry at body, skip sl in body below entry, f
         "absoluteProfit": 13,
         "entry": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 55,
           "side": "buy",
           "size": 1,
@@ -106,6 +112,7 @@ exports[`green candle: should fill entry at body, skip sl in body below entry, f
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 70,
           "side": "sell",
           "size": 1,
@@ -123,6 +130,7 @@ exports[`green candle: should fill entry at body, skip sl in body below entry, f
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 55,
         "side": "buy",
         "size": 1,
@@ -130,6 +138,7 @@ exports[`green candle: should fill entry at body, skip sl in body below entry, f
       },
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 70,
         "side": "sell",
         "size": 1,
@@ -154,6 +163,7 @@ exports[`green candle: should fill entry at bottom tail, fill sl at bottom tail,
         "absoluteProfit": -7,
         "entry": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 45,
           "side": "buy",
           "size": 1,
@@ -161,6 +171,7 @@ exports[`green candle: should fill entry at bottom tail, fill sl at bottom tail,
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 40,
           "side": "sell",
           "size": 1,
@@ -178,6 +189,7 @@ exports[`green candle: should fill entry at bottom tail, fill sl at bottom tail,
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 45,
         "side": "buy",
         "size": 1,
@@ -185,6 +197,7 @@ exports[`green candle: should fill entry at bottom tail, fill sl at bottom tail,
       },
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 40,
         "side": "sell",
         "size": 1,
@@ -209,6 +222,7 @@ exports[`green candle: should fill entry at bottom tail, skip sl below tail, fil
         "absoluteProfit": 28,
         "entry": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 40,
           "side": "buy",
           "size": 1,
@@ -216,6 +230,7 @@ exports[`green candle: should fill entry at bottom tail, skip sl below tail, fil
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 70,
           "side": "sell",
           "size": 1,
@@ -233,6 +248,7 @@ exports[`green candle: should fill entry at bottom tail, skip sl below tail, fil
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 40,
         "side": "buy",
         "size": 1,
@@ -240,6 +256,7 @@ exports[`green candle: should fill entry at bottom tail, skip sl below tail, fil
       },
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 70,
         "side": "sell",
         "size": 1,
@@ -264,6 +281,7 @@ exports[`green candle: should fill short entry at body, skip tp in body below en
         "absoluteProfit": -17,
         "entry": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 55,
           "side": "sell",
           "size": 1,
@@ -271,6 +289,7 @@ exports[`green candle: should fill short entry at body, skip tp in body below en
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 70,
           "side": "buy",
           "size": 1,
@@ -288,6 +307,7 @@ exports[`green candle: should fill short entry at body, skip tp in body below en
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 55,
         "side": "sell",
         "size": 1,
@@ -295,6 +315,7 @@ exports[`green candle: should fill short entry at body, skip tp in body below en
       },
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 70,
         "side": "buy",
         "size": 1,
@@ -326,6 +347,7 @@ exports[`red candle: should fill entry 1`] = `
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 45,
         "side": "buy",
         "size": 1,
@@ -350,6 +372,7 @@ exports[`red candle: should fill entry and sl immediately 1`] = `
         "absoluteProfit": -2,
         "entry": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 50,
           "side": "sell",
           "size": 1,
@@ -357,6 +380,7 @@ exports[`red candle: should fill entry and sl immediately 1`] = `
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 50,
           "side": "buy",
           "size": 1,
@@ -374,6 +398,7 @@ exports[`red candle: should fill entry and sl immediately 1`] = `
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 50,
         "side": "sell",
         "size": 1,
@@ -381,6 +406,7 @@ exports[`red candle: should fill entry and sl immediately 1`] = `
       },
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 50,
         "side": "buy",
         "size": 1,
@@ -405,6 +431,7 @@ exports[`red candle: should fill entry at body, skip sl in body above entry, fil
         "absoluteProfit": 13,
         "entry": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 45,
           "side": "sell",
           "size": 1,
@@ -412,6 +439,7 @@ exports[`red candle: should fill entry at body, skip sl in body above entry, fil
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 30,
           "side": "buy",
           "size": 1,
@@ -429,6 +457,7 @@ exports[`red candle: should fill entry at body, skip sl in body above entry, fil
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 45,
         "side": "sell",
         "size": 1,
@@ -436,6 +465,7 @@ exports[`red candle: should fill entry at body, skip sl in body above entry, fil
       },
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 30,
         "side": "buy",
         "size": 1,
@@ -460,6 +490,7 @@ exports[`red candle: should fill entry at top tail, fill sl at top tail, skip tp
         "absoluteProfit": -7,
         "entry": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 55,
           "side": "sell",
           "size": 1,
@@ -467,6 +498,7 @@ exports[`red candle: should fill entry at top tail, fill sl at top tail, skip tp
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 60,
           "side": "buy",
           "size": 1,
@@ -484,6 +516,7 @@ exports[`red candle: should fill entry at top tail, fill sl at top tail, skip tp
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 55,
         "side": "sell",
         "size": 1,
@@ -491,6 +524,7 @@ exports[`red candle: should fill entry at top tail, fill sl at top tail, skip tp
       },
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 60,
         "side": "buy",
         "size": 1,
@@ -515,6 +549,7 @@ exports[`red candle: should fill entry at top tail, skip sl above tail, fill tp 
         "absoluteProfit": 28,
         "entry": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 60,
           "side": "sell",
           "size": 1,
@@ -522,6 +557,7 @@ exports[`red candle: should fill entry at top tail, skip sl above tail, fill tp 
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 30,
           "side": "buy",
           "size": 1,
@@ -539,6 +575,7 @@ exports[`red candle: should fill entry at top tail, skip sl above tail, fill tp 
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 60,
         "side": "sell",
         "size": 1,
@@ -546,6 +583,7 @@ exports[`red candle: should fill entry at top tail, skip sl above tail, fill tp 
       },
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 30,
         "side": "buy",
         "size": 1,
@@ -570,6 +608,7 @@ exports[`red candle: should fill long entry at body, skip tp in body above entry
         "absoluteProfit": -17,
         "entry": {
           "commission": 1,
+          "liquiditySide": "maker",
           "price": 45,
           "side": "buy",
           "size": 1,
@@ -577,6 +616,7 @@ exports[`red candle: should fill long entry at body, skip tp in body above entry
         },
         "exit": {
           "commission": 1,
+          "liquiditySide": "taker",
           "price": 30,
           "side": "sell",
           "size": 1,
@@ -594,6 +634,7 @@ exports[`red candle: should fill long entry at body, skip tp in body above entry
     "transactions": [
       {
         "commission": 1,
+        "liquiditySide": "maker",
         "price": 45,
         "side": "buy",
         "size": 1,
@@ -601,6 +642,7 @@ exports[`red candle: should fill long entry at body, skip tp in body above entry
       },
       {
         "commission": 1,
+        "liquiditySide": "taker",
         "price": 30,
         "side": "sell",
         "size": 1,

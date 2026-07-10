@@ -180,6 +180,13 @@ export interface BacktestAsyncArgs extends CommonBacktestArgs {
  * const commissionProvider = (transaction: Transaction) =>
  *   transaction.size * transaction.price * 0.001
  * ```
+ * Or if the broker charges different fees for maker and taker transactions:
+ * ```
+ * const commissionProvider = (transaction: Transaction) =>
+ *   transaction.size *
+ *   transaction.price *
+ *   (transaction.liquiditySide === "maker" ? 0.001 : 0.002)
+ * ```
  * Or if you want to simulate a stock broker which charges $0.005 per share, but
  * min $1 per transaction, and max 1% of the transaction's value:
  * ```

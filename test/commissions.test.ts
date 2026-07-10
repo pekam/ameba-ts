@@ -57,3 +57,44 @@ it("should charge commissions by the commission provider", () => {
     48 / 300,
   ]);
 });
+
+it("should provide transaction liquidity side to the commission provider", () => {
+  const symbol = "foo";
+
+  const series = {
+    [symbol]: testData.getSimpleTestData(2),
+  };
+
+  const commissionProvider: CommissionProvider = (transaction) =>
+    transaction.liquiditySide === "maker" ? 0.5 : 1;
+
+  const strategy: FullTradingStrategy = (state) => {
+    const asset = state.assets[symbol];
+    const candle = last(asset.series);
+    if (!asset.position && !asset.transactions.length) {
+      return {
+        [symbol]: {
+          entryOrder: {
+            side: "buy",
+            type: "market",
+            size: 10,
+          },
+          takeProfit: candle.close + 0.5,
+        },
+      };
+    }
+    return { [symbol]: {} };
+  };
+
+  const result = backtestSync({
+    series,
+    strategy,
+    commissionProvider,
+    initialBalance: 100,
+  });
+
+  const transactions = flatMap(result.trades, (t) => [t.entry, t.exit]);
+  expect(transactions.map((t) => t.liquiditySide)).toEqual(["taker", "maker"]);
+  expect(transactions.map((t) => t.commission)).toEqual([1, 0.5]);
+  expect(result.trades[0].absoluteProfit).toBe(3.5);
+});
