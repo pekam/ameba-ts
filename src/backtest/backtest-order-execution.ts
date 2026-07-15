@@ -64,28 +64,36 @@ type EnhancedOrder = Order & {
  * Represents linear movement from one price point to another. A candle is split
  * to these so we can determine which orders are filled and in which order.
  */
-type PricePath = { from: number; to: number };
+type PricePath = { from: number; to: number; isGap?: boolean };
 
 /**
  * The price is expected to have changed in three linear moves within a candle:
  * from open to low, low to high, high to close (for green candles, red candles
- * visit first high and then low).
+ * visit first high and then low). There is also the gap from previous candle's
+ * close to open, which can trigger orders.
  */
-function toPricePaths({ open, high, low, close }: Candle): PricePath[] {
+function toPricePaths(
+  { open, high, low, close }: Candle,
+  previousClose?: number
+): PricePath[] {
   const isGreen = close > open;
-  if (isGreen) {
-    return [
-      { from: open, to: low },
-      { from: low, to: high },
-      { from: high, to: close },
-    ];
-  } else {
-    return [
-      { from: open, to: high },
-      { from: high, to: low },
-      { from: low, to: close },
-    ];
+  const intraCandlePaths = isGreen
+    ? [
+        { from: open, to: low },
+        { from: low, to: high },
+        { from: high, to: close },
+      ]
+    : [
+        { from: open, to: high },
+        { from: high, to: low },
+        { from: low, to: close },
+      ];
+
+  if (!isDefined(previousClose) || previousClose === open) {
+    return intraCandlePaths;
   }
+
+  return [{ from: previousClose, to: open, isGap: true }, ...intraCandlePaths];
 }
 
 /**
@@ -96,7 +104,9 @@ export function handleOrders(args: OrderHandlerArgs): AssetAndCash {
   const { asset, commissionProvider } = args;
   const openOrders = getOpenOrders(asset);
   const candle = last(asset.series);
-  const pricePaths = toPricePaths(candle);
+  const previousCandle: Candle | undefined =
+    asset.series[asset.series.length - 2];
+  const pricePaths = toPricePaths(candle, previousCandle?.close);
 
   const { transactions: newTransactions, initialStopLoss } = fillOrders({
     time: candle.time,
@@ -255,7 +265,7 @@ function splitFirstPricePath(
   pricePaths: PricePath[],
   splitAt: number
 ): PricePath[] {
-  const newFirst: PricePath = { from: splitAt, to: pricePaths[0].to };
+  const newFirst: PricePath = { ...pricePaths[0], from: splitAt };
   return [newFirst, ...drop(pricePaths, 1)];
 }
 
@@ -295,10 +305,15 @@ function getFill(
   order: Order,
   pricePath: PricePath
 ): { price: number; liquiditySide: TransactionLiquiditySide } | null {
-  const startPrice = pricePath.from;
+  if (pricePath.isGap) {
+    return getGapFill(order, pricePath);
+  }
 
-  if (order.type === "market" || shouldFillImmediately(order, startPrice)) {
-    return { price: startPrice, liquiditySide: "taker" };
+  if (order.type === "market" || shouldFillImmediately(order, pricePath.from)) {
+    return {
+      price: pricePath.from,
+      liquiditySide: "taker",
+    };
   }
 
   if (isWithin(order.price, pricePath)) {
@@ -309,6 +324,42 @@ function getFill(
   }
 
   return null;
+}
+
+function getGapFill(
+  order: Order,
+  { from: previousClose, to: nextOpen }: PricePath
+): { price: number; liquiditySide: TransactionLiquiditySide } | null {
+  if (order.type === "market") {
+    return { price: nextOpen, liquiditySide: "taker" };
+  }
+
+  const executableAtPreviousClose = shouldFillImmediately(order, previousClose);
+  const executableAtNextOpen = shouldFillImmediately(order, nextOpen);
+
+  // The gap either moved away from the order's executable side or never reached
+  // it. There were no trades within the gap that could fill the order.
+  if (!executableAtNextOpen) {
+    return null;
+  }
+
+  // An order already executable at the previous close was immediately
+  // marketable when submitted. The next open is its first available fill.
+  if (executableAtPreviousClose) {
+    return { price: nextOpen, liquiditySide: "taker" };
+  }
+
+  // We assume that a limit order resting in the orderbook within the gap would
+  // have been filled at the limit price, even though the historic candle series
+  // didn't have any transactions at that price. NOTE: This assume continuous
+  // markets without gaps in trading sessions. This is not optimal simulation
+  // for backtesting daily candles in the stock market, where the market is
+  // closed during the night.
+  //
+  // A stop order becomes a market order and fills at the next traded price.
+  return order.type === "limit"
+    ? { price: order.price, liquiditySide: "maker" }
+    : { price: nextOpen, liquiditySide: "taker" };
 }
 
 function isWithin(price: number, { from, to }: PricePath) {

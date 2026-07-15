@@ -1,5 +1,11 @@
 import { omit, pipe } from "remeda";
-import { AssetState, Candle, getInitialRisk } from "../src";
+import {
+  AssetState,
+  Candle,
+  getInitialRisk,
+  Order,
+  TransactionLiquiditySide,
+} from "../src";
 import {
   handleOrders,
   OrderHandlerArgs,
@@ -234,6 +240,175 @@ it("should mark stop orders as taker transactions", () => {
       entryOrder: { side: "buy", type: "stop", size: 1, price: 55 },
     })
   ).toBe("taker");
+});
+
+function handleGapOrder({
+  order,
+  previousClose,
+  nextOpen,
+  stopLoss = null,
+}: {
+  order: Order;
+  previousClose: number;
+  nextOpen: number;
+  stopLoss?: number | null;
+}) {
+  return handleOrdersWithoutCommission({
+    symbol: "foo",
+    series: [
+      {
+        open: previousClose,
+        high: previousClose,
+        low: previousClose,
+        close: previousClose,
+        volume: 100,
+        time: 1,
+      },
+      {
+        open: nextOpen,
+        high: nextOpen,
+        low: nextOpen,
+        close: nextOpen,
+        volume: 100,
+        time: 2,
+      },
+    ],
+    position: null,
+    entryOrder: order,
+    stopLoss,
+    takeProfit: null,
+    initialStopLoss: null,
+    bufferSize: 100,
+    data: {},
+    transactions: [],
+    trades: [],
+  });
+}
+
+type ExpectedGapFill = {
+  price: number;
+  liquiditySide: TransactionLiquiditySide;
+} | null;
+
+it.each<{
+  description: string;
+  order: Order;
+  previousClose: number;
+  nextOpen: number;
+  expected: ExpectedGapFill;
+}>([
+  {
+    description: "buy limit crossing down-to-up",
+    order: { side: "buy", type: "limit", size: 1, price: 100 },
+    previousClose: 90,
+    nextOpen: 110,
+    expected: null,
+  },
+  {
+    description: "buy limit crossing up-to-down",
+    order: { side: "buy", type: "limit", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 90,
+    expected: { price: 100, liquiditySide: "maker" },
+  },
+  {
+    description: "buy limit already executable on both sides of the gap",
+    order: { side: "buy", type: "limit", size: 1, price: 100 },
+    previousClose: 90,
+    nextOpen: 80,
+    expected: { price: 80, liquiditySide: "taker" },
+  },
+  {
+    description: "buy stop crossing down-to-up",
+    order: { side: "buy", type: "stop", size: 1, price: 100 },
+    previousClose: 90,
+    nextOpen: 110,
+    expected: { price: 110, liquiditySide: "taker" },
+  },
+  {
+    description: "buy stop crossing up-to-down",
+    order: { side: "buy", type: "stop", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 90,
+    expected: null,
+  },
+  {
+    description: "buy stop already executable on both sides of the gap",
+    order: { side: "buy", type: "stop", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 120,
+    expected: { price: 120, liquiditySide: "taker" },
+  },
+  {
+    description: "sell limit crossing down-to-up",
+    order: { side: "sell", type: "limit", size: 1, price: 100 },
+    previousClose: 90,
+    nextOpen: 110,
+    expected: { price: 100, liquiditySide: "maker" },
+  },
+  {
+    description: "sell limit crossing up-to-down",
+    order: { side: "sell", type: "limit", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 90,
+    expected: null,
+  },
+  {
+    description: "sell limit already executable on both sides of the gap",
+    order: { side: "sell", type: "limit", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 120,
+    expected: { price: 120, liquiditySide: "taker" },
+  },
+  {
+    description: "sell stop crossing down-to-up",
+    order: { side: "sell", type: "stop", size: 1, price: 100 },
+    previousClose: 90,
+    nextOpen: 110,
+    expected: null,
+  },
+  {
+    description: "sell stop crossing up-to-down",
+    order: { side: "sell", type: "stop", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 90,
+    expected: { price: 90, liquiditySide: "taker" },
+  },
+  {
+    description: "sell stop already executable on both sides of the gap",
+    order: { side: "sell", type: "stop", size: 1, price: 100 },
+    previousClose: 90,
+    nextOpen: 80,
+    expected: { price: 80, liquiditySide: "taker" },
+  },
+])("gap handling: $description", ({ expected, ...args }) => {
+  const result = handleGapOrder(args);
+  const fills = result.asset.transactions.map(({ price, liquiditySide }) => ({
+    price,
+    liquiditySide,
+  }));
+
+  expect(fills).toEqual(expected ? [expected] : []);
+});
+
+it("fills an attached stop at the open after its entry limit fills within the gap", () => {
+  const result = handleGapOrder({
+    order: { side: "buy", type: "limit", size: 1, price: 100 },
+    previousClose: 110,
+    nextOpen: 90,
+    stopLoss: 95,
+  });
+
+  expect(
+    result.asset.transactions.map(({ side, price, liquiditySide }) => ({
+      side,
+      price,
+      liquiditySide,
+    }))
+  ).toEqual([
+    { side: "buy", price: 100, liquiditySide: "maker" },
+    { side: "sell", price: 90, liquiditySide: "taker" },
+  ]);
 });
 
 it("should store initial stop loss for a completed short trade", () => {
